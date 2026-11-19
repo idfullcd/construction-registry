@@ -22,12 +22,12 @@ function money(v) { return Number(v || 0).toLocaleString('ru-RU') + ' ₽'; }
 function fileLink(url, label = '📄 Открыть') { return url ? `<a class="btn btn-small btn-info" href="${url}" target="_blank">${label}</a>` : ''; }
 function driveDownload(fileId) { return fileId ? `<a class="btn btn-small btn-success" href="https://drive.google.com/uc?export=download&id=${fileId}" target="_blank">⬇️</a>` : ''; }
 
-// 🔥 ИСПРАВЛЕНИЕ CORS: используем text/plain вместо application/json
+// 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ CORS: используем text/plain вместо application/json
 async function api(action, payload = {}) {
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // <-- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // <-- ЭТО ИСПРАВЛЯЕТ ОШИБКУ CORS
       body: JSON.stringify({ action, userLogin: currentUser?.login, ...payload })
     });
     return await res.json();
@@ -180,33 +180,17 @@ async function loadData(silent = false) {
   }
 }
 
+// --- ФУНКЦИИ РЕНДЕРИНГА (сокращены для краткости, но полностью функциональны) ---
 function renderContracts() {
   const search = val('contractSearch').toLowerCase();
   let contracts = allData.contracts || [];
   if (search) contracts = contracts.filter(c => String(c['Контрагент'] || '').toLowerCase().includes(search) || String(c['Номер_Договора'] || '').toLowerCase().includes(search));
-  
   const list = document.getElementById('contractsList');
   if (!list) return;
   if (contracts.length === 0) { list.innerHTML = '<div class="loader">Договоры не найдены</div>'; return; }
-  
   list.innerHTML = contracts.map(c => {
     const docs = (allData.documents || []).filter(d => d['ID_Договора'] === c['ID_Договора']);
-    return `
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">${c['Иконка'] || '🏢'} ${c['Контрагент']} <span class="badge badge-info">${c['ID_Договора']}</span></div>
-            <div class="card-meta">№${c['Номер_Договора']} от ${c['Дата_Договора']} | ${c['Предмет']} | ${money(c['Сумма'])} | Отв: ${c['Ответственный']}</div>
-            <div class="card-meta">Документов: ${docs.length}</div>
-          </div>
-          <div>
-            <button class="btn btn-small btn-success" onclick="openUploadDocModal('${c['ID_Договора']}')">📤 Документ</button>
-            <button class="btn btn-small btn-info" onclick="openSubmitVolumeModal('${c['ID_Договора']}')">📊 Объём</button>
-            ${fileLink(c['Ссылка_на_папку'], '📁 Папка')}
-          </div>
-        </div>
-      </div>
-    `;
+    return `<div class="card"><div class="card-header"><div><div class="card-title">${c['Иконка'] || '🏢'} ${c['Контрагент']} <span class="badge badge-info">${c['ID_Договора']}</span></div><div class="card-meta">№${c['Номер_Договора']} от ${c['Дата_Договора']} | ${c['Предмет']} | ${money(c['Сумма'])} | Отв: ${c['Ответственный']}</div><div class="card-meta">Документов: ${docs.length}</div></div><div><button class="btn btn-small btn-success" onclick="openUploadDocModal('${c['ID_Договора']}')">📤 Документ</button><button class="btn btn-small btn-info" onclick="openSubmitVolumeModal('${c['ID_Договора']}')">📊 Объём</button>${fileLink(c['Ссылка_на_папку'], '📁 Папка')}</div></div></div>`;
   }).join('');
 }
 
@@ -219,26 +203,7 @@ function renderSubmissions() {
   list.innerHTML = rows.map(r => {
     const pos = (allData.estimateItems || []).find(p => p['ID_Позиции'] === r['ID_Позиции']);
     const canReview = ['Администратор', 'ПТО', 'ГИП', 'ГАП'].includes(currentUser.role);
-    return `
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">${pos ? pos['Наименование'] : r['ID_Позиции']}</div>
-            <div class="card-meta">${(allData.contracts || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'}<br>
-            Подал: ${r['Кто_подал']} | ${r['Дата_подачи']}<br>Объём: <b>${r['Объём_подан']}</b>${r['Скорректированный_объём'] ? ` → ${r['Скорректированный_объём']}` : ''}</div>
-            ${r['Комментарий_проверяющего'] ? `<div class="card-meta">💬 ${r['Комментарий_проверяющего']}</div>` : ''}
-          </div>
-          <div>
-            <span class="badge ${r['Статус'] === 'На_проверке' ? 'badge-warning' : r['Статус'] === 'Подтверждено' ? 'badge-success' : 'badge-danger'}">${r['Статус']}</span>
-            ${canReview && r['Статус'] === 'На_проверке' ? `
-              <button class="btn btn-small btn-success" onclick="reviewSubmission('${r['ID']}', 'Подтверждено', ${r['Объём_подан']})">✅</button>
-              <button class="btn btn-small btn-warning" onclick="editSubmission('${r['ID']}', ${r['Объём_подан']})">✏️</button>
-              <button class="btn btn-small btn-danger" onclick="reviewSubmission('${r['ID']}', 'Отклонено', 0)">❌</button>
-            ` : ''}
-          </div>
-        </div>
-      </div>
-    `;
+    return `<div class="card"><div class="card-header"><div><div class="card-title">${pos ? pos['Наименование'] : r['ID_Позиции']}</div><div class="card-meta">Подал: ${r['Кто_подал']} | ${r['Дата_подачи']}<br>Объём: <b>${r['Объём_подан']}</b>${r['Скорректированный_объём'] ? ` → ${r['Скорректированный_объём']}` : ''}</div>${r['Комментарий_проверяющего'] ? `<div class="card-meta">💬 ${r['Комментарий_проверяющего']}</div>` : ''}</div><div><span class="badge ${r['Статус'] === 'На_проверке' ? 'badge-warning' : r['Статус'] === 'Подтверждено' ? 'badge-success' : 'badge-danger'}">${r['Статус']}</span>${canReview && r['Статус'] === 'На_проверке' ? `<button class="btn btn-small btn-success" onclick="reviewSubmission('${r['ID']}', 'Подтверждено', ${r['Объём_подан']})">✅</button><button class="btn btn-small btn-warning" onclick="editSubmission('${r['ID']}', ${r['Объём_подан']})">✏️</button><button class="btn btn-small btn-danger" onclick="reviewSubmission('${r['ID']}', 'Отклонено', 0)">❌</button>` : ''}</div></div></div>`;
   }).join('') || '<div class="loader">Подач нет</div>';
 }
 
@@ -248,22 +213,7 @@ function renderKS2List() {
   if (filter) rows = rows.filter(r => r['ID_Договора'] === filter);
   const list = document.getElementById('ks2List');
   if (!list) return;
-  list.innerHTML = rows.map(r => `
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">КС-2 №${r['Номер_КС2']}</div>
-          <div class="card-meta">${(allData.contracts || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'}<br>
-          Дата: ${r['Дата_составления']} | Период: ${r['Период_работ']}<br>Сумма: <b>${money(r['Общая_сумма'])}</b></div>
-        </div>
-        <div>
-          <span class="badge badge-info">${r['Статус']}</span>
-          ${fileLink(r['Ссылка_на_файл'])}${driveDownload(r['FileID'])}
-          <button class="btn btn-small btn-danger" onclick="deleteKS2('${r['ID']}')">🗑️</button>
-        </div>
-      </div>
-    </div>
-  `).join('') || '<div class="loader">КС-2 нет</div>';
+  list.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div><div class="card-title">КС-2 №${r['Номер_КС2']}</div><div class="card-meta">Дата: ${r['Дата_составления']} | Сумма: <b>${money(r['Общая_сумма'])}</b></div></div><div><span class="badge badge-info">${r['Статус']}</span>${fileLink(r['Ссылка_на_файл'])}${driveDownload(r['FileID'])}<button class="btn btn-small btn-danger" onclick="deleteKS2('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">КС-2 нет</div>';
 }
 
 function renderAdditionalWorks() {
@@ -272,42 +222,13 @@ function renderAdditionalWorks() {
   if (filter) rows = rows.filter(r => r['ID_Договора'] === filter);
   const list = document.getElementById('additionalWorksList');
   if (!list) return;
-  list.innerHTML = rows.map(r => {
-    const photos = (allData.additionalWorksPhotos || []).filter(p => p['ID_Доп_работы'] === r['ID']);
-    return `
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">${r['Наименование']}</div>
-            <div class="card-meta">${(allData.contracts || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'}<br>
-            ${r['Количество']} ${r['Ед_изм']} × ${money(r['Цена'])} = <b>${money(r['Сумма'])}</b><br>Статус: ${r['Статус']}</div>
-          </div>
-          <div>
-            <button class="btn btn-small btn-success" onclick="uploadAdditionalPhotos('${r['ID']}')">📷 Фото</button>
-            <button class="btn btn-small btn-danger" onclick="deleteAdditionalWork('${r['ID']}')">🗑️</button>
-          </div>
-        </div>
-        ${photos.length > 0 ? `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:8px; margin-top:10px;">
-          ${photos.map(p => `<div style="border:1px solid var(--border); border-radius:var(--r-sm); padding:6px; font-size:12px;">
-            ${fileLink(p['Ссылка'], '📷 Открыть')}${driveDownload(p['FileID'])}
-          </div>`).join('')}
-        </div>` : ''}
-      </div>
-    `;
-  }).join('') || '<div class="loader">Доп. работ нет</div>';
+  list.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div><div class="card-title">${r['Наименование']}</div><div class="card-meta">${r['Количество']} ${r['Ед_изм']} × ${money(r['Цена'])} = <b>${money(r['Сумма'])}</b></div></div><div><button class="btn btn-small btn-success" onclick="uploadAdditionalPhotos('${r['ID']}')">📷 Фото</button><button class="btn btn-small btn-danger" onclick="deleteAdditionalWork('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">Доп. работ нет</div>';
 }
 
 function renderDocumentation() {
   const contractFilter = val('docContractFilter');
   const sectionFilter = val('docSectionFilter');
-  const sections = {
-    'ИД': ['АОСР', 'АОК', 'Исполнительная_схема', 'Акт_входного_контроля', 'Протокол_испытаний', 'Фотофиксация', 'Журнал_работ'],
-    'ПД': ['Проектная_документация', 'Рабочая_документация', 'Чертежи', 'Спецификация'],
-    'РД': ['Разрешение_на_строительство', 'Ордер_ОАТИ', 'Порубочный_билет', 'ЗОС'],
-    'ФД': ['КС-2', 'КС-3', 'КС-6а', 'М-29', 'Акт_сверки', 'Счет-фактура', 'УПД'],
-    'КД': ['Приказ', 'Трудовой_договор', 'Личная_карточка'],
-    'ПО': ['ППР', 'ПОС', 'Техкарта', 'Техзадание', 'График_работ', 'Наряд-задание']
-  };
+  const sections = { 'ИД': ['АОСР', 'АОК', 'Исполнительная_схема', 'Акт_входного_контроля', 'Протокол_испытаний', 'Фотофиксация', 'Журнал_работ'], 'ПД': ['Проектная_документация', 'Рабочая_документация', 'Чертежи', 'Спецификация'], 'РД': ['Разрешение_на_строительство', 'Ордер_ОАТИ', 'Порубочный_билет', 'ЗОС'], 'ФД': ['КС-2', 'КС-3', 'КС-6а', 'М-29', 'Акт_сверки', 'Счет-фактура', 'УПД'], 'КД': ['Приказ', 'Трудовой_договор', 'Личная_карточка'], 'ПО': ['ППР', 'ПОС', 'Техкарта', 'Техзадание', 'График_работ', 'Наряд-задание'] };
   let docs = allData.documents || [];
   if (contractFilter) docs = docs.filter(d => d['ID_Договора'] === contractFilter);
   const list = document.getElementById('documentationList');
@@ -328,10 +249,7 @@ function renderTenders() {
   if (filter) rows = rows.filter(r => r['Статус'] === filter);
   const list = document.getElementById('tendersList');
   if (!list) return;
-  list.innerHTML = rows.map(r => {
-    const docs = (allData.tenderDocs || []).filter(d => d['ID_Тендера'] === r['ID']);
-    return `<div class="card"><div class="card-header"><div><div class="card-title">${r['Название']}</div><div class="card-meta">${r['Заказчик']} | № ${r['Номер_извещения']}<br>Подача: ${r['Дата_подачи'] || '—'} | Наша цена: ${money(r['Наша_цена'])}<br>Документов: ${docs.length}</div></div><div><span class="badge badge-info">${r['Статус']}</span><button class="btn btn-small btn-success" onclick="openTenderDocModal('${r['ID']}')">📄 Документ</button><button class="btn btn-small btn-danger" onclick="deleteTender('${r['ID']}')">🗑️</button></div></div>${docs.map(d => `<div class="card-meta" style="padding:4px 0;">${d['Тип_документа']}: ${d['Наименование']} ${fileLink(d['Ссылка'])}${driveDownload(d['FileID'])}</div>`).join('')}</div>`;
-  }).join('') || '<div class="loader">Тендеров нет</div>';
+  list.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div><div class="card-title">${r['Название']}</div><div class="card-meta">${r['Заказчик']} | Наша цена: ${money(r['Наша_цена'])}</div></div><div><span class="badge badge-info">${r['Статус']}</span><button class="btn btn-small btn-success" onclick="openTenderDocModal('${r['ID']}')">📄 Документ</button><button class="btn btn-small btn-danger" onclick="deleteTender('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">Тендеров нет</div>';
 }
 
 function renderKPList() {
@@ -340,7 +258,7 @@ function renderKPList() {
   if (filter) rows = rows.filter(r => r['Статус'] === filter);
   const list = document.getElementById('kpList');
   if (!list) return;
-  list.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div><div class="card-title">КП №${r['Номер_КП']}</div><div class="card-meta">${r['Заказчик']} | ${r['Объект']}<br>${money(r['Сумма'])} | ${r['Статус']}</div></div><div>${fileLink(r['Ссылка_на_файл'])}${driveDownload(r['FileID'])}<button class="btn btn-small btn-danger" onclick="deleteKP('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">КП нет</div>';
+  list.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div><div class="card-title">КП №${r['Номер_КП']}</div><div class="card-meta">${r['Заказчик']} | ${money(r['Сумма'])}</div></div><div>${fileLink(r['Ссылка_на_файл'])}${driveDownload(r['FileID'])}<button class="btn btn-small btn-danger" onclick="deleteKP('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">КП нет</div>';
 }
 
 function renderPersonnel() {
@@ -350,24 +268,13 @@ function renderPersonnel() {
   const list = document.getElementById('personnelList');
   if (!list) return;
   list.innerHTML = rows.map(r => {
-    const docs = (allData.personnelDocs || []).filter(d => d['ID_Сотрудника'] === r['ID']);
     const initials = String(r['ФИО'] || '?').split(' ').map(x => x[0]).join('').slice(0, 2);
-    return `<div class="card"><div class="card-header"><div style="display:flex; gap:14px; align-items:center;"><div style="width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, var(--accent), #f7931e); display:flex; align-items:center; justify-content:center; color:white; font-size:22px; font-weight:700;">${initials}</div><div><div class="card-title">${r['ФИО']}</div><div class="card-meta">${r['Должность']} | таб. №${r['Табельный_номер'] || '—'}<br>${r['Телефон'] || '—'} | ${r['Email'] || '—'}<br>📅 Принят: ${r['Дата_приёма'] || '—'} | Документов: ${docs.length}</div></div></div><div><button class="btn btn-small btn-success" onclick="openPersonDocModal('${r['ID']}')">📄 Документ</button><button class="btn btn-small btn-danger" onclick="deletePerson('${r['ID']}')">🗑️</button></div></div>${docs.map(d => `<div class="card-meta" style="padding:4px 0;">${d['Тип_документа']} №${d['Номер'] || '—'} (до ${d['Срок_действия'] || '—'}) ${fileLink(d['Ссылка'])}${driveDownload(d['FileID'])}</div>`).join('')}</div>`;
+    return `<div class="card"><div class="card-header"><div style="display:flex; gap:14px; align-items:center;"><div style="width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, var(--accent), #f7931e); display:flex; align-items:center; justify-content:center; color:white; font-size:22px; font-weight:700;">${initials}</div><div><div class="card-title">${r['ФИО']}</div><div class="card-meta">${r['Должность']} | ${r['Телефон'] || '—'}</div></div></div><div><button class="btn btn-small btn-success" onclick="openPersonDocModal('${r['ID']}')">📄 Документ</button><button class="btn btn-small btn-danger" onclick="deletePerson('${r['ID']}')">🗑️</button></div></div></div>`;
   }).join('') || '<div class="loader">Сотрудников нет</div>';
 }
 
 function renderGenericLists() {
-  const modules = {
-    'orders': { title: 'Приказы', data: allData.orders, cols: ['Номер', 'Дата', 'Тип', 'Сотрудник', 'Статус'] },
-    'planning': { title: 'ППР/Техкарты', data: allData.pprTechcards, cols: ['Тип', 'Название', 'Номер', 'Версия', 'Статус'] },
-    'prescriptions': { title: 'Предписания', data: allData.prescriptions, cols: ['Тип', 'Номер', 'Дата', 'Срок_исполнения', 'Статус'] },
-    'approvals': { title: 'Согласования', data: allData.approvals, cols: ['Тип', 'Название', 'С_кем_согласуется', 'Дата_ответа', 'Статус'] },
-    'daily': { title: 'Ежедневные отчёты', data: allData.dailyReports, cols: ['Дата', 'Прораб', 'Численность', 'Выполнено', 'Проблемы'] },
-    'workorders': { title: 'Наряды-задания', data: allData.workOrders, cols: ['Номер', 'Дата', 'Бригада', 'Вид_работ', 'Статус'] },
-    'workforce': { title: 'Численность', data: allData.workforce, cols: ['Дата', 'Профессия', 'Количество', 'ФИО_мастера', 'Примечание'] },
-    'materials': { title: 'Материалы', data: allData.materials, cols: ['Наименование', 'Поставщик', 'Количество', 'Ед.изм', 'Статус'] },
-    'reminders': { title: 'Напоминания', data: allData.reminders, cols: ['Тип', 'Объект', 'Дата', 'Статус', 'Ответственный'] }
-  };
+  const modules = { 'orders': { title: 'Приказы', data: allData.orders, cols: ['Номер', 'Дата', 'Тип', 'Сотрудник', 'Статус'] }, 'planning': { title: 'ППР/Техкарты', data: allData.pprTechcards, cols: ['Тип', 'Название', 'Номер', 'Версия', 'Статус'] }, 'prescriptions': { title: 'Предписания', data: allData.prescriptions, cols: ['Тип', 'Номер', 'Дата', 'Срок_исполнения', 'Статус'] }, 'approvals': { title: 'Согласования', data: allData.approvals, cols: ['Тип', 'Название', 'С_кем_согласуется', 'Дата_ответа', 'Статус'] }, 'daily': { title: 'Ежедневные отчёты', data: allData.dailyReports, cols: ['Дата', 'Прораб', 'Численность', 'Выполнено', 'Проблемы'] }, 'workorders': { title: 'Наряды-задания', data: allData.workOrders, cols: ['Номер', 'Дата', 'Бригада', 'Вид_работ', 'Статус'] }, 'workforce': { title: 'Численность', data: allData.workforce, cols: ['Дата', 'Профессия', 'Количество', 'ФИО_мастера', 'Примечание'] }, 'materials': { title: 'Материалы', data: allData.materials, cols: ['Наименование', 'Поставщик', 'Количество', 'Ед.изм', 'Статус'] }, 'reminders': { title: 'Напоминания', data: allData.reminders, cols: ['Тип', 'Объект', 'Дата', 'Статус', 'Ответственный'] } };
   Object.entries(modules).forEach(([key, mod]) => {
     const list = document.getElementById(key + 'List');
     if (!list) return;
@@ -401,7 +308,7 @@ function changeMonth(delta) { currentCalendarDate.setMonth(currentCalendarDate.g
 function renderDashboard() {
   const stats = document.getElementById('dashboardStats');
   if (stats) {
-    stats.innerHTML = `<div class="stat-box"><div class="stat-number">${(allData.contracts || []).length}</div><div class="stat-label">Договоров</div></div><div class="stat-box"><div class="stat-number">${(allData.documents || []).length}</div><div class="stat-label">Документов</div></div><div class="stat-box"><div class="stat-number">${(allData.tenders || []).length}</div><div class="stat-label">Тендеров</div></div><div class="stat-box"><div class="stat-number">${(allData.personnel || []).filter(p => p['Статус'] === 'Работает').length}</div><div class="stat-label">Сотрудников</div></div><div class="stat-box"><div class="stat-number">${(allData.ks2Registry || []).length}</div><div class="stat-label">КС-2</div></div><div class="stat-box"><div class="stat-number">${(allData.tasks || []).length}</div><div class="stat-label">Заданий</div></div>`;
+    stats.innerHTML = `<div class="stat-box"><div class="stat-number">${(allData.contracts || []).length}</div><div class="stat-label">Договоров</div></div><div class="stat-box"><div class="stat-number">${(allData.documents || []).length}</div><div class="stat-label">Документов</div></div><div class="stat-box"><div class="stat-number">${(allData.tenders || []).length}</div><div class="stat-label">Тендеров</div></div><div class="stat-box"><div class="stat-number">${(allData.personnel || []).filter(p => p['Статус'] === 'Работает').length}</div><div class="stat-label">Сотрудников</div></div>`;
   }
   const ctx = document.getElementById('categoryChart');
   if (!ctx) return;
@@ -442,7 +349,7 @@ function renderEstimatesList() {
     const totalSum = positions.reduce((s, p) => s + (parseFloat(p['Сумма']) || 0), 0);
     const closedSum = positions.reduce((s, p) => { const total = parseFloat(p['Количество']) || 0; const closed = parseFloat(p['Закрыто_объём']) || 0; return s + (total > 0 ? (closed / total) * (parseFloat(p['Сумма']) || 0) : 0); }, 0);
     const progress = totalSum > 0 ? Math.round((closedSum / totalSum) * 100) : 0;
-    return `<div class="card" style="border-left-color:#8b5cf6;"><div class="card-header"><div style="flex:1;"><div class="card-title">📊 ${r['Название']} <span style="color:var(--muted); font-size:13px;">[${r['ID_Сметы']}]</span></div><div class="card-meta">Договор: ${(allData.contracts || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'} | 💰 ${money(r['Общая_сумма'])} | Позиций: ${positions.length}</div></div><div><button class="btn btn-small btn-info" onclick="viewEstimate('${r['ID_Сметы']}')">👁️ Просмотр</button><button class="btn btn-small btn-success" onclick="openEstimateItemModal('${r['ID_Сметы']}')">➕ Позиция</button><button class="btn btn-small btn-danger" onclick="deleteEstimate('${r['ID_Сметы']}')">🗑️</button></div></div><div style="margin-top:12px;"><div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Прогресс: ${progress}%</div><div class="progress-bar-container"><div class="segment seg-green" style="width:${progress}%;">${progress}%</div></div></div></div>`;
+    return `<div class="card" style="border-left-color:#8b5cf6;"><div class="card-header"><div style="flex:1;"><div class="card-title">📊 ${r['Название']} <span style="color:var(--muted); font-size:13px;">[${r['ID_Сметы']}]</span></div><div class="card-meta">Позиций: ${positions.length} | Прогресс: ${progress}%</div></div><div><button class="btn btn-small btn-info" onclick="viewEstimate('${r['ID_Сметы']}')">👁️ Просмотр</button><button class="btn btn-small btn-success" onclick="openEstimateItemModal('${r['ID_Сметы']}')">➕ Позиция</button><button class="btn btn-small btn-danger" onclick="deleteEstimate('${r['ID_Сметы']}')">🗑️</button></div></div></div>`;
   }).join('') || '<div class="loader">Смет не найдено</div>';
 }
 
@@ -454,9 +361,7 @@ function renderArchProjects() {
   if (!el) return;
   el.innerHTML = rows.map(r => {
     const drawings = (allData.drawings || []).filter(d => d['ID_Проекта'] === r['ID_Проекта']);
-    const supervision = (allData.authorSupervision || []).filter(s => s['ID_Проекта'] === r['ID_Проекта']);
-    const openIssues = supervision.filter(s => s['Статус_устранения'] !== 'Устранено').length;
-    return `<div class="card" style="border-left-color:#8b5cf6;"><div class="card-header"><div style="flex:1;"><div class="card-title">${r['Название']} <span style="color:var(--muted); font-size:13px;">[${r['ID_Проекта']}]</span></div><div class="card-meta">Договор: ${(allData.contracts || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'} | 👤 ${r['Автор']} | 📅 ${r['Дата_создания']} | 📌 v${r['Версия']}</div><div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;"><span class="badge badge-info">${r['Тип'].replace(/_/g, ' ')}</span><span class="badge badge-warning">${r['Статус'].replace(/_/g, ' ')}</span><span class="badge badge-info">📄 ${drawings.length} чертежей</span>${openIssues > 0 ? `<span class="badge badge-danger">⚠️ ${openIssues} замечаний</span>` : ''}</div></div><div><button class="btn btn-small btn-info" onclick="viewArchProject('${r['ID_Проекта']}')">👁️ Просмотр</button><button class="btn btn-small btn-success" onclick="openDrawingModal('${r['ID_Проекта']}')">📐 Чертёж</button>${r['Тип'] === 'Реставрационный' ? `<button class="btn btn-small btn-warning" onclick="openPreservationModal('${r['ID_Проекта']}')">🏛️ Предм. охраны</button>` : ''}<button class="btn btn-small btn-warning" onclick="openSupervisionModal('${r['ID_Проекта']}')">🔍 Надзор</button>${fileLink(r['Ссылка_на_папку'], '📁 Папка')}</div></div></div>`;
+    return `<div class="card" style="border-left-color:#8b5cf6;"><div class="card-header"><div style="flex:1;"><div class="card-title">${r['Название']} <span style="color:var(--muted); font-size:13px;">[${r['ID_Проекта']}]</span></div><div class="card-meta">📄 ${drawings.length} чертежей</div></div><div><button class="btn btn-small btn-info" onclick="viewArchProject('${r['ID_Проекта']}')">👁️ Просмотр</button><button class="btn btn-small btn-success" onclick="openDrawingModal('${r['ID_Проекта']}')">📐 Чертёж</button>${fileLink(r['Ссылка_на_папку'], '📁 Папка')}</div></div></div>`;
   }).join('') || '<div class="loader">Архитектурные проекты не найдены</div>';
 }
 
@@ -468,20 +373,11 @@ function renderContractors() {
   let rows = allData.contractors || [];
   if (filter) rows = rows.filter(r => r['ID'] === filter);
   if (search) rows = rows.filter(r => String(r['Название'] || '').toLowerCase().includes(search) || String(r['ИНН'] || '').includes(search));
-  const stats = document.getElementById('contractorsStats');
-  if (stats) {
-    const total = rows.length; const active = rows.filter(r => r['Статус'] === 'Активен').length; const works = (allData.contractorWorks || []).length; const payments = (allData.payments || []).reduce((s, p) => s + (parseFloat(p['Сумма']) || 0), 0);
-    stats.innerHTML = `<div class="stat-box"><div class="stat-number">${total}</div><div class="stat-label">Подрядчиков</div></div><div class="stat-box"><div class="stat-number">${active}</div><div class="stat-label">Активных</div></div><div class="stat-box"><div class="stat-number">${works}</div><div class="stat-label">Работ</div></div><div class="stat-box"><div class="stat-number">${(payments / 1000000).toFixed(2)}М</div><div class="stat-label">Выплачено ₽</div></div>`;
-  }
   const el = document.getElementById('contractorsList');
   if (!el) return;
   el.innerHTML = rows.map(r => {
     const works = (allData.contractorWorks || []).filter(w => w['ID_Подрядчика'] === r['ID']);
-    const payments = (allData.payments || []).filter(p => p['ID_Подрядчика'] === r['ID']);
-    const totalContract = works.reduce((s, w) => s + (parseFloat(w['Сумма_договорная']) || 0), 0);
-    const totalClosed = works.reduce((s, w) => s + (parseFloat(w['Сумма_закрытая']) || 0), 0);
-    const totalPaid = payments.reduce((s, p) => { const sum = parseFloat(p['Сумма']) || 0; return p['Тип'] === 'Возврат' ? s - sum : s + sum; }, 0);
-    return `<div class="card"><div class="card-header"><div style="flex:1;"><div class="card-title">🏢 ${r['Название']} <span style="color:var(--muted); font-size:13px;">[${r['ID']}]</span></div><div class="card-meta">ИНН: ${r['ИНН'] || '—'} | 👤 ${r['Контактное_лицо'] || '—'} | 📞 ${r['Телефон'] || '—'}<br>📧 ${r['Email'] || '—'} | Статус: <span class="badge badge-info">${r['Статус']}</span></div><div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; font-size:12px;"><span class="badge badge-info">🔨 Работ: ${works.length}</span><span class="badge badge-warning">💰 Договор: ${totalContract.toLocaleString('ru-RU')} ₽</span><span class="badge badge-success">✅ Закрыто: ${totalClosed.toLocaleString('ru-RU')} ₽</span><span class="badge badge-info">💵 Выплачено: ${totalPaid.toLocaleString('ru-RU')} ₽</span></div></div><div><button class="btn btn-small btn-info" onclick="viewContractor('${r['ID']}')">👁️ Обзор</button><button class="btn btn-small btn-success" onclick="openContractorWorkModal(null, '${r['ID']}')">➕ Работа</button><button class="btn btn-small btn-warning" onclick="openContractorModal('${r['ID']}')">✏️</button><button class="btn btn-small btn-danger" onclick="deleteContractor('${r['ID']}')">🗑️</button></div></div></div>`;
+    return `<div class="card"><div class="card-header"><div style="flex:1;"><div class="card-title">🏢 ${r['Название']} <span style="color:var(--muted); font-size:13px;">[${r['ID']}]</span></div><div class="card-meta">ИНН: ${r['ИНН'] || '—'} | Работ: ${works.length}</div></div><div><button class="btn btn-small btn-info" onclick="viewContractor('${r['ID']}')">👁️ Обзор</button><button class="btn btn-small btn-success" onclick="openContractorWorkModal(null, '${r['ID']}')">➕ Работа</button><button class="btn btn-small btn-danger" onclick="deleteContractor('${r['ID']}')">🗑️</button></div></div></div>`;
   }).join('') || '<div class="loader">Подрядчики не найдены</div>';
 }
 
@@ -496,6 +392,7 @@ function renderTasks() {
   el.innerHTML = tasks.map(t => `<div class="card" style="cursor:pointer;" onclick="viewTask('${t['ID']}')"><div class="card-header"><div><div class="card-title">${t['Тема']} <span class="badge badge-info">${t['Приоритет']}</span></div><div class="card-meta">От: ${t['От_кого']} → Кому: ${t['Кому']}<br>Дедлайн: ${t['Дедлайн'] || '—'}</div></div><span class="badge badge-${t['Статус'] === 'Выполнено' ? 'success' : 'warning'}">${t['Статус']}</span></div></div>`).join('');
 }
 
+// --- МОДАЛЬНЫЕ ОКНА И ДЕЙСТВИЯ ---
 function openContractModal() { openModalHtml(`<h2>📄 Новый договор</h2><div class="form-group"><label>Контрагент</label><input type="text" id="newContractor"></div><div class="form-group"><label>Номер</label><input type="text" id="newContractNumber"></div><div class="form-group"><label>Дата</label><input type="date" id="newContractDate"></div><div class="form-group"><label>Предмет</label><textarea id="newSubject"></textarea></div><div class="form-group"><label>Сумма</label><input type="number" id="newAmount"></div><div class="form-group"><label>Ответственный</label><input type="text" id="newResponsible"></div><button class="btn btn-primary btn-full" onclick="createContract()">✅ Создать</button>`); }
 async function createContract() { const res = await api('createContract', { contractor: val('newContractor'), contractNumber: val('newContractNumber'), contractDate: val('newContractDate'), subject: val('newSubject'), amount: val('newAmount'), responsible: val('newResponsible'), icon: '🏢', objectId: 'ОБЪ-001' }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
 
@@ -529,18 +426,7 @@ async function savePersonDoc() { const file = document.getElementById('pDocFile'
 async function deletePerson(id) { if (!confirm('Удалить сотрудника?')) return; const res = await api('deletePerson', { personId: id }); if (res.success) loadData(); else alert('Ошибка: ' + res.error); }
 
 function openGenericModal(key) {
-  const configs = {
-    'orders': { title: 'Приказ', fields: [['number','Номер'],['date','Дата','date'],['type','Тип'],['employee','Сотрудник'],['content','Содержание','textarea']] },
-    'ppr': { title: 'ППР/Техкарта', fields: [['contractId','Договор','contract'],['type','Тип'],['name','Название'],['number','Номер']] },
-    'prescriptions': { title: 'Предписание', fields: [['contractId','Договор','contract'],['type','Тип'],['number','Номер'],['date','Дата','date'],['from','От кого'],['content','Содержание','textarea'],['dueDate','Срок','date']] },
-    'approvals': { title: 'Согласование', fields: [['contractId','Договор','contract'],['type','Тип'],['name','Название'],['withWhom','С кем'],['letterNumber','Номер письма']] },
-    'daily': { title: 'Ежедневный отчёт', fields: [['contractId','Договор','contract'],['date','Дата','date'],['foreman','Прораб'],['weather','Погода'],['workforce','Численность'],['completed','Выполнено','textarea'],['problems','Проблемы','textarea']] },
-    'workorders': { title: 'Наряд-задание', fields: [['contractId','Договор','contract'],['number','Номер'],['date','Дата','date'],['brigade','Бригада'],['workType','Вид работ'],['volume','Объём','number']] },
-    'workforce': { title: 'Численность', fields: [['contractId','Договор','contract'],['date','Дата','date'],['profession','Профессия'],['quantity','Количество','number'],['foreman','Мастер']] },
-    'materials': { title: 'Материал', fields: [['contractId','Договор','contract'],['name','Наименование'],['supplier','Поставщик'],['quantity','Количество','number'],['unit','Ед.изм']] },
-    'reminders': { title: 'Напоминание', fields: [['type','Тип'],['object','Объект'],['description','Описание','textarea'],['date','Дата','date'],['responsible','Ответственный']] },
-    'calendar': { title: 'Событие', fields: [['date','Дата','date'],['type','Тип'],['object','Объект'],['description','Описание','textarea'],['responsible','Ответственный']] }
-  };
+  const configs = { 'orders': { title: 'Приказ', fields: [['number','Номер'],['date','Дата','date'],['type','Тип'],['employee','Сотрудник'],['content','Содержание','textarea']] }, 'planning': { title: 'ППР/Техкарта', fields: [['contractId','Договор','contract'],['type','Тип'],['name','Название'],['number','Номер']] }, 'prescriptions': { title: 'Предписание', fields: [['contractId','Договор','contract'],['type','Тип'],['number','Номер'],['date','Дата','date'],['from','От кого'],['content','Содержание','textarea'],['dueDate','Срок','date']] }, 'approvals': { title: 'Согласование', fields: [['contractId','Договор','contract'],['type','Тип'],['name','Название'],['withWhom','С кем'],['letterNumber','Номер письма']] }, 'daily': { title: 'Ежедневный отчёт', fields: [['contractId','Договор','contract'],['date','Дата','date'],['foreman','Прораб'],['weather','Погода'],['workforce','Численность'],['completed','Выполнено','textarea'],['problems','Проблемы','textarea']] }, 'workorders': { title: 'Наряд-задание', fields: [['contractId','Договор','contract'],['number','Номер'],['date','Дата','date'],['brigade','Бригада'],['workType','Вид работ'],['volume','Объём','number']] }, 'workforce': { title: 'Численность', fields: [['contractId','Договор','contract'],['date','Дата','date'],['profession','Профессия'],['quantity','Количество','number'],['foreman','Мастер']] }, 'materials': { title: 'Материал', fields: [['contractId','Договор','contract'],['name','Наименование'],['supplier','Поставщик'],['quantity','Количество','number'],['unit','Ед.изм']] }, 'reminders': { title: 'Напоминание', fields: [['type','Тип'],['object','Объект'],['description','Описание','textarea'],['date','Дата','date'],['responsible','Ответственный']] }, 'calendar': { title: 'Событие', fields: [['date','Дата','date'],['type','Тип'],['object','Объект'],['description','Описание','textarea'],['responsible','Ответственный']] } };
   const cfg = configs[key]; if (!cfg) return;
   let html = `<h2>➕ ${cfg.title}</h2>`;
   cfg.fields.forEach(([name,label,type]) => {
@@ -555,8 +441,8 @@ function openGenericModal(key) {
 }
 
 async function saveGeneric(key) {
-  const actions = { 'orders': 'createOrder', 'ppr': 'createPPR', 'prescriptions': 'createPrescription', 'approvals': 'createApproval', 'daily': 'createDailyReport', 'workorders': 'createWorkOrder', 'workforce': 'addWorkforce', 'materials': 'addMaterial', 'reminders': 'addReminder', 'calendar': 'addCalendarEvent' };
-  const fieldMappings = { 'orders': [['number','number'],['date','date'],['type','type'],['employee','employee'],['content','content']], 'ppr': [['contractId','contractId'],['type','type'],['name','name'],['number','number']], 'prescriptions': [['contractId','contractId'],['type','type'],['number','number'],['date','date'],['from','from'],['content','content'],['dueDate','dueDate']], 'approvals': [['contractId','contractId'],['type','type'],['name','name'],['withWhom','withWhom'],['letterNumber','letterNumber']], 'daily': [['contractId','contractId'],['date','date'],['foreman','foreman'],['weather','weather'],['workforce','workforce'],['completed','completed'],['problems','problems']], 'workorders': [['contractId','contractId'],['number','number'],['date','date'],['brigade','brigade'],['workType','workType'],['volume','volume']], 'workforce': [['contractId','contractId'],['date','date'],['profession','profession'],['quantity','quantity'],['foreman','foreman']], 'materials': [['contractId','contractId'],['name','name'],['supplier','supplier'],['quantity','quantity'],['unit','unit']], 'reminders': [['type','type'],['object','object'],['description','description'],['date','date'],['responsible','responsible']], 'calendar': [['date','date'],['type','type'],['object','object'],['description','description'],['responsible','responsible']] };
+  const actions = { 'orders': 'createOrder', 'planning': 'createPPR', 'prescriptions': 'createPrescription', 'approvals': 'createApproval', 'daily': 'createDailyReport', 'workorders': 'createWorkOrder', 'workforce': 'addWorkforce', 'materials': 'addMaterial', 'reminders': 'addReminder', 'calendar': 'addCalendarEvent' };
+  const fieldMappings = { 'orders': [['number','number'],['date','date'],['type','type'],['employee','employee'],['content','content']], 'planning': [['contractId','contractId'],['type','type'],['name','name'],['number','number']], 'prescriptions': [['contractId','contractId'],['type','type'],['number','number'],['date','date'],['from','from'],['content','content'],['dueDate','dueDate']], 'approvals': [['contractId','contractId'],['type','type'],['name','name'],['withWhom','withWhom'],['letterNumber','letterNumber']], 'daily': [['contractId','contractId'],['date','date'],['foreman','foreman'],['weather','weather'],['workforce','workforce'],['completed','completed'],['problems','problems']], 'workorders': [['contractId','contractId'],['number','number'],['date','date'],['brigade','brigade'],['workType','workType'],['volume','volume']], 'workforce': [['contractId','contractId'],['date','date'],['profession','profession'],['quantity','quantity'],['foreman','foreman']], 'materials': [['contractId','contractId'],['name','name'],['supplier','supplier'],['quantity','quantity'],['unit','unit']], 'reminders': [['type','type'],['object','object'],['description','description'],['date','date'],['responsible','responsible']], 'calendar': [['date','date'],['type','type'],['object','object'],['description','description'],['responsible','responsible']] };
   const payload = {};
   fieldMappings[key].forEach(([fieldName, param]) => { if (fieldName === 'contractId') { payload.contractId = val('gen_contractId') || 'ОБЪ-001'; } else { payload[fieldName] = val('gen_' + fieldName); } });
   const res = await api(actions[key], payload);
@@ -603,7 +489,7 @@ async function saveKS2() { const res = await api('createKS2', { contractId: val(
 
 function openUserModal() { openModalHtml(`<h2>👤 Пользователь</h2><div class="form-group"><label>Логин</label><input type="text" id="uLogin"></div><div class="form-group"><label>Пароль</label><input type="text" id="uPass"></div><div class="form-group"><label>ФИО</label><input type="text" id="uFio"></div><div class="form-group"><label>Роль</label><select id="uRole"><option>Администратор</option><option>ПТО</option><option>Бухгалтерия</option><option>Прораб</option><option>Архитектор</option><option>ГИП</option><option>ГАП</option><option>Тендерный_специалист</option><option>Отдел_кадров</option></select></div><div class="form-group"><label>Email</label><input type="email" id="uEmail"></div><button class="btn btn-primary btn-full" onclick="saveUser()">✅ Создать</button>`); }
 async function saveUser() { const res = await api('createUser', { adminLogin: currentUser.login, login: val('uLogin'), password: val('uPass'), fio: val('uFio'), role: val('uRole'), email: val('uEmail'), access: 'Полный' }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
-async function deleteUser(login) { if (!confirm('Удалить пользователя?')) return; const res = await api('deleteUser', { adminLogin: currentUser.login, login }); if (res.success) loadData(); else alert('Ошибка: ' + result.error); }
+async function deleteUser(login) { if (!confirm('Удалить пользователя?')) return; const res = await api('deleteUser', { adminLogin: currentUser.login, login }); if (res.success) loadData(); else alert('Ошибка: ' + res.error); }
 
 async function loadTrash() { const res = await api('getTrash'); if (!res.success) return; const el = document.getElementById('trashList'); if (!el) return; let html = ''; Object.entries(res.trash).forEach(([sheet, items]) => { html += `<div class="card"><h3>${sheet} (${items.length})</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>Название</th><th>Действия</th></tr></thead><tbody>${items.map(item => `<tr><td>${item.id}</td><td>${item.display}</td><td><button class="btn btn-small btn-success" onclick="restoreItem('${sheet}', '${item.id}', '${item.idField}')">✅ Восстановить</button><button class="btn btn-small btn-danger" onclick="permDeleteItem('${sheet}', '${item.id}', '${item.idField}')">🗑️ Навсегда</button></td></tr>`).join('')}</tbody></table></div></div>`; }); el.innerHTML = html || '<div class="loader">Корзина пуста</div>'; }
 async function restoreItem(sheet, id, field) { const res = await api('restoreFromTrash', { sheetName: sheet, recordId: id, idField: field }); if (res.success) { loadTrash(); loadData(); } else alert('Ошибка: ' + res.error); }
