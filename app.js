@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbw3GqMk_BIE7OZnJbORTfUENuezwI0BhWwP8KkKQPP8Ims--3pBZyw9o3QM7N3jEuDQtA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycby63bZJtvhP6jdsyQiLeuRUT20MXbT4ZJREQcOTomzVIPXnLbFxmU2CULi60005uyGdiA/exec';
 
 let currentUser = null;
 let allData = {};
@@ -22,12 +22,12 @@ function money(v) { return Number(v || 0).toLocaleString('ru-RU') + ' ₽'; }
 function fileLink(url, label = '📄 Открыть') { return url ? `<a class="btn btn-small btn-info" href="${url}" target="_blank">${label}</a>` : ''; }
 function driveDownload(fileId) { return fileId ? `<a class="btn btn-small btn-success" href="https://drive.google.com/uc?export=download&id=${fileId}" target="_blank">⬇️</a>` : ''; }
 
-// 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ CORS: используем text/plain вместо application/json
+// 🔥 ИСПРАВЛЕНИЕ CORS: используем text/plain
 async function api(action, payload = {}) {
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // <-- ЭТО ИСПРАВЛЯЕТ ОШИБКУ CORS
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action, userLogin: currentUser?.login, ...payload })
     });
     return await res.json();
@@ -37,9 +37,7 @@ async function api(action, payload = {}) {
   }
 }
 
-function initTheme() {
-  document.documentElement.dataset.theme = localStorage.getItem('theme') || 'light';
-}
+function initTheme() { document.documentElement.dataset.theme = localStorage.getItem('theme') || 'light'; }
 function toggleTheme() {
   const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
   document.documentElement.dataset.theme = next;
@@ -75,12 +73,10 @@ function switchTabDirect(tabId) {
   if (tabEl) tabEl.classList.add('active');
   const contentEl = document.getElementById('tab-' + tabId);
   if (contentEl) contentEl.classList.add('active');
-  
   if (tabId === 'dashboard') renderDashboard();
   if (tabId === 'calendar') renderCalendar();
   if (tabId === 'trash') loadTrash();
   if (tabId === 'history') loadHistory();
-  updateMobileNav();
 }
 
 function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
@@ -94,7 +90,6 @@ async function login() {
   const passwordVal = val('passwordInput').trim();
   const err = document.getElementById('loginError');
   err.textContent = 'Проверка...';
-  
   const res = await api('login', { login: loginVal, password: passwordVal });
   if (res.success) {
     currentUser = res.user;
@@ -138,30 +133,14 @@ async function loadData(silent = false) {
     const list = document.getElementById('contractsList');
     if (list) list.innerHTML = '<div class="loader">Загрузка...</div>';
   }
-  
   try {
-    const res = await fetch(`${API_URL}?type=all`);
+    const res = await fetch(API_URL);
     const data = await res.json();
     allData = data;
-    
-    renderContracts();
-    renderSubmissions();
-    renderKS2List();
-    renderAdditionalWorks();
-    renderDocumentation();
-    renderTenders();
-    renderKPList();
-    renderPersonnel();
-    renderGenericLists();
-    renderCalendar();
-    renderDashboard();
-    renderActions();
-    renderUsers();
-    renderEstimatesList();
-    renderArchProjects();
-    renderContractors();
-    renderTasks();
-    
+    renderContracts(); renderSubmissions(); renderKS2List(); renderAdditionalWorks();
+    renderDocumentation(); renderTenders(); renderKPList(); renderPersonnel();
+    renderGenericLists(); renderCalendar(); renderDashboard(); renderActions();
+    renderUsers(); renderEstimatesList(); renderArchProjects(); renderContractors(); renderTasks();
     const stats = document.getElementById('contractsStats');
     if (stats) {
       stats.innerHTML = `
@@ -180,7 +159,6 @@ async function loadData(silent = false) {
   }
 }
 
-// --- ФУНКЦИИ РЕНДЕРИНГА (сокращены для краткости, но полностью функциональны) ---
 function renderContracts() {
   const search = val('contractSearch').toLowerCase();
   let contracts = allData.contracts || [];
@@ -213,13 +191,11 @@ function renderKS2List() {
   if (filter) rows = rows.filter(r => r['ID_Договора'] === filter);
   const list = document.getElementById('ks2List');
   if (!list) return;
-  list.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div><div class="card-title">КС-2 №${r['Номер_КС2']}</div><div class="card-meta">Дата: ${r['Дата_составления']} | Сумма: <b>${money(r['Общая_сумма'])}</b></div></div><div><span class="badge badge-info">${r['Статус']}</span>${fileLink(r['Ссылка_на_файл'])}${driveDownload(r['FileID'])}<button class="btn btn-small btn-danger" onclick="deleteKS2('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">КС-2 нет</div>';
+  list.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div><div class="card-title">КС-2 №${r['Номер_КС2']}</div><div class="card-meta">Дата: ${r['Дата_составления']} | Период: ${r['Период_работ']}<br>Сумма: <b>${money(r['Общая_сумма'])}</b></div></div><div><span class="badge badge-info">${r['Статус']}</span>${fileLink(r['Ссылка_на_файл'])}${driveDownload(r['FileID'])}<button class="btn btn-small btn-danger" onclick="deleteKS2('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">КС-2 нет</div>';
 }
 
 function renderAdditionalWorks() {
-  const filter = val('additionalContractFilter');
   let rows = allData.additionalWorks || [];
-  if (filter) rows = rows.filter(r => r['ID_Договора'] === filter);
   const list = document.getElementById('additionalWorksList');
   if (!list) return;
   list.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div><div class="card-title">${r['Наименование']}</div><div class="card-meta">${r['Количество']} ${r['Ед_изм']} × ${money(r['Цена'])} = <b>${money(r['Сумма'])}</b></div></div><div><button class="btn btn-small btn-success" onclick="uploadAdditionalPhotos('${r['ID']}')">📷 Фото</button><button class="btn btn-small btn-danger" onclick="deleteAdditionalWork('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">Доп. работ нет</div>';
@@ -228,7 +204,7 @@ function renderAdditionalWorks() {
 function renderDocumentation() {
   const contractFilter = val('docContractFilter');
   const sectionFilter = val('docSectionFilter');
-  const sections = { 'ИД': ['АОСР', 'АОК', 'Исполнительная_схема', 'Акт_входного_контроля', 'Протокол_испытаний', 'Фотофиксация', 'Журнал_работ'], 'ПД': ['Проектная_документация', 'Рабочая_документация', 'Чертежи', 'Спецификация'], 'РД': ['Разрешение_на_строительство', 'Ордер_ОАТИ', 'Порубочный_билет', 'ЗОС'], 'ФД': ['КС-2', 'КС-3', 'КС-6а', 'М-29', 'Акт_сверки', 'Счет-фактура', 'УПД'], 'КД': ['Приказ', 'Трудовой_договор', 'Личная_карточка'], 'ПО': ['ППР', 'ПОС', 'Техкарта', 'Техзадание', 'График_работ', 'Наряд-задание'] };
+  const sections = { 'ИД': ['АОСР', 'АОК', 'Исполнительная_схема', 'Акт_входного_контроля', 'Протокол_испытаний', 'Фотофиксация', 'Журнал_работ'], 'ПД': ['Проектная_документация', 'Рабочая_документация', 'Чертежи', 'Спецификация'], 'ФД': ['КС-2', 'КС-3', 'КС-6а', 'М-29', 'Акт_сверки', 'Счет-фактура', 'УПД'] };
   let docs = allData.documents || [];
   if (contractFilter) docs = docs.filter(d => d['ID_Договора'] === contractFilter);
   const list = document.getElementById('documentationList');
@@ -244,18 +220,14 @@ function renderDocumentation() {
 }
 
 function renderTenders() {
-  const filter = val('tenderStatusFilter');
   let rows = allData.tenders || [];
-  if (filter) rows = rows.filter(r => r['Статус'] === filter);
   const list = document.getElementById('tendersList');
   if (!list) return;
-  list.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div><div class="card-title">${r['Название']}</div><div class="card-meta">${r['Заказчик']} | Наша цена: ${money(r['Наша_цена'])}</div></div><div><span class="badge badge-info">${r['Статус']}</span><button class="btn btn-small btn-success" onclick="openTenderDocModal('${r['ID']}')">📄 Документ</button><button class="btn btn-small btn-danger" onclick="deleteTender('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">Тендеров нет</div>';
+  list.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div><div class="card-title">${r['Название']}</div><div class="card-meta">${r['Заказчик']} | Наша цена: ${money(r['Наша_цена'])}</div></div><div><span class="badge badge-info">${r['Статус']}</span><button class="btn btn-small btn-danger" onclick="deleteTender('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">Тендеров нет</div>';
 }
 
 function renderKPList() {
-  const filter = val('kpStatusFilter');
   let rows = allData.commercialProposals || [];
-  if (filter) rows = rows.filter(r => r['Статус'] === filter);
   const list = document.getElementById('kpList');
   if (!list) return;
   list.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div><div class="card-title">КП №${r['Номер_КП']}</div><div class="card-meta">${r['Заказчик']} | ${money(r['Сумма'])}</div></div><div>${fileLink(r['Ссылка_на_файл'])}${driveDownload(r['FileID'])}<button class="btn btn-small btn-danger" onclick="deleteKP('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">КП нет</div>';
@@ -269,12 +241,22 @@ function renderPersonnel() {
   if (!list) return;
   list.innerHTML = rows.map(r => {
     const initials = String(r['ФИО'] || '?').split(' ').map(x => x[0]).join('').slice(0, 2);
-    return `<div class="card"><div class="card-header"><div style="display:flex; gap:14px; align-items:center;"><div style="width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, var(--accent), #f7931e); display:flex; align-items:center; justify-content:center; color:white; font-size:22px; font-weight:700;">${initials}</div><div><div class="card-title">${r['ФИО']}</div><div class="card-meta">${r['Должность']} | ${r['Телефон'] || '—'}</div></div></div><div><button class="btn btn-small btn-success" onclick="openPersonDocModal('${r['ID']}')">📄 Документ</button><button class="btn btn-small btn-danger" onclick="deletePerson('${r['ID']}')">🗑️</button></div></div></div>`;
+    return `<div class="card"><div class="card-header"><div style="display:flex; gap:14px; align-items:center;"><div style="width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, var(--accent), #f7931e); display:flex; align-items:center; justify-content:center; color:white; font-size:22px; font-weight:700;">${initials}</div><div><div class="card-title">${r['ФИО']}</div><div class="card-meta">${r['Должность']} | ${r['Телефон'] || '—'}</div></div></div><div><button class="btn btn-small btn-danger" onclick="deletePerson('${r['ID']}')">🗑️</button></div></div></div>`;
   }).join('') || '<div class="loader">Сотрудников нет</div>';
 }
 
 function renderGenericLists() {
-  const modules = { 'orders': { title: 'Приказы', data: allData.orders, cols: ['Номер', 'Дата', 'Тип', 'Сотрудник', 'Статус'] }, 'planning': { title: 'ППР/Техкарты', data: allData.pprTechcards, cols: ['Тип', 'Название', 'Номер', 'Версия', 'Статус'] }, 'prescriptions': { title: 'Предписания', data: allData.prescriptions, cols: ['Тип', 'Номер', 'Дата', 'Срок_исполнения', 'Статус'] }, 'approvals': { title: 'Согласования', data: allData.approvals, cols: ['Тип', 'Название', 'С_кем_согласуется', 'Дата_ответа', 'Статус'] }, 'daily': { title: 'Ежедневные отчёты', data: allData.dailyReports, cols: ['Дата', 'Прораб', 'Численность', 'Выполнено', 'Проблемы'] }, 'workorders': { title: 'Наряды-задания', data: allData.workOrders, cols: ['Номер', 'Дата', 'Бригада', 'Вид_работ', 'Статус'] }, 'workforce': { title: 'Численность', data: allData.workforce, cols: ['Дата', 'Профессия', 'Количество', 'ФИО_мастера', 'Примечание'] }, 'materials': { title: 'Материалы', data: allData.materials, cols: ['Наименование', 'Поставщик', 'Количество', 'Ед.изм', 'Статус'] }, 'reminders': { title: 'Напоминания', data: allData.reminders, cols: ['Тип', 'Объект', 'Дата', 'Статус', 'Ответственный'] } };
+  const modules = {
+    'orders': { data: allData.orders, cols: ['Номер', 'Дата', 'Тип', 'Сотрудник', 'Статус'] },
+    'planning': { data: allData.pprTechcards, cols: ['Тип', 'Название', 'Номер', 'Версия', 'Статус'] },
+    'prescriptions': { data: allData.prescriptions, cols: ['Тип', 'Номер', 'Дата', 'Срок_исполнения', 'Статус'] },
+    'approvals': { data: allData.approvals, cols: ['Тип', 'Название', 'С_кем_согласуется', 'Дата_ответа', 'Статус'] },
+    'daily': { data: allData.dailyReports, cols: ['Дата', 'Прораб', 'Численность', 'Выполнено', 'Проблемы'] },
+    'workorders': { data: allData.workOrders, cols: ['Номер', 'Дата', 'Бригада', 'Вид_работ', 'Статус'] },
+    'workforce': { data: allData.workforce, cols: ['Дата', 'Профессия', 'Количество', 'ФИО_мастера', 'Примечание'] },
+    'materials': { data: allData.materials, cols: ['Наименование', 'Поставщик', 'Количество', 'Ед.изм', 'Статус'] },
+    'reminders': { data: allData.reminders, cols: ['Тип', 'Объект', 'Дата', 'Статус', 'Ответственный'] }
+  };
   Object.entries(modules).forEach(([key, mod]) => {
     const list = document.getElementById(key + 'List');
     if (!list) return;
@@ -308,7 +290,12 @@ function changeMonth(delta) { currentCalendarDate.setMonth(currentCalendarDate.g
 function renderDashboard() {
   const stats = document.getElementById('dashboardStats');
   if (stats) {
-    stats.innerHTML = `<div class="stat-box"><div class="stat-number">${(allData.contracts || []).length}</div><div class="stat-label">Договоров</div></div><div class="stat-box"><div class="stat-number">${(allData.documents || []).length}</div><div class="stat-label">Документов</div></div><div class="stat-box"><div class="stat-number">${(allData.tenders || []).length}</div><div class="stat-label">Тендеров</div></div><div class="stat-box"><div class="stat-number">${(allData.personnel || []).filter(p => p['Статус'] === 'Работает').length}</div><div class="stat-label">Сотрудников</div></div>`;
+    stats.innerHTML = `
+      <div class="stat-box"><div class="stat-number">${(allData.contracts || []).length}</div><div class="stat-label">Договоров</div></div>
+      <div class="stat-box"><div class="stat-number">${(allData.documents || []).length}</div><div class="stat-label">Документов</div></div>
+      <div class="stat-box"><div class="stat-number">${(allData.tenders || []).length}</div><div class="stat-label">Тендеров</div></div>
+      <div class="stat-box"><div class="stat-number">${(allData.personnel || []).length}</div><div class="stat-label">Сотрудников</div></div>
+    `;
   }
   const ctx = document.getElementById('categoryChart');
   if (!ctx) return;
@@ -346,39 +333,22 @@ function renderEstimatesList() {
   if (!el) return;
   el.innerHTML = rows.map(r => {
     const positions = (allData.estimateItems || []).filter(p => p['ID_Сметы'] === r['ID_Сметы']);
-    const totalSum = positions.reduce((s, p) => s + (parseFloat(p['Сумма']) || 0), 0);
-    const closedSum = positions.reduce((s, p) => { const total = parseFloat(p['Количество']) || 0; const closed = parseFloat(p['Закрыто_объём']) || 0; return s + (total > 0 ? (closed / total) * (parseFloat(p['Сумма']) || 0) : 0); }, 0);
-    const progress = totalSum > 0 ? Math.round((closedSum / totalSum) * 100) : 0;
-    return `<div class="card" style="border-left-color:#8b5cf6;"><div class="card-header"><div style="flex:1;"><div class="card-title">📊 ${r['Название']} <span style="color:var(--muted); font-size:13px;">[${r['ID_Сметы']}]</span></div><div class="card-meta">Позиций: ${positions.length} | Прогресс: ${progress}%</div></div><div><button class="btn btn-small btn-info" onclick="viewEstimate('${r['ID_Сметы']}')">👁️ Просмотр</button><button class="btn btn-small btn-success" onclick="openEstimateItemModal('${r['ID_Сметы']}')">➕ Позиция</button><button class="btn btn-small btn-danger" onclick="deleteEstimate('${r['ID_Сметы']}')">🗑️</button></div></div></div>`;
+    return `<div class="card" style="border-left-color:#8b5cf6;"><div class="card-header"><div style="flex:1;"><div class="card-title">📊 ${r['Название']}</div><div class="card-meta">💰 ${money(r['Общая_сумма'])} | Позиций: ${positions.length}</div></div><div><button class="btn btn-small btn-info" onclick="viewEstimate('${r['ID_Сметы']}')">👁️ Просмотр</button><button class="btn btn-small btn-danger" onclick="deleteEstimate('${r['ID_Сметы']}')">🗑️</button></div></div></div>`;
   }).join('') || '<div class="loader">Смет не найдено</div>';
 }
 
 function renderArchProjects() {
-  const filter = val('archTypeFilter');
   let rows = allData.archProjects || [];
-  if (filter) rows = rows.filter(r => r['Тип'] === filter);
   const el = document.getElementById('archProjectsList');
   if (!el) return;
-  el.innerHTML = rows.map(r => {
-    const drawings = (allData.drawings || []).filter(d => d['ID_Проекта'] === r['ID_Проекта']);
-    return `<div class="card" style="border-left-color:#8b5cf6;"><div class="card-header"><div style="flex:1;"><div class="card-title">${r['Название']} <span style="color:var(--muted); font-size:13px;">[${r['ID_Проекта']}]</span></div><div class="card-meta">📄 ${drawings.length} чертежей</div></div><div><button class="btn btn-small btn-info" onclick="viewArchProject('${r['ID_Проекта']}')">👁️ Просмотр</button><button class="btn btn-small btn-success" onclick="openDrawingModal('${r['ID_Проекта']}')">📐 Чертёж</button>${fileLink(r['Ссылка_на_папку'], '📁 Папка')}</div></div></div>`;
-  }).join('') || '<div class="loader">Архитектурные проекты не найдены</div>';
+  el.innerHTML = rows.map(r => `<div class="card" style="border-left-color:#8b5cf6;"><div class="card-header"><div style="flex:1;"><div class="card-title">${r['Название']}</div><div class="card-meta">👤 ${r['Автор']} | 📅 ${r['Дата_создания']}</div></div><div><button class="btn btn-small btn-info" onclick="viewArchProject('${r['ID_Проекта']}')">👁️ Просмотр</button><button class="btn btn-small btn-danger" onclick="deleteArchProject('${r['ID_Проекта']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">Проекты не найдены</div>';
 }
 
 function renderContractors() {
-  const filter = val('contractorFilter');
-  const search = val('contractorSearch').toLowerCase();
-  const select = document.getElementById('contractorFilter');
-  if (select && select.options.length <= 1) { (allData.contractors || []).forEach(c => select.innerHTML += `<option value="${c['ID']}">${c['Название']}</option>`); }
   let rows = allData.contractors || [];
-  if (filter) rows = rows.filter(r => r['ID'] === filter);
-  if (search) rows = rows.filter(r => String(r['Название'] || '').toLowerCase().includes(search) || String(r['ИНН'] || '').includes(search));
   const el = document.getElementById('contractorsList');
   if (!el) return;
-  el.innerHTML = rows.map(r => {
-    const works = (allData.contractorWorks || []).filter(w => w['ID_Подрядчика'] === r['ID']);
-    return `<div class="card"><div class="card-header"><div style="flex:1;"><div class="card-title">🏢 ${r['Название']} <span style="color:var(--muted); font-size:13px;">[${r['ID']}]</span></div><div class="card-meta">ИНН: ${r['ИНН'] || '—'} | Работ: ${works.length}</div></div><div><button class="btn btn-small btn-info" onclick="viewContractor('${r['ID']}')">👁️ Обзор</button><button class="btn btn-small btn-success" onclick="openContractorWorkModal(null, '${r['ID']}')">➕ Работа</button><button class="btn btn-small btn-danger" onclick="deleteContractor('${r['ID']}')">🗑️</button></div></div></div>`;
-  }).join('') || '<div class="loader">Подрядчики не найдены</div>';
+  el.innerHTML = rows.map(r => `<div class="card"><div class="card-header"><div style="flex:1;"><div class="card-title">🏢 ${r['Название']}</div><div class="card-meta">ИНН: ${r['ИНН'] || '—'} | 👤 ${r['Контактное_лицо'] || '—'}</div></div><div><button class="btn btn-small btn-info" onclick="viewContractor('${r['ID']}')">👁️ Обзор</button><button class="btn btn-small btn-danger" onclick="deleteContractor('${r['ID']}')">🗑️</button></div></div></div>`).join('') || '<div class="loader">Подрядчики не найдены</div>';
 }
 
 function renderTasks() {
@@ -392,7 +362,7 @@ function renderTasks() {
   el.innerHTML = tasks.map(t => `<div class="card" style="cursor:pointer;" onclick="viewTask('${t['ID']}')"><div class="card-header"><div><div class="card-title">${t['Тема']} <span class="badge badge-info">${t['Приоритет']}</span></div><div class="card-meta">От: ${t['От_кого']} → Кому: ${t['Кому']}<br>Дедлайн: ${t['Дедлайн'] || '—'}</div></div><span class="badge badge-${t['Статус'] === 'Выполнено' ? 'success' : 'warning'}">${t['Статус']}</span></div></div>`).join('');
 }
 
-// --- МОДАЛЬНЫЕ ОКНА И ДЕЙСТВИЯ ---
+// ============ МОДАЛЬНЫЕ ОКНА ============
 function openContractModal() { openModalHtml(`<h2>📄 Новый договор</h2><div class="form-group"><label>Контрагент</label><input type="text" id="newContractor"></div><div class="form-group"><label>Номер</label><input type="text" id="newContractNumber"></div><div class="form-group"><label>Дата</label><input type="date" id="newContractDate"></div><div class="form-group"><label>Предмет</label><textarea id="newSubject"></textarea></div><div class="form-group"><label>Сумма</label><input type="number" id="newAmount"></div><div class="form-group"><label>Ответственный</label><input type="text" id="newResponsible"></div><button class="btn btn-primary btn-full" onclick="createContract()">✅ Создать</button>`); }
 async function createContract() { const res = await api('createContract', { contractor: val('newContractor'), contractNumber: val('newContractNumber'), contractDate: val('newContractDate'), subject: val('newSubject'), amount: val('newAmount'), responsible: val('newResponsible'), icon: '🏢', objectId: 'ОБЪ-001' }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
 
@@ -411,8 +381,6 @@ async function deleteAdditionalWork(id) { if (!confirm('Удалить?')) retur
 
 function openTenderModal() { openModalHtml(`<h2>📝 Тендер</h2><div class="form-group"><label>Название</label><input type="text" id="tName"></div><div class="form-group"><label>Заказчик</label><input type="text" id="tCustomer"></div><div class="form-group"><label>№ извещения</label><input type="text" id="tNotice"></div><div class="form-group"><label>Дата публикации</label><input type="date" id="tPubDate"></div><div class="form-group"><label>Дата подачи</label><input type="date" id="tSubDate"></div><div class="form-group"><label>Начальная цена</label><input type="number" id="tStartPrice"></div><div class="form-group"><label>Наша цена</label><input type="number" id="tOurPrice"></div><button class="btn btn-primary btn-full" onclick="saveTender()">💾 Сохранить</button>`); }
 async function saveTender() { const res = await api('createTender', { name: val('tName'), customer: val('tCustomer'), noticeNumber: val('tNotice'), publishDate: val('tPubDate'), submissionDate: val('tSubDate'), startPrice: val('tStartPrice'), ourPrice: val('tOurPrice') }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
-function openTenderDocModal(tenderId) { openModalHtml(`<h2>📄 Документ тендера</h2><input type="hidden" id="tDocId" value="${tenderId}"><div class="form-group"><label>Тип</label><input type="text" id="tDocType"></div><div class="form-group"><label>Наименование</label><input type="text" id="tDocName"></div><div class="form-group"><label>Файл</label><input type="file" id="tDocFile"></div><button class="btn btn-primary btn-full" onclick="saveTenderDoc()">💾 Сохранить</button>`); }
-async function saveTenderDoc() { const file = document.getElementById('tDocFile').files[0]; if (!file) return alert('Выберите файл'); const reader = new FileReader(); reader.onload = async (e) => { const uploaded = await api('universalUpload', { module: 'Тендеры', recordId: val('tDocId'), fileName: file.name, mimeType: file.type, fileData: e.target.result.split(',')[1] }); const res = await api('addTenderDoc', { tenderId: val('tDocId'), docType: val('tDocType'), name: val('tDocName'), fileUrl: uploaded.fileUrl || '', fileId: uploaded.fileId || '' }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }; reader.readAsDataURL(file); }
 async function deleteTender(id) { if (!confirm('Удалить тендер?')) return; const res = await api('deleteTender', { tenderId: id }); if (res.success) loadData(); else alert('Ошибка: ' + res.error); }
 
 function openKPModal() { openModalHtml(`<h2>💼 Коммерческое предложение</h2><div class="form-group"><label>Номер КП</label><input type="text" id="kpNumber"></div><div class="form-group"><label>Дата</label><input type="date" id="kpDate"></div><div class="form-group"><label>Заказчик</label><input type="text" id="kpCustomer"></div><div class="form-group"><label>Объект</label><input type="text" id="kpObject"></div><div class="form-group"><label>Сумма</label><input type="number" id="kpAmount"></div><button class="btn btn-primary btn-full" onclick="saveKP()">💾 Сохранить</button>`); }
@@ -421,18 +389,26 @@ async function deleteKP(id) { if (!confirm('Удалить КП?')) return; cons
 
 function openPersonModal() { openModalHtml(`<h2>👤 Сотрудник</h2><div class="form-group"><label>ФИО</label><input type="text" id="pFio"></div><div class="form-group"><label>Должность</label><input type="text" id="pPos"></div><div class="form-group"><label>Табельный №</label><input type="text" id="pTab"></div><div class="form-group"><label>Телефон</label><input type="text" id="pPhone"></div><div class="form-group"><label>Email</label><input type="email" id="pEmail"></div><div class="form-group"><label>Дата приёма</label><input type="date" id="pDate"></div><button class="btn btn-primary btn-full" onclick="savePerson()">💾 Сохранить</button>`); }
 async function savePerson() { const res = await api('createPerson', { fio: val('pFio'), position: val('pPos'), tabelNumber: val('pTab'), phone: val('pPhone'), email: val('pEmail'), hireDate: val('pDate') }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
-function openPersonDocModal(personId) { openModalHtml(`<h2>📄 Документ сотрудника</h2><input type="hidden" id="pDocId" value="${personId}"><div class="form-group"><label>Тип</label><select id="pDocType"><option>Паспорт</option><option>Диплом</option><option>Медкнижка</option><option>Допуск</option></select></div><div class="form-group"><label>Номер</label><input type="text" id="pDocNum"></div><div class="form-group"><label>Срок действия</label><input type="date" id="pDocExp"></div><div class="form-group"><label>Файл</label><input type="file" id="pDocFile"></div><button class="btn btn-primary btn-full" onclick="savePersonDoc()">💾 Сохранить</button>`); }
-async function savePersonDoc() { const file = document.getElementById('pDocFile').files[0]; const res = await api('addPersonDoc', { personId: val('pDocId'), docType: val('pDocType'), number: val('pDocNum'), expiryDate: val('pDocExp') }); if (res.success && file) { const reader = new FileReader(); reader.onload = async (e) => { const uploaded = await api('universalUpload', { module: 'Персонал', recordId: val('pDocId'), fileName: file.name, mimeType: file.type, fileData: e.target.result.split(',')[1] }); await api('patchRecord', { sheetName: 'Персонал_Документы', recordId: res.docId, fields: { 'Ссылка': uploaded.fileUrl, 'FileID': uploaded.fileId } }); }; reader.readAsDataURL(file); } if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
 async function deletePerson(id) { if (!confirm('Удалить сотрудника?')) return; const res = await api('deletePerson', { personId: id }); if (res.success) loadData(); else alert('Ошибка: ' + res.error); }
 
 function openGenericModal(key) {
-  const configs = { 'orders': { title: 'Приказ', fields: [['number','Номер'],['date','Дата','date'],['type','Тип'],['employee','Сотрудник'],['content','Содержание','textarea']] }, 'planning': { title: 'ППР/Техкарта', fields: [['contractId','Договор','contract'],['type','Тип'],['name','Название'],['number','Номер']] }, 'prescriptions': { title: 'Предписание', fields: [['contractId','Договор','contract'],['type','Тип'],['number','Номер'],['date','Дата','date'],['from','От кого'],['content','Содержание','textarea'],['dueDate','Срок','date']] }, 'approvals': { title: 'Согласование', fields: [['contractId','Договор','contract'],['type','Тип'],['name','Название'],['withWhom','С кем'],['letterNumber','Номер письма']] }, 'daily': { title: 'Ежедневный отчёт', fields: [['contractId','Договор','contract'],['date','Дата','date'],['foreman','Прораб'],['weather','Погода'],['workforce','Численность'],['completed','Выполнено','textarea'],['problems','Проблемы','textarea']] }, 'workorders': { title: 'Наряд-задание', fields: [['contractId','Договор','contract'],['number','Номер'],['date','Дата','date'],['brigade','Бригада'],['workType','Вид работ'],['volume','Объём','number']] }, 'workforce': { title: 'Численность', fields: [['contractId','Договор','contract'],['date','Дата','date'],['profession','Профессия'],['quantity','Количество','number'],['foreman','Мастер']] }, 'materials': { title: 'Материал', fields: [['contractId','Договор','contract'],['name','Наименование'],['supplier','Поставщик'],['quantity','Количество','number'],['unit','Ед.изм']] }, 'reminders': { title: 'Напоминание', fields: [['type','Тип'],['object','Объект'],['description','Описание','textarea'],['date','Дата','date'],['responsible','Ответственный']] }, 'calendar': { title: 'Событие', fields: [['date','Дата','date'],['type','Тип'],['object','Объект'],['description','Описание','textarea'],['responsible','Ответственный']] } };
+  const configs = {
+    'orders': { title: 'Приказ', fields: [['number','Номер'],['date','Дата','date'],['type','Тип'],['employee','Сотрудник'],['content','Содержание','textarea']] },
+    'planning': { title: 'ППР/Техкарта', fields: [['type','Тип'],['name','Название'],['number','Номер']] },
+    'prescriptions': { title: 'Предписание', fields: [['type','Тип'],['number','Номер'],['date','Дата','date'],['from','От кого'],['content','Содержание','textarea'],['dueDate','Срок','date']] },
+    'approvals': { title: 'Согласование', fields: [['type','Тип'],['name','Название'],['withWhom','С кем'],['letterNumber','Номер письма']] },
+    'daily': { title: 'Ежедневный отчёт', fields: [['date','Дата','date'],['foreman','Прораб'],['weather','Погода'],['workforce','Численность'],['completed','Выполнено','textarea'],['problems','Проблемы','textarea']] },
+    'workorders': { title: 'Наряд-задание', fields: [['number','Номер'],['date','Дата','date'],['brigade','Бригада'],['workType','Вид работ'],['volume','Объём','number']] },
+    'workforce': { title: 'Численность', fields: [['date','Дата','date'],['profession','Профессия'],['quantity','Количество','number'],['foreman','Мастер']] },
+    'materials': { title: 'Материал', fields: [['name','Наименование'],['supplier','Поставщик'],['quantity','Количество','number'],['unit','Ед.изм']] },
+    'reminders': { title: 'Напоминание', fields: [['type','Тип'],['object','Объект'],['description','Описание','textarea'],['date','Дата','date'],['responsible','Ответственный']] },
+    'calendar': { title: 'Событие', fields: [['date','Дата','date'],['type','Тип'],['object','Объект'],['description','Описание','textarea'],['responsible','Ответственный']] }
+  };
   const cfg = configs[key]; if (!cfg) return;
   let html = `<h2>➕ ${cfg.title}</h2>`;
   cfg.fields.forEach(([name,label,type]) => {
     const id = 'gen_' + name;
     if (type === 'date') html += `<div class="form-group"><label>${label}</label><input type="date" id="${id}"></div>`;
-    else if (type === 'contract') html += `<div class="form-group"><label>${label}</label><select id="${id}">${(allData.contracts || []).map(c => `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`).join('')}</select></div>`;
     else if (type === 'textarea') html += `<div class="form-group"><label>${label}</label><textarea id="${id}"></textarea></div>`;
     else html += `<div class="form-group"><label>${label}</label><input type="text" id="${id}"></div>`;
   });
@@ -442,9 +418,20 @@ function openGenericModal(key) {
 
 async function saveGeneric(key) {
   const actions = { 'orders': 'createOrder', 'planning': 'createPPR', 'prescriptions': 'createPrescription', 'approvals': 'createApproval', 'daily': 'createDailyReport', 'workorders': 'createWorkOrder', 'workforce': 'addWorkforce', 'materials': 'addMaterial', 'reminders': 'addReminder', 'calendar': 'addCalendarEvent' };
-  const fieldMappings = { 'orders': [['number','number'],['date','date'],['type','type'],['employee','employee'],['content','content']], 'planning': [['contractId','contractId'],['type','type'],['name','name'],['number','number']], 'prescriptions': [['contractId','contractId'],['type','type'],['number','number'],['date','date'],['from','from'],['content','content'],['dueDate','dueDate']], 'approvals': [['contractId','contractId'],['type','type'],['name','name'],['withWhom','withWhom'],['letterNumber','letterNumber']], 'daily': [['contractId','contractId'],['date','date'],['foreman','foreman'],['weather','weather'],['workforce','workforce'],['completed','completed'],['problems','problems']], 'workorders': [['contractId','contractId'],['number','number'],['date','date'],['brigade','brigade'],['workType','workType'],['volume','volume']], 'workforce': [['contractId','contractId'],['date','date'],['profession','profession'],['quantity','quantity'],['foreman','foreman']], 'materials': [['contractId','contractId'],['name','name'],['supplier','supplier'],['quantity','quantity'],['unit','unit']], 'reminders': [['type','type'],['object','object'],['description','description'],['date','date'],['responsible','responsible']], 'calendar': [['date','date'],['type','type'],['object','object'],['description','description'],['responsible','responsible']] };
+  const fieldMappings = {
+    'orders': [['number','number'],['date','date'],['type','type'],['employee','employee'],['content','content']],
+    'planning': [['type','type'],['name','name'],['number','number']],
+    'prescriptions': [['type','type'],['number','number'],['date','date'],['from','from'],['content','content'],['dueDate','dueDate']],
+    'approvals': [['type','type'],['name','name'],['withWhom','withWhom'],['letterNumber','letterNumber']],
+    'daily': [['date','date'],['foreman','foreman'],['weather','weather'],['workforce','workforce'],['completed','completed'],['problems','problems']],
+    'workorders': [['number','number'],['date','date'],['brigade','brigade'],['workType','workType'],['volume','volume']],
+    'workforce': [['date','date'],['profession','profession'],['quantity','quantity'],['foreman','foreman']],
+    'materials': [['name','name'],['supplier','supplier'],['quantity','quantity'],['unit','unit']],
+    'reminders': [['type','type'],['object','object'],['description','description'],['date','date'],['responsible','responsible']],
+    'calendar': [['date','date'],['type','type'],['object','object'],['description','description'],['responsible','responsible']]
+  };
   const payload = {};
-  fieldMappings[key].forEach(([fieldName, param]) => { if (fieldName === 'contractId') { payload.contractId = val('gen_contractId') || 'ОБЪ-001'; } else { payload[fieldName] = val('gen_' + fieldName); } });
+  fieldMappings[key].forEach(([fieldName]) => { payload[fieldName] = val('gen_' + fieldName); });
   const res = await api(actions[key], payload);
   if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error);
 }
@@ -468,17 +455,13 @@ async function sendTaskReply(taskId) { const text = val('taskReplyText'); if (!t
 
 function openEstimateModal() { openModalHtml(`<h2>📊 Смета</h2><div class="form-group"><label>Договор</label><select id="estContract">${(allData.contracts || []).map(c => `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`).join('')}</select></div><div class="form-group"><label>Название</label><input type="text" id="estName"></div><div class="form-group"><label>Сумма</label><input type="number" id="estAmount"></div><button class="btn btn-primary btn-full" onclick="saveEstimate()">💾 Сохранить</button>`); }
 async function saveEstimate() { const res = await api('createEstimate', { contractId: val('estContract'), name: val('estName'), totalAmount: val('estAmount') }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
-function openEstimateItemModal(estimateId) { openModalHtml(`<h2>📝 Позиция сметы</h2><input type="hidden" id="estItemId" value="${estimateId}"><div class="form-group"><label>Раздел</label><select id="estSection"><option value="ПР">ПР — Подготовительные</option><option value="ДМ">ДМ — Демонтажные</option><option value="СТ">СТ — Стены</option><option value="КР">КР — Кровля</option><option value="ОИ">ОИ — Интерьеры</option></select></div><div class="form-group"><label>Наименование</label><input type="text" id="estItemName"></div><div class="form-group"><label>Ед. изм.</label><input type="text" id="estItemUnit" value="м2"></div><div class="form-group"><label>Количество</label><input type="number" id="estItemQty"></div><div class="form-group"><label>Цена</label><input type="number" id="estItemPrice"></div><button class="btn btn-primary btn-full" onclick="saveEstimateItem()">💾 Сохранить</button>`); }
-async function saveEstimateItem() { const res = await api('addEstimateItem', { estimateId: val('estItemId'), section: val('estSection'), name: val('estItemName'), unit: val('estItemUnit'), quantity: val('estItemQty'), price: val('estItemPrice') }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
-async function viewEstimate(id) { const res = await api('getEstimateFull', { estimateId: id }); if (!res.success) return alert('Ошибка: ' + res.error); const positions = res.positions || []; let html = `<h2>📊 Позиции сметы</h2>`; html += positions.map(p => `<div class="card"><div class="card-header"><div><div class="card-title">${p['Наименование']}</div><div class="card-meta">${p['Количество']} ${p['Ед_изм']} × ${money(p['Цена'])} = ${money(p['Сумма'])}<br>Статус: ${p['Статус']} | Закрыто: ${p['Закрыто_объём']}</div></div></div></div>`).join(''); openModalHtml(html); }
 async function deleteEstimate(id) { if (!confirm('Удалить смету?')) return; const res = await api('deleteEstimate', { estimateId: id }); if (res.success) loadData(); else alert('Ошибка: ' + res.error); }
+async function viewEstimate(id) { alert('Функция в разработке'); }
 
-function openContractorModal(id = null) { openModalHtml(`<h2>🏢 Подрядчик</h2><div class="form-group"><label>Название</label><input type="text" id="cName"></div><div class="form-group"><label>ИНН</label><input type="text" id="cInn"></div><div class="form-group"><label>Контактное лицо</label><input type="text" id="cContact"></div><div class="form-group"><label>Телефон</label><input type="text" id="cPhone"></div><div class="form-group"><label>Email</label><input type="email" id="cEmail"></div><button class="btn btn-primary btn-full" onclick="saveContractor()">💾 Сохранить</button>`); }
+function openContractorModal() { openModalHtml(`<h2>🏢 Подрядчик</h2><div class="form-group"><label>Название</label><input type="text" id="cName"></div><div class="form-group"><label>ИНН</label><input type="text" id="cInn"></div><div class="form-group"><label>Контактное лицо</label><input type="text" id="cContact"></div><div class="form-group"><label>Телефон</label><input type="text" id="cPhone"></div><div class="form-group"><label>Email</label><input type="email" id="cEmail"></div><button class="btn btn-primary btn-full" onclick="saveContractor()">💾 Сохранить</button>`); }
 async function saveContractor() { const res = await api('createContractor', { name: val('cName'), inn: val('cInn'), contactPerson: val('cContact'), phone: val('cPhone'), email: val('cEmail') }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
 async function deleteContractor(id) { if (!confirm('Удалить подрядчика?')) return; const res = await api('deleteContractor', { contractorId: id }); if (res.success) loadData(); else alert('Ошибка: ' + res.error); }
-function openContractorWorkModal(workId = null, contractorId = null) { openModalHtml(`<h2>🔨 Работа подрядчика</h2><input type="hidden" id="cwId" value="${workId || ''}"><div class="form-group"><label>Подрядчик</label><select id="cwContractor">${(allData.contractors || []).map(c => `<option value="${c['ID']}" ${c['ID'] === contractorId ? 'selected' : ''}>${c['Название']}</option>`).join('')}</select></div><div class="form-group"><label>Вид работ</label><input type="text" id="cwType"></div><div class="form-group"><label>Договорной объём</label><input type="number" id="cwVol"></div><div class="form-group"><label>Цена за ед.</label><input type="number" id="cwPrice"></div><button class="btn btn-primary btn-full" onclick="saveContractorWork()">💾 Сохранить</button>`); }
-async function saveContractorWork() { const res = await api('createContractorWork', { contractorId: val('cwContractor'), workType: val('cwType'), volume: val('cwVol'), price: val('cwPrice'), unit: 'м2' }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
-async function viewContractor(id) { const res = await api('getContractorSummary', { contractorId: id }); if (!res.success) return alert('Ошибка: ' + res.error); const c = res.contractor; const s = res.summary; const works = res.works; let html = `<h2>🏢 ${c['Название']}</h2><div class="stats"><div class="stat-box"><div class="stat-number">${money(s.totalContract)}</div><div class="stat-label">Договорная сумма</div></div><div class="stat-box"><div class="stat-number">${money(s.totalClosed)}</div><div class="stat-label">Закрыто</div></div><div class="stat-box"><div class="stat-number">${money(s.totalPaid)}</div><div class="stat-label">Выплачено</div></div><div class="stat-box"><div class="stat-number" style="color:${s.totalBalance >= 0 ? 'var(--success)' : 'var(--danger)'}">${money(s.totalBalance)}</div><div class="stat-label">${s.totalBalance >= 0 ? 'К выплате' : 'Переплата'}</div></div></div><h3>🔨 Работы</h3>${works.map(w => `<div class="card" style="margin-bottom:8px;"><div class="card-header"><div><div class="card-title">${w['Вид_работ']}</div><div class="card-meta">Объём: ${w['Закрыто_объём']} / ${w['Договорной_объём']} ${w['Ед_изм']} | Сумма: ${money(w['Сумма_закрытая'])} / ${money(w['Сумма_договорная'])}</div></div></div></div>`).join('')}`; openModalHtml(html); }
+async function viewContractor(id) { const res = await api('getContractorSummary', { contractorId: id }); if (!res.success) return alert('Ошибка: ' + res.error); const c = res.contractor; const s = res.summary; openModalHtml(`<h2>🏢 ${c['Название']}</h2><div class="stats"><div class="stat-box"><div class="stat-number">${money(s.totalContract)}</div><div class="stat-label">Договорная сумма</div></div><div class="stat-box"><div class="stat-number">${money(s.totalClosed)}</div><div class="stat-label">Закрыто</div></div><div class="stat-box"><div class="stat-number">${money(s.totalPaid)}</div><div class="stat-label">Выплачено</div></div><div class="stat-box"><div class="stat-number" style="color:${s.totalBalance >= 0 ? 'var(--success)' : 'var(--danger)'}">${money(s.totalBalance)}</div><div class="stat-label">${s.totalBalance >= 0 ? 'К выплате' : 'Переплата'}</div></div></div>`); }
 
 function openSubmitVolumeModal(contractId = '') { openModalHtml(`<h2>📊 Подать объём на проверку</h2><div class="form-group"><label>Договор</label><select id="svContract" onchange="updateSubmitPositions()"><option value="">Выберите</option>${(allData.contracts || []).map(c => `<option value="${c['ID_Договора']}" ${c['ID_Договора'] === contractId ? 'selected' : ''}>${c['Контрагент']}</option>`).join('')}</select></div><div class="form-group"><label>Позиция</label><select id="svPosition"></select></div><div class="form-group"><label>Объём</label><input type="number" id="svVolume"></div><div class="form-group"><label>Комментарий</label><textarea id="svComment"></textarea></div><button class="btn btn-primary btn-full" onclick="submitVolume()">📤 Подать</button>`); updateSubmitPositions(); }
 function updateSubmitPositions() { const contractId = val('svContract'); const estimates = (allData.estimates || []).filter(e => e['ID_Договора'] === contractId); const ids = estimates.map(e => e['ID_Сметы']); const positions = (allData.estimateItems || []).filter(p => ids.includes(p['ID_Сметы'])); document.getElementById('svPosition').innerHTML = positions.map(p => `<option value="${p['ID_Позиции']}">${p['Наименование']} — ${p['Количество']} ${p['Ед_изм']}</option>`).join(''); }
@@ -487,9 +470,9 @@ async function submitVolume() { const res = await api('submitVolume', { contract
 function openKS2Modal() { openModalHtml(`<h2>💰 Новый КС-2</h2><div class="form-group"><label>Договор</label><select id="ks2cContract">${(allData.contracts || []).map(c => `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`).join('')}</select></div><div class="form-group"><label>Номер</label><input type="text" id="ks2cNumber"></div><div class="form-group"><label>Дата</label><input type="date" id="ks2cDate"></div><div class="form-group"><label>Период работ</label><input type="text" id="ks2cPeriod"></div><div class="form-group"><label>Сумма</label><input type="number" id="ks2cAmount"></div><button class="btn btn-primary btn-full" onclick="saveKS2()">💾 Сохранить</button>`); }
 async function saveKS2() { const res = await api('createKS2', { contractId: val('ks2cContract'), ks2Number: val('ks2cNumber'), date: val('ks2cDate'), period: val('ks2cPeriod'), totalAmount: val('ks2cAmount'), positions: [] }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
 
-function openUserModal() { openModalHtml(`<h2>👤 Пользователь</h2><div class="form-group"><label>Логин</label><input type="text" id="uLogin"></div><div class="form-group"><label>Пароль</label><input type="text" id="uPass"></div><div class="form-group"><label>ФИО</label><input type="text" id="uFio"></div><div class="form-group"><label>Роль</label><select id="uRole"><option>Администратор</option><option>ПТО</option><option>Бухгалтерия</option><option>Прораб</option><option>Архитектор</option><option>ГИП</option><option>ГАП</option><option>Тендерный_специалист</option><option>Отдел_кадров</option></select></div><div class="form-group"><label>Email</label><input type="email" id="uEmail"></div><button class="btn btn-primary btn-full" onclick="saveUser()">✅ Создать</button>`); }
-async function saveUser() { const res = await api('createUser', { adminLogin: currentUser.login, login: val('uLogin'), password: val('uPass'), fio: val('uFio'), role: val('uRole'), email: val('uEmail'), access: 'Полный' }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
-async function deleteUser(login) { if (!confirm('Удалить пользователя?')) return; const res = await api('deleteUser', { adminLogin: currentUser.login, login }); if (res.success) loadData(); else alert('Ошибка: ' + res.error); }
+function openUserModal() { openModalHtml(`<h2>👤 Пользователь</h2><div class="form-group"><label>Логин</label><input type="text" id="uLogin"></div><div class="form-group"><label>Пароль</label><input type="text" id="uPass"></div><div class="form-group"><label>ФИО</label><input type="text" id="uFio"></div><div class="form-group"><label>Роль</label><select id="uRole"><option>Администратор</option><option>ПТО</option><option>Бухгалтерия</option><option>Прораб</option><option>Архитектор</option><option>ГИП</option><option>ГАП</option></select></div><div class="form-group"><label>Email</label><input type="email" id="uEmail"></div><button class="btn btn-primary btn-full" onclick="saveUser()">✅ Создать</button>`); }
+async function saveUser() { const res = await api('createUser', { login: val('uLogin'), password: val('uPass'), fio: val('uFio'), role: val('uRole'), email: val('uEmail'), access: 'Полный' }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
+async function deleteUser(login) { if (!confirm('Удалить пользователя?')) return; const res = await api('deleteUser', { login }); if (res.success) loadData(); else alert('Ошибка: ' + res.error); }
 
 async function loadTrash() { const res = await api('getTrash'); if (!res.success) return; const el = document.getElementById('trashList'); if (!el) return; let html = ''; Object.entries(res.trash).forEach(([sheet, items]) => { html += `<div class="card"><h3>${sheet} (${items.length})</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>Название</th><th>Действия</th></tr></thead><tbody>${items.map(item => `<tr><td>${item.id}</td><td>${item.display}</td><td><button class="btn btn-small btn-success" onclick="restoreItem('${sheet}', '${item.id}', '${item.idField}')">✅ Восстановить</button><button class="btn btn-small btn-danger" onclick="permDeleteItem('${sheet}', '${item.id}', '${item.idField}')">🗑️ Навсегда</button></td></tr>`).join('')}</tbody></table></div></div>`; }); el.innerHTML = html || '<div class="loader">Корзина пуста</div>'; }
 async function restoreItem(sheet, id, field) { const res = await api('restoreFromTrash', { sheetName: sheet, recordId: id, idField: field }); if (res.success) { loadTrash(); loadData(); } else alert('Ошибка: ' + res.error); }
@@ -497,40 +480,18 @@ async function permDeleteItem(sheet, id, field) { if (!confirm('Удалить �
 
 async function loadHistory() { const res = await api('getHistory', { limit: 100 }); if (!res.success) return; const el = document.getElementById('historyList'); if (!el) return; el.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Дата</th><th>Пользователь</th><th>Действие</th><th>Сущность</th><th>Детали</th></tr></thead><tbody>${(res.history || []).map(h => `<tr><td>${h['Дата']}</td><td>${h['Пользователь']}</td><td>${h['Действие']}</td><td>${h['Сущность']}</td><td>${h['Комментарий'] || ''}</td></tr>`).join('')}</tbody></table></div>`; }
 
-function openEmailSettingsModal() { openModalHtml(`<h2>📧 Email-уведомления</h2><div class="form-group"><label>Ваш Email</label><input type="email" id="emailAddr" value="${currentUser.email || ''}"></div><button class="btn btn-primary btn-full" onclick="saveEmailSettings()">💾 Сохранить</button><button class="btn btn-info btn-full" style="margin-top:8px;" onclick="testEmail()">🧪 Тест</button>`); }
-async function saveEmailSettings() { const res = await api('saveUserEmail', { login: currentUser.login, email: val('emailAddr'), subscriptions: 'Документы,Замечания,Напоминания,Договоры,Сроки' }); if (res.success) { closeModal('universalModal'); alert('Сохранено'); } else alert('Ошибка: ' + res.error); }
-async function testEmail() { const res = await api('testEmail', { email: val('emailAddr') }); if (res.success) alert('Письмо отправлено'); else alert('Ошибка: ' + res.error); }
 function exportData() { const type = prompt('Что экспортировать? (contracts, documents, materials, reminders, personnel, tenders, ks2)', 'contracts'); if (!type) return; api('exportCSV', { type }).then(res => { if (res.success) window.open(res.fileUrl, '_blank'); else alert('Ошибка: ' + res.error); }); }
 
-let searchDebounce = null;
-function handleGlobalSearch(query) { clearTimeout(searchDebounce); searchDebounce = setTimeout(() => performGlobalSearch(query.trim()), 300); }
-function showSearchResults() { const el = document.getElementById('searchResults'); if (el.innerHTML) el.classList.add('active'); }
-function hideSearchResults() { setTimeout(() => document.getElementById('searchResults').classList.remove('active'), 200); }
-function performGlobalSearch(query) {
-  if (!query || query.length < 2) { document.getElementById('searchResults').innerHTML = ''; document.getElementById('searchResults').classList.remove('active'); return; }
-  const q = query.toLowerCase(); const results = [];
-  (allData.contracts || []).forEach(c => { if (String(c['Контрагент'] || '').toLowerCase().includes(q)) results.push({ type: 'Договор', text: c['Контрагент'], action: `switchTabDirect('contracts')` }); });
-  (allData.personnel || []).forEach(p => { if (String(p['ФИО'] || '').toLowerCase().includes(q)) results.push({ type: 'Сотрудник', text: p['ФИО'], action: `switchTabDirect('personnel')` }); });
-  (allData.tenders || []).forEach(t => { if (String(t['Название'] || '').toLowerCase().includes(q)) results.push({ type: 'Тендер', text: t['Название'], action: `switchTabDirect('tenders')` }); });
-  const el = document.getElementById('searchResults');
-  if (results.length === 0) { el.innerHTML = '<div class="search-empty">Ничего не найдено</div>'; }
-  else { el.innerHTML = `<div class="search-group-title">Найдено: ${results.length}</div>` + results.slice(0, 10).map(r => `<div class="search-item" onclick="${r.action}; hideSearchResults();"><div class="search-item-title">${r.type}: ${r.text}</div></div>`).join(''); }
-  el.classList.add('active');
-}
-
-function updateMobileNav() { const active = document.querySelector('.tab.active'); if (!active) return; const id = active.dataset.tab; document.querySelectorAll('.mobile-nav-item').forEach(item => { item.classList.remove('active'); if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(`'${id}'`)) item.classList.add('active'); }); }
-function mobileQuickAction() { const active = document.querySelector('.tab.active'); if (!active) return; const id = active.dataset.tab; const actions = { 'contracts': () => openContractModal(), 'submissions': () => openSubmitVolumeModal(), 'tasks': () => openTaskModal(), 'estimates': () => openEstimateModal() }; if (actions[id]) actions[id](); }
-
-let touchStartX = 0; let touchEndX = 0;
-document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
-document.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; const diff = touchEndX - touchStartX; if (Math.abs(diff) < 80) return; const tabs = Array.from(document.querySelectorAll('.tab')).filter(t => t.style.display !== 'none'); const idx = tabs.findIndex(t => t.classList.contains('active')); if (diff > 0 && idx > 0) tabs[idx - 1].click(); else if (diff < 0 && idx < tabs.length - 1) tabs[idx + 1].click(); });
-document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); document.getElementById('globalSearch').focus(); } if (e.key === 'Escape') { document.getElementById('searchResults').classList.remove('active'); document.getElementById('globalSearch').blur(); closeModal('universalModal'); } });
-
 async function renderContractProgress() { const contractId = val('progressContractFilter'); if (!contractId) return; const res = await api('getContractProgress', { contractId }); if (!res.success) return alert('Ошибка: ' + res.error); const summary = res.summary; const s = document.getElementById('progressSummary'); if (s) { s.innerHTML = `<div class="stat-box"><div class="stat-number">${summary.totalVolume}</div><div class="stat-label">Всего объёма</div></div><div class="stat-box"><div class="stat-number">${summary.approvedExecuted}</div><div class="stat-label">Выполнено</div></div><div class="stat-box"><div class="stat-number">${summary.onReview}</div><div class="stat-label">На проверке</div></div><div class="stat-box"><div class="stat-number">${summary.ks2Count}</div><div class="stat-label">КС-2</div></div>`; } const positions = res.positions || []; const list = document.getElementById('progressPositionsList'); if (list) { list.innerHTML = positions.map(p => `<div class="card"><div class="card-title">${p.name}</div><div class="card-meta">Всего: ${p.totalVolume} ${p.unit} | ${money(p.totalAmount)}</div><div style="margin-top:10px;"><div class="progress-bar-container"><div class="segment seg-green" style="width:${(p.approvedExecuted/p.totalVolume*100)||0}%">${p.approvedExecuted}</div><div class="segment seg-yellow" style="width:${(p.onReview/p.totalVolume*100)||0}%">${p.onReview}</div><div class="segment seg-gray" style="width:${(p.executionRemaining/p.totalVolume*100)||0}%">${p.executionRemaining}</div></div></div></div>`).join(''); } }
-function viewArchProject(id) { const p = (allData.archProjects || []).find(x => x['ID_Проекта'] === id); if (!p) return; openModalHtml(`<h2>🏛️ ${p['Название']}</h2><div class="card"><div class="card-meta"><b>Тип:</b> ${p['Тип']}<br><b>Автор:</b> ${p['Автор']}<br><b>Версия:</b> ${p['Версия']}<br><b>Дата:</b> ${p['Дата_создания']}<br>${p['Примечание'] ? '<b>Примечание:</b> ' + p['Примечание'] : ''}</div></div>${p['Ссылка_на_папку'] ? `<a href="${p['Ссылка_на_папку']}" target="_blank" class="btn btn-info">📁 Открыть папку</a>` : ''}`); }
-function openDrawingModal(projectId) { openModalHtml(`<h2>📐 Добавить чертёж</h2><input type="hidden" id="drProjectId" value="${projectId}"><div class="form-group"><label>Шифр</label><select id="drCode"><option>АР</option><option>КР</option><option>КЖ</option><option>ОВ</option><option>ВК</option><option>ЭОМ</option></select></div><div class="form-group"><label>Название</label><input type="text" id="drName"></div><div class="form-group"><label>Масштаб</label><input type="text" id="drScale"></div><div class="form-group"><label>Лист</label><input type="text" id="drSheet"></div><button class="btn btn-primary btn-full" onclick="saveDrawing()">💾 Сохранить</button>`); }
-async function saveDrawing() { const res = await api('addDrawing', { projectId: val('drProjectId'), code: val('drCode'), name: val('drName'), scale: val('drScale'), sheet: val('drSheet'), format: 'А3' }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
-function openPreservationModal(projectId) { openModalHtml(`<h2>🏛️ Предмет охраны</h2><input type="hidden" id="prProjectId" value="${projectId}"><div class="form-group"><label>Название</label><input type="text" id="prName"></div><div class="form-group"><label>Тип</label><select id="prType"><option>Фасад</option><option>Интерьер</option><option>Декор</option><option>Лепнина</option><option>Роспись</option></select></div><div class="form-group"><label>Местоположение</label><input type="text" id="prLoc"></div><div class="form-group"><label>Описание</label><textarea id="prDesc"></textarea></div><button class="btn btn-primary btn-full" onclick="savePreservation()">💾 Сохранить</button>`); }
-async function savePreservation() { const res = await api('addPreservationItem', { projectId: val('prProjectId'), name: val('prName'), type: val('prType'), location: val('prLoc'), description: val('prDesc') }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
-function openSupervisionModal(projectId) { openModalHtml(`<h2>🔍 Замечание авторского надзора</h2><input type="hidden" id="supProjectId" value="${projectId}"><div class="form-group"><label>Дата</label><input type="date" id="supDate"></div><div class="form-group"><label>Описание</label><textarea id="supDesc"></textarea></div><div class="form-group"><label>Исполнитель</label><select id="supResp">${(allData.users || []).map(u => `<option value="${u['Логин']}">${u['ФИО']}</option>`).join('')}</select></div><button class="btn btn-primary btn-full" onclick="saveSupervision()">💾 Сохранить</button>`); }
-async function saveSupervision() { const res = await api('addAuthorSupervision', { projectId: val('supProjectId'), date: val('supDate'), description: val('supDesc'), responsible: val('supResp'), author: currentUser.fio }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
+
+function viewArchProject(id) { const p = (allData.archProjects || []).find(x => x['ID_Проекта'] === id); if (!p) return; openModalHtml(`<h2>🏛️ ${p['Название']}</h2><div class="card"><div class="card-meta"><b>Тип:</b> ${p['Тип']}<br><b>Автор:</b> ${p['Автор']}<br><b>Версия:</b> ${p['Версия']}<br><b>Дата:</b> ${p['Дата_создания']}</div></div>`); }
+
+function openArchProjectModal() { openModalHtml(`<h2>🏛️ Новый архитектурный проект</h2><div class="form-group"><label>Название</label><input type="text" id="apName"></div><div class="form-group"><label>Тип</label><select id="apType"><option>Обмерный</option><option>Рабочий_РД</option><option>Реставрационный</option><option>Дизайн-проект</option></select></div><div class="form-group"><label>Автор</label><input type="text" id="apAuthor" value="${currentUser.fio}"></div><button class="btn btn-primary btn-full" onclick="saveArchProject()">✅ Создать</button>`); }
+async function saveArchProject() { const res = await api('createArchProject', { name: val('apName'), type: val('apType'), author: val('apAuthor') }); if (res.success) { closeModal('universalModal'); loadData(); } else alert('Ошибка: ' + res.error); }
+async function deleteArchProject(id) { if (!confirm('Удалить проект?')) return; const res = await api('deleteArchProject', { projectId: id }); if (res.success) loadData(); else alert('Ошибка: ' + res.error); }
+
+// Горячие клавиши
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); document.getElementById('globalSearch')?.focus(); }
+  if (e.key === 'Escape') { closeModal('universalModal'); }
+});
