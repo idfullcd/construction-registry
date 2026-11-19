@@ -1,4 +1,3 @@
-// ⚠️ ЗАМЕНИТЕ ЭТУ СТРОКУ НА ВАШ РЕАЛЬНЫЙ URL APPS SCRIPT
 const API_URL = 'https://script.google.com/macros/s/AKfycbw7mLMaEQs_GVNu6X02vnKsi0MvsGnllZMC2trvVx_jDAr8Sn-b-D0iV_1vYRTj6PIbJw/exec';
 
 let currentUser = null;
@@ -17,7 +16,6 @@ const TAB_GROUPS = {
   'admin': [['admin', '⚙️ Админ']]
 };
 
-// ====== УТИЛИТЫ ======
 function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
 function setVal(id, value) { const el = document.getElementById(id); if (el) el.value = value ?? ''; }
 function money(v) { return Number(v || 0).toLocaleString('ru-RU') + ' ₽'; }
@@ -28,7 +26,7 @@ async function api(action, payload = {}) {
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action, userLogin: currentUser?.login, ...payload })
     });
     return await res.json();
@@ -38,7 +36,6 @@ async function api(action, payload = {}) {
   }
 }
 
-// ====== ТЕМА ======
 function initTheme() {
   document.documentElement.dataset.theme = localStorage.getItem('theme') || 'light';
 }
@@ -50,7 +47,6 @@ function toggleTheme() {
 }
 initTheme();
 
-// ====== ВКЛАДКИ ======
 function buildTabs() {
   const container = document.getElementById('tabsContainer');
   if (!container) return;
@@ -64,9 +60,11 @@ function buildTabs() {
     const tabsDiv = groupDiv.querySelector('.tabs');
     tabs.forEach(([id, label]) => {
       const hidden = (id === 'admin' && currentUser?.role !== 'Администратор');
-      tabsDiv.innerHTML += `<div class="tab ${id === 'contracts' ? 'active' : ''}" data-tab="${id}" onclick="switchTabDirect('${id}')" style="${hidden ? 'display:none;' : ''}">${label}</div>`;
+      tabsDiv.innerHTML += `<div class="tab" data-tab="${id}" onclick="switchTabDirect('${id}')" style="${hidden ? 'display:none;' : ''}">${label}</div>`;
     });
   });
+  const firstTab = document.querySelector('.tab');
+  if (firstTab) firstTab.classList.add('active');
 }
 
 function switchTabDirect(tabId) {
@@ -90,7 +88,6 @@ function openModalHtml(html) {
   document.getElementById('universalModal').style.display = 'block';
 }
 
-// ====== АВТОРИЗАЦИЯ ======
 async function login() {
   const loginVal = val('loginInput').trim();
   const passwordVal = val('passwordInput').trim();
@@ -121,9 +118,8 @@ function showMainScreen() {
   document.getElementById('userName').textContent = currentUser.fio;
   document.getElementById('userRole').textContent = currentUser.role;
   buildTabs();
-  switchTabDirect('contracts');
   loadData();
-  refreshTimer = setInterval(() => loadData(true), 60000); // Обновление каждую минуту
+  refreshTimer = setInterval(() => loadData(true), 60000);
 }
 
 window.onload = () => {
@@ -134,7 +130,8 @@ window.onload = () => {
   }
 };
 
-// ====== ЗАГРУЗКА ДАННЫХ ======
+document.getElementById('passwordInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+
 async function loadData(silent = false) {
   if (!silent) {
     const list = document.getElementById('contractsList');
@@ -142,14 +139,8 @@ async function loadData(silent = false) {
   }
   
   try {
-    const sheets = ['Договоры','Документы','Пользователи','Комментарии','Журнал_действий','История_изменений','Материалы','Напоминания','Сметы','Сметные_позиции','Привязка_ИД','Чеклист_ИД','События_календаря','Шаблоны','Задания','Задания_Ответы','Архитектурные_проекты','Чертежи','Предметы_охраны','Авторский_надзор','Согласования_КГИОП','Подрядчики','Работы_подрядчиков','Закрытия_объёмов','Выплаты_подрядчикам','Подачи_объёмов','КС-2','КС-2_Состав','Дополнительные_работы','Дополнительные_работы_Фото','Тендеры','Тендеры_Документы','Коммерческие_предложения','Персонал','Персонал_Документы','Приказы','Организация_работ','Предписания','Согласования','Ежедневные_отчёты','Наряды-задания','Численность','Справочник_Объекты','Справочник_Типы_документов','Справочник_Статусы','Справочник_Роли','Справочник_Разделы','Справочник_Единицы','Настройки'];
-    
-    const results = await Promise.all(sheets.map(s => api('getSheetData', { sheetName: s }))); // Упрощенный вызов, в реальности используем batch или getAll
-    
-    // Для совместимости с текущим API doGet('all'):
     const res = await fetch(`${API_URL}?type=all`);
     const data = await res.json();
-    
     allData = data;
     
     renderContracts();
@@ -165,13 +156,18 @@ async function loadData(silent = false) {
     renderDashboard();
     renderActions();
     renderUsers();
+    renderEstimatesList();
+    renderArchProjects();
+    renderContractors();
+    renderTasks();
     
     const stats = document.getElementById('contractsStats');
     if (stats) {
       stats.innerHTML = `
-        <div class="stat-box"><div class="stat-number">${(allData.Договоры || []).length}</div><div class="stat-label">Договоров</div></div>
-        <div class="stat-box"><div class="stat-number">${(allData.Документы || []).length}</div><div class="stat-label">Документов</div></div>
-        <div class="stat-box"><div class="stat-number">${(allData.Подачи_объёмов || []).filter(s => s['Статус'] === 'На_проверке').length}</div><div class="stat-label">На проверке</div></div>
+        <div class="stat-box"><div class="stat-number">${(allData.contracts || []).length}</div><div class="stat-label">Договоров</div></div>
+        <div class="stat-box"><div class="stat-number">${(allData.documents || []).length}</div><div class="stat-label">Документов</div></div>
+        <div class="stat-box"><div class="stat-number">${(allData.submissions || []).filter(s => s['Статус'] === 'На_проверке').length}</div><div class="stat-label">На проверке</div></div>
+        <div class="stat-box"><div class="stat-number">${(allData.tenders || []).length}</div><div class="stat-label">Тендеров</div></div>
       `;
     }
   } catch (e) {
@@ -183,10 +179,9 @@ async function loadData(silent = false) {
   }
 }
 
-// ====== РЕНДЕРИНГ МОДУЛЕЙ ======
 function renderContracts() {
   const search = val('contractSearch').toLowerCase();
-  let contracts = allData.Договоры || [];
+  let contracts = allData.contracts || [];
   if (search) contracts = contracts.filter(c => String(c['Контрагент'] || '').toLowerCase().includes(search) || String(c['Номер_Договора'] || '').toLowerCase().includes(search));
   
   const list = document.getElementById('contractsList');
@@ -197,40 +192,44 @@ function renderContracts() {
     return;
   }
   
-  list.innerHTML = contracts.map(c => `
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">${c['Иконка'] || '🏢'} ${c['Контрагент']} <span class="badge badge-info">${c['ID_Договора']}</span></div>
-          <div class="card-meta">№${c['Номер_Договора']} от ${c['Дата_Договора']} | ${c['Предмет']} | ${money(c['Сумма'])} | Отв: ${c['Ответственный']}</div>
-        </div>
-        <div>
-          <button class="btn btn-small btn-success" onclick="openUploadDocModal('${c['ID_Договора']}')">📤 Документ</button>
-          <button class="btn btn-small btn-info" onclick="openSubmitVolumeModal('${c['ID_Договора']}')">📊 Объём</button>
-          ${fileLink(c['Ссылка_на_папку'], '📁 Папка')}
+  list.innerHTML = contracts.map(c => {
+    const docs = (allData.documents || []).filter(d => d['ID_Договора'] === c['ID_Договора']);
+    return `
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${c['Иконка'] || '🏢'} ${c['Контрагент']} <span class="badge badge-info">${c['ID_Договора']}</span></div>
+            <div class="card-meta">№${c['Номер_Договора']} от ${c['Дата_Договора']} | ${c['Предмет']} | ${money(c['Сумма'])} | Отв: ${c['Ответственный']}</div>
+            <div class="card-meta">Документов: ${docs.length}</div>
+          </div>
+          <div>
+            <button class="btn btn-small btn-success" onclick="openUploadDocModal('${c['ID_Договора']}')">📤 Документ</button>
+            <button class="btn btn-small btn-info" onclick="openSubmitVolumeModal('${c['ID_Договора']}')">📊 Объём</button>
+            ${fileLink(c['Ссылка_на_папку'], '📁 Папка')}
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function renderSubmissions() {
   const filter = val('submissionFilter');
-  let rows = allData.Подачи_объёмов || [];
+  let rows = allData.submissions || [];
   if (filter) rows = rows.filter(r => r['Статус'] === filter);
   
   const list = document.getElementById('submissionsList');
   if (!list) return;
   
   list.innerHTML = rows.map(r => {
-    const pos = (allData.Сметные_позиции || []).find(p => p['ID_Позиции'] === r['ID_Позиции']);
+    const pos = (allData.estimateItems || []).find(p => p['ID_Позиции'] === r['ID_Позиции']);
     const canReview = ['Администратор', 'ПТО', 'ГИП', 'ГАП'].includes(currentUser.role);
     return `
       <div class="card">
         <div class="card-header">
           <div>
             <div class="card-title">${pos ? pos['Наименование'] : r['ID_Позиции']}</div>
-            <div class="card-meta">Договор: ${(allData.Договоры || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'}<br>
+            <div class="card-meta">${(allData.contracts || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'}<br>
             Подал: ${r['Кто_подал']} | ${r['Дата_подачи']}<br>Объём: <b>${r['Объём_подан']}</b>${r['Скорректированный_объём'] ? ` → ${r['Скорректированный_объём']}` : ''}</div>
             ${r['Комментарий_проверяющего'] ? `<div class="card-meta">💬 ${r['Комментарий_проверяющего']}</div>` : ''}
           </div>
@@ -250,7 +249,7 @@ function renderSubmissions() {
 
 function renderKS2List() {
   const filter = val('ks2ContractFilter');
-  let rows = allData['КС-2'] || [];
+  let rows = allData.ks2Registry || [];
   if (filter) rows = rows.filter(r => r['ID_Договора'] === filter);
   
   const list = document.getElementById('ks2List');
@@ -261,7 +260,7 @@ function renderKS2List() {
       <div class="card-header">
         <div>
           <div class="card-title">КС-2 №${r['Номер_КС2']}</div>
-          <div class="card-meta">${(allData.Договоры || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'}<br>
+          <div class="card-meta">${(allData.contracts || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'}<br>
           Дата: ${r['Дата_составления']} | Период: ${r['Период_работ']}<br>Сумма: <b>${money(r['Общая_сумма'])}</b></div>
         </div>
         <div>
@@ -276,20 +275,20 @@ function renderKS2List() {
 
 function renderAdditionalWorks() {
   const filter = val('additionalContractFilter');
-  let rows = allData.Дополнительные_работы || [];
+  let rows = allData.additionalWorks || [];
   if (filter) rows = rows.filter(r => r['ID_Договора'] === filter);
   
   const list = document.getElementById('additionalWorksList');
   if (!list) return;
   
   list.innerHTML = rows.map(r => {
-    const photos = (allData.Дополнительные_работы_Фото || []).filter(p => p['ID_Доп_работы'] === r['ID']);
+    const photos = (allData.additionalWorksPhotos || []).filter(p => p['ID_Доп_работы'] === r['ID']);
     return `
       <div class="card">
         <div class="card-header">
           <div>
             <div class="card-title">${r['Наименование']}</div>
-            <div class="card-meta">${(allData.Договоры || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'}<br>
+            <div class="card-meta">${(allData.contracts || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'}<br>
             ${r['Количество']} ${r['Ед_изм']} × ${money(r['Цена'])} = <b>${money(r['Сумма'])}</b><br>Статус: ${r['Статус']}</div>
           </div>
           <div>
@@ -319,7 +318,7 @@ function renderDocumentation() {
     'ПО': ['ППР', 'ПОС', 'Техкарта', 'Техзадание', 'График_работ', 'Наряд-задание']
   };
   
-  let docs = allData.Документы || [];
+  let docs = allData.documents || [];
   if (contractFilter) docs = docs.filter(d => d['ID_Договора'] === contractFilter);
   
   const list = document.getElementById('documentationList');
@@ -346,14 +345,14 @@ function renderDocumentation() {
 
 function renderTenders() {
   const filter = val('tenderStatusFilter');
-  let rows = allData.Тендеры || [];
+  let rows = allData.tenders || [];
   if (filter) rows = rows.filter(r => r['Статус'] === filter);
   
   const list = document.getElementById('tendersList');
   if (!list) return;
   
   list.innerHTML = rows.map(r => {
-    const docs = (allData.Тендеры_Документы || []).filter(d => d['ID_Тендера'] === r['ID']);
+    const docs = (allData.tenderDocs || []).filter(d => d['ID_Тендера'] === r['ID']);
     return `
       <div class="card">
         <div class="card-header">
@@ -376,7 +375,7 @@ function renderTenders() {
 
 function renderKPList() {
   const filter = val('kpStatusFilter');
-  let rows = allData.Коммерческие_предложения || [];
+  let rows = allData.commercialProposals || [];
   if (filter) rows = rows.filter(r => r['Статус'] === filter);
   
   const list = document.getElementById('kpList');
@@ -400,14 +399,14 @@ function renderKPList() {
 
 function renderPersonnel() {
   const search = val('personnelSearch').toLowerCase();
-  let rows = allData.Персонал || [];
+  let rows = allData.personnel || [];
   if (search) rows = rows.filter(r => String(r['ФИО'] || '').toLowerCase().includes(search) || String(r['Должность'] || '').toLowerCase().includes(search));
   
   const list = document.getElementById('personnelList');
   if (!list) return;
   
   list.innerHTML = rows.map(r => {
-    const docs = (allData.Персонал_Документы || []).filter(d => d['ID_Сотрудника'] === r['ID']);
+    const docs = (allData.personnelDocs || []).filter(d => d['ID_Сотрудника'] === r['ID']);
     const initials = String(r['ФИО'] || '?').split(' ').map(x => x[0]).join('').slice(0, 2);
     return `
       <div class="card">
@@ -432,15 +431,15 @@ function renderPersonnel() {
 
 function renderGenericLists() {
   const modules = {
-    'orders': { title: 'Приказы', data: allData.Приказы, cols: ['Номер', 'Дата', 'Тип', 'Сотрудник', 'Статус'] },
-    'planning': { title: 'ППР/Техкарты', data: allData.Организация_работ, cols: ['Тип', 'Название', 'Номер', 'Версия', 'Статус'] },
-    'prescriptions': { title: 'Предписания', data: allData.Предписания, cols: ['Тип', 'Номер', 'Дата', 'Срок_исполнения', 'Статус'] },
-    'approvals': { title: 'Согласования', data: allData.Согласования, cols: ['Тип', 'Название', 'С_кем_согласуется', 'Дата_ответа', 'Статус'] },
-    'daily': { title: 'Ежедневные отчёты', data: allData.Ежедневные_отчёты, cols: ['Дата', 'Прораб', 'Численность', 'Выполнено', 'Проблемы'] },
-    'workorders': { title: 'Наряды-задания', data: allData.Наряды-задания, cols: ['Номер', 'Дата', 'Бригада', 'Вид_работ', 'Статус'] },
-    'workforce': { title: 'Численность', data: allData.Численность, cols: ['Дата', 'Профессия', 'Количество', 'ФИО_мастера', 'Примечание'] },
-    'materials': { title: 'Материалы', data: allData.Материалы, cols: ['Наименование', 'Поставщик', 'Количество', 'Ед.изм', 'Статус'] },
-    'reminders': { title: 'Напоминания', data: allData.Напоминания, cols: ['Тип', 'Объект', 'Дата', 'Статус', 'Ответственный'] }
+    'orders': { title: 'Приказы', data: allData.orders, cols: ['Номер', 'Дата', 'Тип', 'Сотрудник', 'Статус'] },
+    'planning': { title: 'ППР/Техкарты', data: allData.pprTechcards, cols: ['Тип', 'Название', 'Номер', 'Версия', 'Статус'] },
+    'prescriptions': { title: 'Предписания', data: allData.prescriptions, cols: ['Тип', 'Номер', 'Дата', 'Срок_исполнения', 'Статус'] },
+    'approvals': { title: 'Согласования', data: allData.approvals, cols: ['Тип', 'Название', 'С_кем_согласуется', 'Дата_ответа', 'Статус'] },
+    'daily': { title: 'Ежедневные отчёты', data: allData.dailyReports, cols: ['Дата', 'Прораб', 'Численность', 'Выполнено', 'Проблемы'] },
+    'workorders': { title: 'Наряды-задания', data: allData.workOrders, cols: ['Номер', 'Дата', 'Бригада', 'Вид_работ', 'Статус'] },
+    'workforce': { title: 'Численность', data: allData.workforce, cols: ['Дата', 'Профессия', 'Количество', 'ФИО_мастера', 'Примечание'] },
+    'materials': { title: 'Материалы', data: allData.materials, cols: ['Наименование', 'Поставщик', 'Количество', 'Ед.изм', 'Статус'] },
+    'reminders': { title: 'Напоминания', data: allData.reminders, cols: ['Тип', 'Объект', 'Дата', 'Статус', 'Ответственный'] }
   };
   
   Object.entries(modules).forEach(([key, mod]) => {
@@ -489,20 +488,27 @@ function renderCalendar() {
   
   for (let d = 1; d <= last.getDate(); d++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const events = (allData.События_календаря || []).filter(e => e['Дата'] === dateStr);
+    const events = (allData.calendarEvents || []).filter(e => e['Дата'] === dateStr);
     html += `<div class="card" style="min-height:90px; padding:8px;"><b>${d}</b>${events.map(e => `<div class="badge badge-info" style="margin-top:4px; display:block;">${e['Тип']}</div>`).join('')}</div>`;
   }
   grid.innerHTML = html;
+}
+
+function changeMonth(delta) {
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+  renderCalendar();
 }
 
 function renderDashboard() {
   const stats = document.getElementById('dashboardStats');
   if (stats) {
     stats.innerHTML = `
-      <div class="stat-box"><div class="stat-number">${(allData.Договоры || []).length}</div><div class="stat-label">Договоров</div></div>
-      <div class="stat-box"><div class="stat-number">${(allData.Документы || []).length}</div><div class="stat-label">Документов</div></div>
-      <div class="stat-box"><div class="stat-number">${(allData.Тендеры || []).length}</div><div class="stat-label">Тендеров</div></div>
-      <div class="stat-box"><div class="stat-number">${(allData.Персонал || []).filter(p => p['Статус'] === 'Работает').length}</div><div class="stat-label">Сотрудников</div></div>
+      <div class="stat-box"><div class="stat-number">${(allData.contracts || []).length}</div><div class="stat-label">Договоров</div></div>
+      <div class="stat-box"><div class="stat-number">${(allData.documents || []).length}</div><div class="stat-label">Документов</div></div>
+      <div class="stat-box"><div class="stat-number">${(allData.tenders || []).length}</div><div class="stat-label">Тендеров</div></div>
+      <div class="stat-box"><div class="stat-number">${(allData.personnel || []).filter(p => p['Статус'] === 'Работает').length}</div><div class="stat-label">Сотрудников</div></div>
+      <div class="stat-box"><div class="stat-number">${(allData.ks2Registry || []).length}</div><div class="stat-label">КС-2</div></div>
+      <div class="stat-box"><div class="stat-number">${(allData.tasks || []).length}</div><div class="stat-label">Заданий</div></div>
     `;
   }
   
@@ -510,7 +516,7 @@ function renderDashboard() {
   if (!ctx) return;
   if (window.categoryChartInstance) window.categoryChartInstance.destroy();
   
-  const docs = allData.Документы || [];
+  const docs = allData.documents || [];
   const cats = {};
   docs.forEach(d => { const c = d['Категория'] || 'Другое'; cats[c] = (cats[c] || 0) + 1; });
   
@@ -525,7 +531,7 @@ function renderDashboard() {
 }
 
 function renderActions() {
-  const rows = (allData.Журнал_действий || []).slice().reverse().slice(0, 200);
+  const rows = (allData.actions || []).slice().reverse().slice(0, 200);
   const el = document.getElementById('actionsList');
   if (!el) return;
   el.innerHTML = `
@@ -546,14 +552,13 @@ function renderUsers() {
       <table>
         <thead><tr><th>Логин</th><th>ФИО</th><th>Роль</th><th>Email</th><th>Действия</th></tr></thead>
         <tbody>
-          ${(allData.Пользователи || []).map(u => `
+          ${(allData.users || []).map(u => `
             <tr>
               <td>${u['Логин']}</td>
               <td>${u['ФИО']}</td>
               <td><span class="badge badge-info">${u['Роль']}</span></td>
               <td>${u['Email'] || ''}</td>
               <td>
-                <button class="btn btn-small btn-warning" onclick="openPermissionsModal('${u['Логин']}')">🔐</button>
                 <button class="btn btn-small btn-danger" onclick="deleteUser('${u['Логин']}')" ${u['Логин'] === currentUser.login ? 'disabled' : ''}>🗑️</button>
               </td>
             </tr>
@@ -568,17 +573,17 @@ function renderEstimatesList() {
   const filter = val('estimateContractFilter');
   const select = document.getElementById('estimateContractFilter');
   if (select && select.options.length <= 1) {
-    (allData.Договоры || []).forEach(c => select.innerHTML += `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`);
+    (allData.contracts || []).forEach(c => select.innerHTML += `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`);
   }
   
-  let rows = allData.Сметы || [];
+  let rows = allData.estimates || [];
   if (filter) rows = rows.filter(r => r['ID_Договора'] === filter);
   
   const el = document.getElementById('estimatesList');
   if (!el) return;
   
   el.innerHTML = rows.map(r => {
-    const positions = (allData.Сметные_позиции || []).filter(p => p['ID_Сметы'] === r['ID_Сметы']);
+    const positions = (allData.estimateItems || []).filter(p => p['ID_Сметы'] === r['ID_Сметы']);
     const totalSum = positions.reduce((s, p) => s + (parseFloat(p['Сумма']) || 0), 0);
     const closedSum = positions.reduce((s, p) => {
       const total = parseFloat(p['Количество']) || 0;
@@ -592,7 +597,7 @@ function renderEstimatesList() {
         <div class="card-header">
           <div style="flex:1;">
             <div class="card-title">📊 ${r['Название']} <span style="color:var(--muted); font-size:13px;">[${r['ID_Сметы']}]</span></div>
-            <div class="card-meta">Договор: ${(allData.Договоры || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'} | 💰 ${money(r['Общая_сумма'])} | Позиций: ${positions.length}</div>
+            <div class="card-meta">Договор: ${(allData.contracts || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'} | 💰 ${money(r['Общая_сумма'])} | Позиций: ${positions.length}</div>
           </div>
           <div>
             <button class="btn btn-small btn-info" onclick="viewEstimate('${r['ID_Сметы']}')">👁️ Просмотр</button>
@@ -611,15 +616,15 @@ function renderEstimatesList() {
 
 function renderArchProjects() {
   const filter = val('archTypeFilter');
-  let rows = allData.Архитектурные_проекты || [];
+  let rows = allData.archProjects || [];
   if (filter) rows = rows.filter(r => r['Тип'] === filter);
   
   const el = document.getElementById('archProjectsList');
   if (!el) return;
   
   el.innerHTML = rows.map(r => {
-    const drawings = (allData.Чертежи || []).filter(d => d['ID_Проекта'] === r['ID_Проекта']);
-    const supervision = (allData.Авторский_надзор || []).filter(s => s['ID_Проекта'] === r['ID_Проекта']);
+    const drawings = (allData.drawings || []).filter(d => d['ID_Проекта'] === r['ID_Проекта']);
+    const supervision = (allData.authorSupervision || []).filter(s => s['ID_Проекта'] === r['ID_Проекта']);
     const openIssues = supervision.filter(s => s['Статус_устранения'] !== 'Устранено').length;
     
     return `
@@ -627,7 +632,7 @@ function renderArchProjects() {
         <div class="card-header">
           <div style="flex:1;">
             <div class="card-title">${r['Название']} <span style="color:var(--muted); font-size:13px;">[${r['ID_Проекта']}]</span></div>
-            <div class="card-meta">Договор: ${(allData.Договоры || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'} | 👤 ${r['Автор']} | 📅 ${r['Дата_создания']} | 📌 v${r['Версия']}</div>
+            <div class="card-meta">Договор: ${(allData.contracts || []).find(c => c['ID_Договора'] === r['ID_Договора'])?.['Контрагент'] || '—'} | 👤 ${r['Автор']} | 📅 ${r['Дата_создания']} | 📌 v${r['Версия']}</div>
             <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">
               <span class="badge badge-info">${r['Тип'].replace(/_/g, ' ')}</span>
               <span class="badge badge-warning">${r['Статус'].replace(/_/g, ' ')}</span>
@@ -653,10 +658,10 @@ function renderContractors() {
   const search = val('contractorSearch').toLowerCase();
   const select = document.getElementById('contractorFilter');
   if (select && select.options.length <= 1) {
-    (allData.Подрядчики || []).forEach(c => select.innerHTML += `<option value="${c['ID']}">${c['Название']}</option>`);
+    (allData.contractors || []).forEach(c => select.innerHTML += `<option value="${c['ID']}">${c['Название']}</option>`);
   }
   
-  let rows = allData.Подрядчики || [];
+  let rows = allData.contractors || [];
   if (filter) rows = rows.filter(r => r['ID'] === filter);
   if (search) rows = rows.filter(r => String(r['Название'] || '').toLowerCase().includes(search) || String(r['ИНН'] || '').includes(search));
   
@@ -664,8 +669,8 @@ function renderContractors() {
   if (stats) {
     const total = rows.length;
     const active = rows.filter(r => r['Статус'] === 'Активен').length;
-    const works = (allData.Работы_подрядчиков || []).length;
-    const payments = (allData.Выплаты_подрядчикам || []).reduce((s, p) => s + (parseFloat(p['Сумма']) || 0), 0);
+    const works = (allData.contractorWorks || []).length;
+    const payments = (allData.payments || []).reduce((s, p) => s + (parseFloat(p['Сумма']) || 0), 0);
     stats.innerHTML = `
       <div class="stat-box"><div class="stat-number">${total}</div><div class="stat-label">Подрядчиков</div></div>
       <div class="stat-box"><div class="stat-number">${active}</div><div class="stat-label">Активных</div></div>
@@ -678,8 +683,8 @@ function renderContractors() {
   if (!el) return;
   
   el.innerHTML = rows.map(r => {
-    const works = (allData.Работы_подрядчиков || []).filter(w => w['ID_Подрядчика'] === r['ID']);
-    const payments = (allData.Выплаты_подрядчикам || []).filter(p => p['ID_Подрядчика'] === r['ID']);
+    const works = (allData.contractorWorks || []).filter(w => w['ID_Подрядчика'] === r['ID']);
+    const payments = (allData.payments || []).filter(p => p['ID_Подрядчика'] === r['ID']);
     const totalContract = works.reduce((s, w) => s + (parseFloat(w['Сумма_договорная']) || 0), 0);
     const totalClosed = works.reduce((s, w) => s + (parseFloat(w['Сумма_закрытая']) || 0), 0);
     const totalPaid = payments.reduce((s, p) => {
@@ -712,7 +717,30 @@ function renderContractors() {
   }).join('') || '<div class="loader">Подрядчики не найдены</div>';
 }
 
-// ====== МОДАЛЬНЫЕ ОКНА И ДЕЙСТВИЯ ======
+function renderTasks() {
+  const filter = val('taskFilter');
+  let tasks = allData.tasks || [];
+  if (filter === 'incoming') tasks = tasks.filter(t => t['Кому'] === currentUser.login);
+  else if (filter === 'outgoing') tasks = tasks.filter(t => t['От_кого'] === currentUser.login);
+  
+  const el = document.getElementById('tasksList');
+  if (!el) return;
+  
+  if (tasks.length === 0) { el.innerHTML = '<div class="loader">Заданий нет</div>'; return; }
+  
+  el.innerHTML = tasks.map(t => `
+    <div class="card" style="cursor:pointer;" onclick="viewTask('${t['ID']}')">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${t['Тема']} <span class="badge badge-info">${t['Приоритет']}</span></div>
+          <div class="card-meta">От: ${t['От_кого']} → Кому: ${t['Кому']}<br>Дедлайн: ${t['Дедлайн'] || '—'}</div>
+        </div>
+        <span class="badge badge-${t['Статус'] === 'Выполнено' ? 'success' : 'warning'}">${t['Статус']}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
 function openContractModal() {
   openModalHtml(`
     <h2>📄 Новый договор</h2>
@@ -763,7 +791,7 @@ async function uploadDoc() {
   
   const reader = new FileReader();
   reader.onload = async (e) => {
-    const res = await api('bulkUpload', {
+    const result = await api('bulkUpload', {
       contractId: val('uploadContractId'), category: val('uploadCategory'), fileType: val('uploadFileType'),
       docNumber: val('uploadDocNumber'), status: val('uploadStatus'),
       files: [{ fileName: file.name, fileData: e.target.result.split(',')[1] }]
@@ -799,7 +827,7 @@ async function deleteKS2(id) {
 function openAdditionalWorkModal() {
   openModalHtml(`
     <h2>➕ Дополнительная работа</h2>
-    <div class="form-group"><label>Договор</label><select id="awContract">${(allData.Договоры || []).map(c => `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`).join('')}</select></div>
+    <div class="form-group"><label>Договор</label><select id="awContract">${(allData.contracts || []).map(c => `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`).join('')}</select></div>
     <div class="form-group"><label>Наименование</label><input type="text" id="awName"></div>
     <div class="form-group"><label>Обоснование</label><textarea id="awJustification"></textarea></div>
     <div class="form-group"><label>Ед. изм.</label><input type="text" id="awUnit" value="шт"></div>
@@ -831,16 +859,18 @@ async function savePhotos() {
   const files = document.getElementById('photoFiles').files;
   if (!files.length) return;
   
+  let completed = 0;
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    if (file.size > 10 * 1024 * 1024) { alert(`Файл ${file.name} слишком большой`); continue; }
+    if (file.size > 10 * 1024 * 1024) { alert(`Файл ${file.name} слишком большой`); completed++; continue; }
     
     const reader = new FileReader();
     reader.onload = async (e) => {
       await api('uploadAdditionalWorkPhoto', {
         workId: val('photoWorkId'), fileName: file.name, mimeType: file.type, fileData: e.target.result.split(',')[1]
       });
-      if (i === files.length - 1) { closeModal('universalModal'); loadData(); }
+      completed++;
+      if (completed === files.length) { closeModal('universalModal'); loadData(); }
     };
     reader.readAsDataURL(file);
   }
@@ -892,9 +922,13 @@ async function saveTenderDoc() {
   
   const reader = new FileReader();
   reader.onload = async (e) => {
+    const uploaded = await api('universalUpload', {
+      module: 'Тендеры', recordId: val('tDocId'),
+      fileName: file.name, mimeType: file.type, fileData: e.target.result.split(',')[1]
+    });
     const res = await api('addTenderDoc', {
       tenderId: val('tDocId'), docType: val('tDocType'), name: val('tDocName'),
-      fileData: e.target.result.split(',')[1], mimeType: file.type
+      fileUrl: uploaded.fileUrl || '', fileId: uploaded.fileId || ''
     });
     if (res.success) { closeModal('universalModal'); loadData(); }
     else alert('Ошибка: ' + res.error);
@@ -911,35 +945,20 @@ async function deleteTender(id) {
 function openKPModal() {
   openModalHtml(`
     <h2>💼 Коммерческое предложение</h2>
-    <div class="form-group"><label>Договор</label><select id="kpContract">${(allData.Договоры || []).map(c => `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`).join('')}</select></div>
     <div class="form-group"><label>Номер КП</label><input type="text" id="kpNumber"></div>
     <div class="form-group"><label>Дата</label><input type="date" id="kpDate"></div>
     <div class="form-group"><label>Заказчик</label><input type="text" id="kpCustomer"></div>
     <div class="form-group"><label>Объект</label><input type="text" id="kpObject"></div>
     <div class="form-group"><label>Сумма</label><input type="number" id="kpAmount"></div>
-    <div class="form-group"><label>Файл</label><input type="file" id="kpFile"></div>
     <button class="btn btn-primary btn-full" onclick="saveKP()">💾 Сохранить</button>
   `);
 }
 
 async function saveKP() {
-  const file = document.getElementById('kpFile').files[0];
   const res = await api('createKP', {
-    contractId: val('kpContract'), kpNumber: val('kpNumber'), date: val('kpDate'),
+    kpNumber: val('kpNumber'), date: val('kpDate'),
     customer: val('kpCustomer'), object: val('kpObject'), amount: val('kpAmount')
   });
-  
-  if (res.success && file) {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      await api('patchRecord', {
-        sheetName: 'Коммерческие_предложения', recordId: res.kpId,
-        fields: { 'Ссылка_на_файл': 'uploaded', 'FileID': 'pending' } // Упрощено для примера
-      });
-    };
-    reader.readAsDataURL(file);
-  }
-  
   if (res.success) { closeModal('universalModal'); loadData(); }
   else alert('Ошибка: ' + res.error);
 }
@@ -991,6 +1010,20 @@ async function savePersonDoc() {
   const res = await api('addPersonDoc', {
     personId: val('pDocId'), docType: val('pDocType'), number: val('pDocNum'), expiryDate: val('pDocExp')
   });
+  if (res.success && file) {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const uploaded = await api('universalUpload', {
+        module: 'Персонал', recordId: val('pDocId'),
+        fileName: file.name, mimeType: file.type, fileData: e.target.result.split(',')[1]
+      });
+      await api('patchRecord', {
+        sheetName: 'Персонал_Документы', recordId: res.docId,
+        fields: { 'Ссылка': uploaded.fileUrl, 'FileID': uploaded.fileId }
+      });
+    };
+    reader.readAsDataURL(file);
+  }
   if (res.success) { closeModal('universalModal'); loadData(); }
   else alert('Ошибка: ' + res.error);
 }
@@ -1003,28 +1036,28 @@ async function deletePerson(id) {
 
 function openGenericModal(key) {
   const configs = {
-    'orders': { title: 'Приказ', fields: ['Номер', 'Дата', 'Тип', 'Сотрудник', 'Содержание'] },
-    'ppr': { title: 'ППР/Техкарта', fields: ['Тип', 'Название', 'Номер', 'Версия'] },
-    'prescriptions': { title: 'Предписание', fields: ['Тип', 'Номер', 'Дата', 'От_кого', 'Содержание', 'Срок_исполнения'] },
-    'approvals': { title: 'Согласование', fields: ['Тип', 'Название', 'С_кем_согласуется', 'Номер_письма'] },
-    'daily': { title: 'Ежедневный отчёт', fields: ['Дата', 'Прораб', 'Погода', 'Численность', 'Выполнено', 'Проблемы'] },
-    'workorders': { title: 'Наряд-задание', fields: ['Номер', 'Дата', 'Бригада', 'Вид_работ', 'Объём'] },
-    'workforce': { title: 'Численность', fields: ['Дата', 'Профессия', 'Количество', 'ФИО_мастера'] },
-    'materials': { title: 'Материал', fields: ['Договор', 'Наименование', 'Поставщик', 'Количество', 'Ед.изм', 'Статус'] },
-    'reminders': { title: 'Напоминание', fields: ['Тип', 'Объект', 'Описание', 'Дата', 'Ответственный'] },
-    'calendar': { title: 'Событие', fields: ['Дата', 'Тип', 'Объект', 'Описание', 'Ответственный'] }
+    'orders': { title: 'Приказ', fields: [['number','Номер'],['date','Дата','date'],['type','Тип'],['employee','Сотрудник'],['content','Содержание','textarea']] },
+    'ppr': { title: 'ППР/Техкарта', fields: [['contractId','Договор','contract'],['type','Тип'],['name','Название'],['number','Номер']] },
+    'prescriptions': { title: 'Предписание', fields: [['contractId','Договор','contract'],['type','Тип'],['number','Номер'],['date','Дата','date'],['from','От кого'],['content','Содержание','textarea'],['dueDate','Срок','date']] },
+    'approvals': { title: 'Согласование', fields: [['contractId','Договор','contract'],['type','Тип'],['name','Название'],['withWhom','С кем'],['letterNumber','Номер письма']] },
+    'daily': { title: 'Ежедневный отчёт', fields: [['contractId','Договор','contract'],['date','Дата','date'],['foreman','Прораб'],['weather','Погода'],['workforce','Численность'],['completed','Выполнено','textarea'],['problems','Проблемы','textarea']] },
+    'workorders': { title: 'Наряд-задание', fields: [['contractId','Договор','contract'],['number','Номер'],['date','Дата','date'],['brigade','Бригада'],['workType','Вид работ'],['volume','Объём','number']] },
+    'workforce': { title: 'Численность', fields: [['contractId','Договор','contract'],['date','Дата','date'],['profession','Профессия'],['quantity','Количество','number'],['foreman','Мастер']] },
+    'materials': { title: 'Материал', fields: [['contractId','Договор','contract'],['name','Наименование'],['supplier','Поставщик'],['quantity','Количество','number'],['unit','Ед.изм']] },
+    'reminders': { title: 'Напоминание', fields: [['type','Тип'],['object','Объект'],['description','Описание','textarea'],['date','Дата','date'],['responsible','Ответственный']] },
+    'calendar': { title: 'Событие', fields: [['date','Дата','date'],['type','Тип'],['object','Объект'],['description','Описание','textarea'],['responsible','Ответственный']] }
   };
   
   const cfg = configs[key];
   if (!cfg) return;
   
   let html = `<h2>➕ ${cfg.title}</h2>`;
-  cfg.fields.forEach(f => {
-    const id = 'gen_' + f;
-    if (f.includes('Дата')) html += `<div class="form-group"><label>${f}</label><input type="date" id="${id}"></div>`;
-    else if (f === 'Договор') html += `<div class="form-group"><label>${f}</label><select id="${id}">${(allData.Договоры || []).map(c => `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`).join('')}</select></div>`;
-    else if (f === 'Содержание' || f === 'Описание' || f === 'Проблемы') html += `<div class="form-group"><label>${f}</label><textarea id="${id}"></textarea></div>`;
-    else html += `<div class="form-group"><label>${f}</label><input type="text" id="${id}"></div>`;
+  cfg.fields.forEach(([name,label,type]) => {
+    const id = 'gen_' + name;
+    if (type === 'date') html += `<div class="form-group"><label>${label}</label><input type="date" id="${id}"></div>`;
+    else if (type === 'contract') html += `<div class="form-group"><label>${label}</label><select id="${id}">${(allData.contracts || []).map(c => `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`).join('')}</select></div>`;
+    else if (type === 'textarea') html += `<div class="form-group"><label>${label}</label><textarea id="${id}"></textarea></div>`;
+    else html += `<div class="form-group"><label>${label}</label><input type="text" id="${id}"></div>`;
   });
   html += `<button class="btn btn-primary btn-full" onclick="saveGeneric('${key}')">💾 Сохранить</button>`;
   openModalHtml(html);
@@ -1037,48 +1070,48 @@ async function saveGeneric(key) {
     'workforce': 'addWorkforce', 'materials': 'addMaterial', 'reminders': 'addReminder', 'calendar': 'addCalendarEvent'
   };
   
-  const payload = {};
-  const fields = {
-    'orders': ['number', 'date', 'type', 'employee', 'content'],
-    'ppr': ['type', 'name', 'number', 'version'],
-    'prescriptions': ['type', 'number', 'date', 'from', 'content', 'dueDate'],
-    'approvals': ['type', 'name', 'withWhom', 'letterNumber'],
-    'daily': ['date', 'foreman', 'weather', 'workforce', 'completed', 'problems'],
-    'workorders': ['number', 'date', 'brigade', 'workType', 'volume'],
-    'workforce': ['date', 'profession', 'quantity', 'foreman'],
-    'materials': ['contractId', 'name', 'supplier', 'quantity', 'unit', 'status'],
-    'reminders': ['type', 'object', 'description', 'date', 'responsible'],
-    'calendar': ['date', 'type', 'object', 'description', 'responsible']
+  const fieldMappings = {
+    'orders': [['number','number'],['date','date'],['type','type'],['employee','employee'],['content','content']],
+    'ppr': [['contractId','contractId'],['type','type'],['name','name'],['number','number']],
+    'prescriptions': [['contractId','contractId'],['type','type'],['number','number'],['date','date'],['from','from'],['content','content'],['dueDate','dueDate']],
+    'approvals': [['contractId','contractId'],['type','type'],['name','name'],['withWhom','withWhom'],['letterNumber','letterNumber']],
+    'daily': [['contractId','contractId'],['date','date'],['foreman','foreman'],['weather','weather'],['workforce','workforce'],['completed','completed'],['problems','problems']],
+    'workorders': [['contractId','contractId'],['number','number'],['date','date'],['brigade','brigade'],['workType','workType'],['volume','volume']],
+    'workforce': [['contractId','contractId'],['date','date'],['profession','profession'],['quantity','quantity'],['foreman','foreman']],
+    'materials': [['contractId','contractId'],['name','name'],['supplier','supplier'],['quantity','quantity'],['unit','unit']],
+    'reminders': [['type','type'],['object','object'],['description','description'],['date','date'],['responsible','responsible']],
+    'calendar': [['date','date'],['type','type'],['object','object'],['description','description'],['responsible','responsible']]
   };
   
-  fields[key].forEach(f => {
-    const el = document.getElementById('gen_' + (f === 'contractId' ? 'Договор' : f.charAt(0).toUpperCase() + f.slice(1)));
-    if (el) payload[f] = el.value;
+  const payload = {};
+  fieldMappings[key].forEach(([fieldName, param]) => {
+    if (fieldName === 'contractId') {
+      payload.contractId = val('gen_contractId') || 'ОБЪ-001';
+    } else {
+      payload[fieldName] = val('gen_' + fieldName);
+    }
   });
   
-  // Маппинг для материалов
-  if (key === 'materials') {
-    payload.contractId = val('gen_Договор');
-    payload.name = val('gen_Наименование');
-    payload.supplier = val('gen_Поставщик');
-    payload.quantity = val('gen_Количество');
-    payload.unit = val('gen_Ед.изм');
-    payload.status = val('gen_Статус');
-  }
-  
   const res = await api(actions[key], payload);
-  if (result.success) { closeModal('universalModal'); loadData(); }
-  else alert('Ошибка: ' + result.error);
+  if (res.success) { closeModal('universalModal'); loadData(); }
+  else alert('Ошибка: ' + res.error);
 }
 
 async function deleteGeneric(key, id) {
   if (!confirm('Удалить запись?')) return;
+  const idFields = {
+    'orders': 'orderId', 'planning': 'pprId', 'prescriptions': 'prescriptionId',
+    'approvals': 'approvalId', 'daily': 'reportId', 'workorders': 'workOrderId',
+    'workforce': 'workforceId', 'materials': 'materialId', 'reminders': 'reminderId'
+  };
   const actions = {
     'orders': 'deleteOrder', 'planning': 'deletePPR', 'prescriptions': 'deletePrescription',
     'approvals': 'deleteApproval', 'daily': 'deleteDailyReport', 'workorders': 'deleteWorkOrder',
     'workforce': 'deleteWorkforce', 'materials': 'deleteMaterial', 'reminders': 'deleteReminder'
   };
-  const res = await api(actions[key] || 'deleteGeneric', { [key === 'planning' ? 'pprId' : key === 'materials' ? 'materialId' : key === 'reminders' ? 'reminderId' : 'id']: id });
+  const payload = {};
+  payload[idFields[key]] = id;
+  const res = await api(actions[key], payload);
   if (res.success) loadData(); else alert('Ошибка: ' + res.error);
 }
 
@@ -1105,7 +1138,7 @@ function openTaskModal() {
   openModalHtml(`
     <h2>📨 Новое задание</h2>
     <div class="form-group"><label>Исполнитель</label>
-      <select id="taskTo">${(allData.Пользователи || []).filter(u => u['Логин'] !== currentUser.login).map(u => `<option value="${u['Логин']}">${u['ФИО']}</option>`).join('')}</select>
+      <select id="taskTo">${(allData.users || []).filter(u => u['Логин'] !== currentUser.login).map(u => `<option value="${u['Логин']}">${u['ФИО']}</option>`).join('')}</select>
     </div>
     <div class="form-group"><label>Тема</label><input type="text" id="taskSubj"></div>
     <div class="form-group"><label>Описание</label><textarea id="taskDesc"></textarea></div>
@@ -1165,14 +1198,14 @@ async function sendTaskReply(taskId) {
   const text = val('taskReplyText');
   if (!text) return;
   const res = await api('addTaskReply', { taskId, text });
-  if (res.success) { viewTask(taskId); loadData(); }
+  if (res.success) { closeModal('universalModal'); loadData(); }
   else alert('Ошибка: ' + res.error);
 }
 
 function openEstimateModal() {
   openModalHtml(`
     <h2>📊 Смета</h2>
-    <div class="form-group"><label>Договор</label><select id="estContract">${(allData.Договоры || []).map(c => `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`).join('')}</select></div>
+    <div class="form-group"><label>Договор</label><select id="estContract">${(allData.contracts || []).map(c => `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`).join('')}</select></div>
     <div class="form-group"><label>Название</label><input type="text" id="estName"></div>
     <div class="form-group"><label>Сумма</label><input type="number" id="estAmount"></div>
     <button class="btn btn-primary btn-full" onclick="saveEstimate()">💾 Сохранить</button>
@@ -1217,6 +1250,25 @@ async function saveEstimateItem() {
   else alert('Ошибка: ' + res.error);
 }
 
+async function viewEstimate(id) {
+  const res = await api('getEstimateFull', { estimateId: id });
+  if (!res.success) return alert('Ошибка: ' + res.error);
+  
+  const positions = res.positions || [];
+  let html = `<h2>📊 Позиции сметы</h2>`;
+  html += positions.map(p => `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${p['Наименование']}</div>
+          <div class="card-meta">${p['Количество']} ${p['Ед_изм']} × ${money(p['Цена'])} = ${money(p['Сумма'])}<br>Статус: ${p['Статус']} | Закрыто: ${p['Закрыто_объём']}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  openModalHtml(html);
+}
+
 async function deleteEstimate(id) {
   if (!confirm('Удалить смету?')) return;
   const res = await api('deleteEstimate', { estimateId: id });
@@ -1255,7 +1307,7 @@ function openContractorWorkModal(workId = null, contractorId = null) {
     <h2>🔨 Работа подрядчика</h2>
     <input type="hidden" id="cwId" value="${workId || ''}">
     <div class="form-group"><label>Подрядчик</label>
-      <select id="cwContractor">${(allData.Подрядчики || []).map(c => `<option value="${c['ID']}" ${c['ID'] === contractorId ? 'selected' : ''}>${c['Название']}</option>`).join('')}</select>
+      <select id="cwContractor">${(allData.contractors || []).map(c => `<option value="${c['ID']}" ${c['ID'] === contractorId ? 'selected' : ''}>${c['Название']}</option>`).join('')}</select>
     </div>
     <div class="form-group"><label>Вид работ</label><input type="text" id="cwType"></div>
     <div class="form-group"><label>Договорной объём</label><input type="number" id="cwVol"></div>
@@ -1266,7 +1318,7 @@ function openContractorWorkModal(workId = null, contractorId = null) {
 
 async function saveContractorWork() {
   const res = await api('createContractorWork', {
-    contractorId: val('cwContractor'), workType: val('cwType'), volume: val('cwVol'), price: val('cwPrice')
+    contractorId: val('cwContractor'), workType: val('cwType'), volume: val('cwVol'), price: val('cwPrice'), unit: 'м2'
   });
   if (res.success) { closeModal('universalModal'); loadData(); }
   else alert('Ошибка: ' + res.error);
@@ -1296,7 +1348,6 @@ async function viewContractor(id) {
             <div class="card-title">${w['Вид_работ']}</div>
             <div class="card-meta">Объём: ${w['Закрыто_объём']} / ${w['Договорной_объём']} ${w['Ед_изм']} | Сумма: ${money(w['Сумма_закрытая'])} / ${money(w['Сумма_договорная'])}</div>
           </div>
-          <button class="btn btn-small btn-success" onclick="openCloseVolumeModal('${w['ID']}', 'work')">📊 Закрыть</button>
         </div>
       </div>
     `).join('')}
@@ -1304,29 +1355,58 @@ async function viewContractor(id) {
   openModalHtml(html);
 }
 
-function openCloseVolumeModal(id, type) {
+function openSubmitVolumeModal(contractId = '') {
   openModalHtml(`
-    <h2>✅ Закрыть объём</h2>
-    <input type="hidden" id="cvId" value="${id}">
-    <input type="hidden" id="cvType" value="${type}">
-    <div class="form-group"><label>Тип закрытия</label>
-      <select id="cvClosureType">
-        <option value="ПТО">🏢 Закрытие ПТО</option>
-        <option value="Подрядчик">🔨 Закрытие подрядчику</option>
+    <h2>📊 Подать объём на проверку</h2>
+    <div class="form-group"><label>Договор</label>
+      <select id="svContract" onchange="updateSubmitPositions()">
+        <option value="">Выберите</option>
+        ${(allData.contracts || []).map(c => `<option value="${c['ID_Договора']}" ${c['ID_Договора'] === contractId ? 'selected' : ''}>${c['Контрагент']}</option>`).join('')}
       </select>
     </div>
-    <div class="form-group"><label>Объём</label><input type="number" id="cvVol"></div>
-    <div class="form-group"><label>Комментарий</label><textarea id="cvComment"></textarea></div>
-    <button class="btn btn-primary btn-full" onclick="saveCloseVolume()">✅ Закрыть</button>
+    <div class="form-group"><label>Позиция</label><select id="svPosition"></select></div>
+    <div class="form-group"><label>Объём</label><input type="number" id="svVolume"></div>
+    <div class="form-group"><label>Комментарий</label><textarea id="svComment"></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="submitVolume()">📤 Подать</button>
+  `);
+  updateSubmitPositions();
+}
+
+function updateSubmitPositions() {
+  const contractId = val('svContract');
+  const estimates = (allData.estimates || []).filter(e => e['ID_Договора'] === contractId);
+  const ids = estimates.map(e => e['ID_Сметы']);
+  const positions = (allData.estimateItems || []).filter(p => ids.includes(p['ID_Сметы']));
+  document.getElementById('svPosition').innerHTML = positions.map(p => `<option value="${p['ID_Позиции']}">${p['Наименование']} — ${p['Количество']} ${p['Ед_изм']}</option>`).join('');
+}
+
+async function submitVolume() {
+  const res = await api('submitVolume', {
+    contractId: val('svContract'), positionId: val('svPosition'),
+    volume: val('svVolume'), comment: val('svComment')
+  });
+  if (res.success) { closeModal('universalModal'); loadData(); }
+  else alert('Ошибка: ' + res.error);
+}
+
+function openKS2Modal() {
+  openModalHtml(`
+    <h2>💰 Новый КС-2</h2>
+    <div class="form-group"><label>Договор</label>
+      <select id="ks2cContract">${(allData.contracts || []).map(c => `<option value="${c['ID_Договора']}">${c['Контрагент']}</option>`).join('')}</select>
+    </div>
+    <div class="form-group"><label>Номер</label><input type="text" id="ks2cNumber"></div>
+    <div class="form-group"><label>Дата</label><input type="date" id="ks2cDate"></div>
+    <div class="form-group"><label>Период работ</label><input type="text" id="ks2cPeriod"></div>
+    <div class="form-group"><label>Сумма</label><input type="number" id="ks2cAmount"></div>
+    <button class="btn btn-primary btn-full" onclick="saveKS2()">💾 Сохранить</button>
   `);
 }
 
-async function saveCloseVolume() {
-  const res = await api('closeVolume', {
-    closureType: val('cvClosureType'),
-    positionId: val('cvType') === 'position' ? val('cvId') : null,
-    contractorWorkId: val('cvType') === 'work' ? val('cvId') : null,
-    volume: val('cvVol'), comment: val('cvComment')
+async function saveKS2() {
+  const res = await api('createKS2', {
+    contractId: val('ks2cContract'), ks2Number: val('ks2cNumber'), date: val('ks2cDate'),
+    period: val('ks2cPeriod'), totalAmount: val('ks2cAmount'), positions: []
   });
   if (res.success) { closeModal('universalModal'); loadData(); }
   else alert('Ошибка: ' + res.error);
@@ -1339,7 +1419,17 @@ function openUserModal() {
     <div class="form-group"><label>Пароль</label><input type="text" id="uPass"></div>
     <div class="form-group"><label>ФИО</label><input type="text" id="uFio"></div>
     <div class="form-group"><label>Роль</label>
-      <select id="uRole"><option>Администратор</option><option>ПТО</option><option>Бухгалтерия</option><option>Прораб</option></select>
+      <select id="uRole">
+        <option>Администратор</option>
+        <option>ПТО</option>
+        <option>Бухгалтерия</option>
+        <option>Прораб</option>
+        <option>Архитектор</option>
+        <option>ГИП</option>
+        <option>ГАП</option>
+        <option>Тендерный_специалист</option>
+        <option>Отдел_кадров</option>
+      </select>
     </div>
     <div class="form-group"><label>Email</label><input type="email" id="uEmail"></div>
     <button class="btn btn-primary btn-full" onclick="saveUser()">✅ Создать</button>
@@ -1348,6 +1438,7 @@ function openUserModal() {
 
 async function saveUser() {
   const res = await api('createUser', {
+    adminLogin: currentUser.login,
     login: val('uLogin'), password: val('uPass'), fio: val('uFio'),
     role: val('uRole'), email: val('uEmail'), access: 'Полный'
   });
@@ -1357,7 +1448,7 @@ async function saveUser() {
 
 async function deleteUser(login) {
   if (!confirm('Удалить пользователя?')) return;
-  const res = await api('deleteUser', { login });
+  const res = await api('deleteUser', { adminLogin: currentUser.login, login });
   if (res.success) loadData(); else alert('Ошибка: ' + res.error);
 }
 
@@ -1370,35 +1461,31 @@ async function loadTrash() {
   
   let html = '';
   Object.entries(res.trash).forEach(([sheet, items]) => {
-    html += `<h3>${sheet} (${items.length})</h3>
+    html += `<div class="card"><h3>${sheet} (${items.length})</h3>
       <div class="table-wrap"><table>
-        <thead><tr><th><input type="checkbox" onchange="toggleTrashAll(this, '${sheet}')"></th><th>ID</th><th>Название</th><th>Действия</th></tr></thead>
+        <thead><tr><th>ID</th><th>Название</th><th>Действия</th></tr></thead>
         <tbody>
           ${items.map(item => `
             <tr>
-              <td><input type="checkbox" class="trash-check" data-sheet="${sheet}" data-id="${item.id}" data-field="${item.idField}"></td>
               <td>${item.id}</td>
               <td>${item.display}</td>
               <td>
-                <button class="btn btn-small btn-success" onclick="restoreItem('${sheet}', '${item.id}', '${item.idField}')">✅</button>
-                <button class="btn btn-small btn-danger" onclick="permDeleteItem('${sheet}', '${item.id}', '${item.idField}')">🗑️</button>
+                <button class="btn btn-small btn-success" onclick="restoreItem('${sheet}', '${item.id}', '${item.idField}')">✅ Восстановить</button>
+                <button class="btn btn-small btn-danger" onclick="permDeleteItem('${sheet}', '${item.id}', '${item.idField}')">🗑️ Навсегда</button>
               </td>
             </tr>
           `).join('')}
         </tbody>
-      </table></div>
+      </table></div></div>
     `;
   });
   el.innerHTML = html || '<div class="loader">Корзина пуста</div>';
 }
 
-function toggleTrashAll(cb, sheet) {
-  document.querySelectorAll(`.trash-check[data-sheet="${sheet}"]`).forEach(c => c.checked = cb.checked);
-}
-
 async function restoreItem(sheet, id, field) {
   const res = await api('restoreFromTrash', { sheetName: sheet, recordId: id, idField: field });
-  if (res.success) loadTrash(); else alert('Ошибка: ' + res.error);
+  if (res.success) { loadTrash(); loadData(); }
+  else alert('Ошибка: ' + res.error);
 }
 
 async function permDeleteItem(sheet, id, field) {
@@ -1407,31 +1494,8 @@ async function permDeleteItem(sheet, id, field) {
   if (res.success) loadTrash(); else alert('Ошибка: ' + res.error);
 }
 
-async function restoreAllSelected() {
-  const checks = document.querySelectorAll('.trash-check:checked');
-  if (!checks.length) return alert('Ничего не выбрано');
-  
-  for (let cb of checks) {
-    await api('restoreFromTrash', { sheetName: cb.dataset.sheet, recordId: cb.dataset.id, idField: cb.dataset.field });
-  }
-  loadTrash();
-}
-
-async function permanentDeleteSelected() {
-  const checks = document.querySelectorAll('.trash-check:checked');
-  if (!checks.length) return alert('Ничего не выбрано');
-  if (!confirm('Удалить выбранные навсегда?')) return;
-  
-  for (let cb of checks) {
-    await api('permanentDelete', { sheetName: cb.dataset.sheet, recordId: cb.dataset.id, idField: cb.dataset.field });
-  }
-  loadTrash();
-}
-
 async function loadHistory() {
-  const entity = val('historyEntityFilter');
-  const recordId = val('historyRecordFilter');
-  const res = await api('getHistory', { entity, recordId, limit: 100 });
+  const res = await api('getHistory', { limit: 100 });
   if (!res.success) return;
   
   const el = document.getElementById('historyList');
@@ -1442,7 +1506,7 @@ async function loadHistory() {
       <table>
         <thead><tr><th>Дата</th><th>Пользователь</th><th>Действие</th><th>Сущность</th><th>Детали</th></tr></thead>
         <tbody>
-          ${res.history.map(h => `<tr><td>${h['Дата']}</td><td>${h['Пользователь']}</td><td>${h['Действие']}</td><td>${h['Сущность']}</td><td>${h['Детали'] || ''}</td></tr>`).join('')}
+          ${(res.history || []).map(h => `<tr><td>${h['Дата']}</td><td>${h['Пользователь']}</td><td>${h['Действие']}</td><td>${h['Сущность']}</td><td>${h['Комментарий'] || ''}</td></tr>`).join('')}
         </tbody>
       </table>
     </div>
@@ -1453,19 +1517,13 @@ function openEmailSettingsModal() {
   openModalHtml(`
     <h2>📧 Email-уведомления</h2>
     <div class="form-group"><label>Ваш Email</label><input type="email" id="emailAddr" value="${currentUser.email || ''}"></div>
-    <div class="form-group"><label>Подписки</label>
-      <label><input type="checkbox" class="emailSub" value="Документы" checked> Документы</label><br>
-      <label><input type="checkbox" class="emailSub" value="Замечания" checked> Замечания</label><br>
-      <label><input type="checkbox" class="emailSub" value="Напоминания" checked> Напоминания</label>
-    </div>
     <button class="btn btn-primary btn-full" onclick="saveEmailSettings()">💾 Сохранить</button>
     <button class="btn btn-info btn-full" style="margin-top:8px;" onclick="testEmail()">🧪 Тест</button>
   `);
 }
 
 async function saveEmailSettings() {
-  const subs = Array.from(document.querySelectorAll('.emailSub:checked')).map(c => c.value).join(',');
-  const res = await api('saveUserEmail', { email: val('emailAddr'), subscriptions: subs });
+  const res = await api('saveUserEmail', { login: currentUser.login, email: val('emailAddr'), subscriptions: 'Документы,Замечания,Напоминания,Договоры,Сроки' });
   if (res.success) { closeModal('universalModal'); alert('Сохранено'); }
   else alert('Ошибка: ' + res.error);
 }
@@ -1486,7 +1544,6 @@ function exportData() {
   });
 }
 
-// ====== ГЛОБАЛЬНЫЙ ПОИСК ======
 let searchDebounce = null;
 function handleGlobalSearch(query) {
   clearTimeout(searchDebounce);
@@ -1512,11 +1569,14 @@ function performGlobalSearch(query) {
   const q = query.toLowerCase();
   const results = [];
   
-  (allData.Договоры || []).forEach(c => {
+  (allData.contracts || []).forEach(c => {
     if (String(c['Контрагент'] || '').toLowerCase().includes(q)) results.push({ type: 'Договор', text: c['Контрагент'], action: `switchTabDirect('contracts')` });
   });
-  (allData.Персонал || []).forEach(p => {
+  (allData.personnel || []).forEach(p => {
     if (String(p['ФИО'] || '').toLowerCase().includes(q)) results.push({ type: 'Сотрудник', text: p['ФИО'], action: `switchTabDirect('personnel')` });
+  });
+  (allData.tenders || []).forEach(t => {
+    if (String(t['Название'] || '').toLowerCase().includes(q)) results.push({ type: 'Тендер', text: t['Название'], action: `switchTabDirect('tenders')` });
   });
   
   const el = document.getElementById('searchResults');
@@ -1533,14 +1593,13 @@ function performGlobalSearch(query) {
   el.classList.add('active');
 }
 
-// ====== МОБИЛЬНАЯ НАВИГАЦИЯ ======
 function updateMobileNav() {
   const active = document.querySelector('.tab.active');
   if (!active) return;
   const id = active.dataset.tab;
   document.querySelectorAll('.mobile-nav-item').forEach(item => {
     item.classList.remove('active');
-    if (item.getAttribute('onclick').includes(`'${id}'`)) item.classList.add('active');
+    if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(`'${id}'`)) item.classList.add('active');
   });
 }
 
@@ -1557,7 +1616,6 @@ function mobileQuickAction() {
   if (actions[id]) actions[id]();
 }
 
-// Свайпы для мобильных
 let touchStartX = 0;
 let touchEndX = 0;
 document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
@@ -1572,7 +1630,6 @@ document.addEventListener('touchend', e => {
   else if (diff < 0 && idx < tabs.length - 1) tabs[idx + 1].click();
 });
 
-// Горячие клавиши
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
     e.preventDefault();
@@ -1584,3 +1641,126 @@ document.addEventListener('keydown', e => {
     closeModal('universalModal');
   }
 });
+
+async function renderContractProgress() {
+  const contractId = val('progressContractFilter');
+  if (!contractId) return;
+  
+  const res = await api('getContractProgress', { contractId });
+  if (!res.success) return alert('Ошибка: ' + res.error);
+  
+  const summary = res.summary;
+  const s = document.getElementById('progressSummary');
+  if (s) {
+    s.innerHTML = `
+      <div class="stat-box"><div class="stat-number">${summary.totalVolume}</div><div class="stat-label">Всего объёма</div></div>
+      <div class="stat-box"><div class="stat-number">${summary.approvedExecuted}</div><div class="stat-label">Выполнено</div></div>
+      <div class="stat-box"><div class="stat-number">${summary.onReview}</div><div class="stat-label">На проверке</div></div>
+      <div class="stat-box"><div class="stat-number">${summary.ks2Count}</div><div class="stat-label">КС-2</div></div>
+    `;
+  }
+  
+  const positions = res.positions || [];
+  const list = document.getElementById('progressPositionsList');
+  if (list) {
+    list.innerHTML = positions.map(p => `
+      <div class="card">
+        <div class="card-title">${p.name}</div>
+        <div class="card-meta">Всего: ${p.totalVolume} ${p.unit} | ${money(p.totalAmount)}</div>
+        <div style="margin-top:10px;">
+          <div class="progress-bar-container">
+            <div class="segment seg-green" style="width:${(p.approvedExecuted/p.totalVolume*100)||0}%">${p.approvedExecuted}</div>
+            <div class="segment seg-yellow" style="width:${(p.onReview/p.totalVolume*100)||0}%">${p.onReview}</div>
+            <div class="segment seg-gray" style="width:${(p.executionRemaining/p.totalVolume*100)||0}%">${p.executionRemaining}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function viewArchProject(id) {
+  const p = (allData.archProjects || []).find(x => x['ID_Проекта'] === id);
+  if (!p) return;
+  openModalHtml(`
+    <h2>🏛️ ${p['Название']}</h2>
+    <div class="card">
+      <div class="card-meta">
+        <b>Тип:</b> ${p['Тип']}<br>
+        <b>Автор:</b> ${p['Автор']}<br>
+        <b>Версия:</b> ${p['Версия']}<br>
+        <b>Дата:</b> ${p['Дата_создания']}<br>
+        ${p['Примечание'] ? '<b>Примечание:</b> ' + p['Примечание'] : ''}
+      </div>
+    </div>
+    ${p['Ссылка_на_папку'] ? `<a href="${p['Ссылка_на_папку']}" target="_blank" class="btn btn-info">📁 Открыть папку</a>` : ''}
+  `);
+}
+
+function openDrawingModal(projectId) {
+  openModalHtml(`
+    <h2>📐 Добавить чертёж</h2>
+    <input type="hidden" id="drProjectId" value="${projectId}">
+    <div class="form-group"><label>Шифр</label>
+      <select id="drCode"><option>АР</option><option>КР</option><option>КЖ</option><option>ОВ</option><option>ВК</option><option>ЭОМ</option></select>
+    </div>
+    <div class="form-group"><label>Название</label><input type="text" id="drName"></div>
+    <div class="form-group"><label>Масштаб</label><input type="text" id="drScale"></div>
+    <div class="form-group"><label>Лист</label><input type="text" id="drSheet"></div>
+    <button class="btn btn-primary btn-full" onclick="saveDrawing()">💾 Сохранить</button>
+  `);
+}
+
+async function saveDrawing() {
+  const res = await api('addDrawing', {
+    projectId: val('drProjectId'), code: val('drCode'), name: val('drName'),
+    scale: val('drScale'), sheet: val('drSheet'), format: 'А3'
+  });
+  if (res.success) { closeModal('universalModal'); loadData(); }
+  else alert('Ошибка: ' + res.error);
+}
+
+function openPreservationModal(projectId) {
+  openModalHtml(`
+    <h2>🏛️ Предмет охраны</h2>
+    <input type="hidden" id="prProjectId" value="${projectId}">
+    <div class="form-group"><label>Название</label><input type="text" id="prName"></div>
+    <div class="form-group"><label>Тип</label>
+      <select id="prType"><option>Фасад</option><option>Интерьер</option><option>Декор</option><option>Лепнина</option><option>Роспись</option></select>
+    </div>
+    <div class="form-group"><label>Местоположение</label><input type="text" id="prLoc"></div>
+    <div class="form-group"><label>Описание</label><textarea id="prDesc"></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="savePreservation()">💾 Сохранить</button>
+  `);
+}
+
+async function savePreservation() {
+  const res = await api('addPreservationItem', {
+    projectId: val('prProjectId'), name: val('prName'), type: val('prType'),
+    location: val('prLoc'), description: val('prDesc')
+  });
+  if (res.success) { closeModal('universalModal'); loadData(); }
+  else alert('Ошибка: ' + res.error);
+}
+
+function openSupervisionModal(projectId) {
+  openModalHtml(`
+    <h2>🔍 Замечание авторского надзора</h2>
+    <input type="hidden" id="supProjectId" value="${projectId}">
+    <div class="form-group"><label>Дата</label><input type="date" id="supDate"></div>
+    <div class="form-group"><label>Описание</label><textarea id="supDesc"></textarea></div>
+    <div class="form-group"><label>Исполнитель</label>
+      <select id="supResp">${(allData.users || []).map(u => `<option value="${u['Логин']}">${u['ФИО']}</option>`).join('')}</select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveSupervision()">💾 Сохранить</button>
+  `);
+}
+
+async function saveSupervision() {
+  const res = await api('addAuthorSupervision', {
+    projectId: val('supProjectId'), date: val('supDate'),
+    description: val('supDesc'), responsible: val('supResp'), author: currentUser.fio
+  });
+  if (res.success) { closeModal('universalModal'); loadData(); }
+  else alert('Ошибка: ' + res.error);
+}
