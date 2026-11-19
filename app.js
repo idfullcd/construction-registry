@@ -1,5 +1,5 @@
 // ⚠️ ЗАМЕНИТЕ ЭТУ СТРОКУ НА ВАШ РЕАЛЬНЫЙ URL APPS SCRIPT
-const API_URL = 'ВАШ_URL_ИЗ_ЭТАПА_3';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyegQF1PvF2dyiW8YPTLe4hc_rAR_3CruU--dc2NegkxL1V-hevoQzKhTkzFQHrYVcZuA/exec';
 
 let currentUser = null;
 let allData = {};
