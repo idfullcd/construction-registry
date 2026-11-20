@@ -1,49 +1,54 @@
-let renderToken=0, lastSelIndex=-1;
+let renderToken=0,lastSelIndex=-1;
 const qCache=new Map();
 
+/* ---------- навигация ---------- */
 function buildNav(){
-  const host=$('#navGroups'); host.innerHTML='';
+  const host=$('#navGroups');host.innerHTML='';
   GROUPS.forEach(([g,label])=>{
     const mods=visibleModules().filter(m=>m.group===g); if(!mods.length) return;
-    const box=document.createElement('section'); box.className='nav-group';
+    const box=document.createElement('section');box.className='nav-group';
     box.innerHTML='<div class="nav-label">'+esc(label)+'</div>';
-    const row=document.createElement('div'); row.className='nav-row';
+    const row=document.createElement('div');row.className='nav-row';
     mods.forEach(m=>{
       const b=document.createElement('button');
-      b.className='tab'+(m.id===S.mod?' on':''); b.dataset.mod=m.id;
+      b.className='tab'+(m.id===S.mod?' on':'');b.dataset.mod=m.id;
       b.innerHTML='<span class="tab-ico">'+m.icon+'</span><span>'+esc(m.title)+'</span><span class="tab-n" data-badge="'+m.id+'"></span>';
-      b.onclick=()=>setModule(m.id); row.appendChild(b);
+      b.onclick=()=>setModule(m.id);row.appendChild(b);
     });
-    box.appendChild(row); host.appendChild(box);
+    box.appendChild(row);host.appendChild(box);
   });
   const vis=visibleModules();
   if(!MOD[S.mod]||vis.indexOf(MOD[S.mod])===-1) S.mod=vis.length?vis[0].id:'dashboard';
 }
 function paintBadges(){
   $$('[data-badge]').forEach(el=>{
-    const id=el.dataset.badge,m=MOD[id]; let n=0,hot=false;
+    const id=el.dataset.badge,m=MOD[id];let n=0,hot=false;
     if(id==='trash') n=Object.keys(S.trash).reduce((a,k)=>a+S.trash[k].length,0);
     else if(id==='submissions'){n=(S.snap.submissions||[]).filter(r=>String(r['Статус'])==='На_проверке').length;hot=n>0;}
     else if(m&&!m.special) n=(S.snap[m.id]||[]).length;
-    el.textContent=n||''; el.classList.toggle('show',!!n); el.classList.toggle('hot',hot);
+    el.textContent=n||'';el.classList.toggle('show',!!n);el.classList.toggle('hot',hot);
   });
-  const ts=$('#syncTime'); if(ts) ts.textContent=S.lastTs?new Date(S.lastTs).toLocaleTimeString('ru-RU'):'—';
+  const ts=$('#syncTime');if(ts) ts.textContent=S.lastTs?new Date(S.lastTs).toLocaleTimeString('ru-RU'):'—';
 }
 function buildMore(){
-  const host=$('#moreBody'); host.innerHTML='';
+  const host=$('#moreBody');host.innerHTML='';
   GROUPS.forEach(([g,label])=>{
-    const mods=visibleModules().filter(m=>m.group===g); if(!mods.length) return;
-    const s=document.createElement('div'); s.className='more-group';
+    const mods=visibleModules().filter(m=>m.group===g);if(!mods.length) return;
+    const s=document.createElement('div');s.className='more-group';
     s.innerHTML='<div class="more-label">'+esc(label)+'</div>';
-    const grid=document.createElement('div'); grid.className='more-grid';
+    const grid=document.createElement('div');grid.className='more-grid';
     mods.forEach(m=>{const b=document.createElement('button');b.className='more-item';
       b.innerHTML='<span>'+m.icon+'</span><b>'+esc(m.title)+'</b>';
       b.onclick=()=>{setModule(m.id);closeMore();};grid.appendChild(b);});
-    s.appendChild(grid); host.appendChild(s);
+    s.appendChild(grid);host.appendChild(s);
   });
 }
 function openMore(){$('#moreSheet').classList.add('on');document.body.classList.add('lock');}
-function closeMore(){$('#moreSheet').classList.remove('on');if(!$('#modal').classList.contains('on')&&!$('#drawer').classList.contains('on'))document.body.classList.remove('lock');}
+function closeMore(){$('#moreSheet').classList.remove('on');unlockBody();}
+function unlockBody(){
+  if(!$('#modal').classList.contains('on')&&!$('#drawer').classList.contains('on')&&!S.pal.open&&!S.notifOpen&&!$('#moreSheet').classList.contains('on'))
+    document.body.classList.remove('lock');
+}
 function buildShell(){
   $('#modHost').innerHTML='<div class="mod-head"><div><h1 id="modTitle">—</h1><div class="mod-sub" id="modSub"></div></div><div class="mod-actions" id="modActions"></div></div>'+
     '<div class="toolbar" id="toolbar"></div><div class="bulk" id="bulkBar"></div><div id="modBody"></div>';
@@ -60,43 +65,50 @@ function buildShell(){
 }
 function setModule(id){
   if(!MOD[id]) return;
-  S.mod=id;S.sel.clear();S.orderMode=false;lastSelIndex=-1;
+  S.mod=id;S.sel.clear();S.orderMode=false;lastSelIndex=-1;S.focusRow=-1;
   $$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.mod===id));
   $$('.mnav-item').forEach(t=>t.classList.toggle('on',t.dataset.mod===id));
-  renderActive(); window.scrollTo({top:0,behavior:'smooth'});
+  renderActive();window.scrollTo({top:0,behavior:'smooth'});
 }
 function renderActive(){
-  const m=MOD[S.mod]; if(!m) return;
+  const m=MOD[S.mod];if(!m) return;
   const tok=++renderToken;
   $('#modTitle').innerHTML='<span class="mh-ico">'+m.icon+'</span>'+esc(m.title);
   $('#modSub').textContent=m.special?specialSub(m):((S.snap[m.id]||[]).length+' записей · лист «'+m.sheet+'»');
   $('#modActions').innerHTML=
     (m.sheet&&can(m.id,'create')?'<button class="btn primary" data-a="new">＋ Создать</button>':'')+
+    (m.sheet?'<button class="btn ghost" data-a="print">🖨 Печать</button>':'')+
     (m.sheet&&can(m.id,'export')?'<button class="btn ghost" data-a="xls">⤓ Excel</button><button class="btn ghost" data-a="csv">⤓ CSV</button>':'')+
     '<button class="btn ghost" data-a="refresh">⟳</button>';
   if(m.special){$('#toolbar').innerHTML='';$('#bulkBar').innerHTML='';renderSpecial(m,tok);return;}
   renderToolbar(m);renderBulk(m);renderList(m,tok);
 }
 function specialSub(m){
-  if(m.special==='dashboard') return 'Сводка · '+Object.keys(MOD).filter(k=>MOD[k].sheet).length+' разделов под контролем';
+  if(m.special==='dashboard') return 'Живая сводка · '+MODULES.filter(x=>x.sheet).length+' разделов · настройте вид справа';
   if(m.special==='progress') return 'Выполнение работ и подача КС-2 параллельно';
   if(m.special==='calendar') return 'События и напоминания по месяцам';
   if(m.special==='trash') return Object.keys(S.trash).reduce((a,k)=>a+S.trash[k].length,0)+' записей в корзине';
-  if(m.special==='admin') return 'Пользователи, роли, уведомления, резервные копии';
+  if(m.special==='admin') return 'Пользователи, роли, уведомления, импорт, копии';
   return (S.snap[m.source]||[]).length+' записей';
 }
+
+/* ---------- toolbar ---------- */
 function renderToolbar(m){
   const v=(S.views[m.id]&&S.views[m.id].active)?S.views[m.id].list[S.views[m.id].active]:null;
   if(v&&!S.q[m.id]&&!S.filter[m.id]){S.q[m.id]=v.q||'';S.filter[m.id]=v.status||'';S.sort[m.id]=v.sort||null;}
-  const statuses=m.statuses||[], names=Object.keys((S.views[m.id]||{}).list||{});
-  const q=S.q[m.id]||'';
-  const sortCol=(S.sort[m.id]||{}).col||'';
+  const statuses=m.statuses||[],names=Object.keys((S.views[m.id]||{}).list||{});
+  const q=S.q[m.id]||'',sortCol=(S.sort[m.id]||{}).col||'';
   $('#toolbar').innerHTML=
-    '<div class="tb-search"><span>🔍</span><input id="search" placeholder="Поиск по разделу   /" value="'+esc(q)+'"></div>'+
+    '<div class="tb-search"><span>🔍</span><input id="search" placeholder="Поиск в разделе   ·   Ctrl+K — по всей системе" value="'+esc(q)+'"></div>'+
     (statuses.length?'<select id="fStatus" class="tb-sel"><option value="">Все статусы</option>'+statuses.map(s=>'<option'+(S.filter[m.id]===s?' selected':'')+'>'+esc(s)+'</option>').join('')+'</select>':'')+
     '<select id="fSort" class="tb-sel"><option value="">Сортировка</option>'+m.cols.map(c=>'<option value="'+esc(c)+'"'+(sortCol===c?' selected':'')+'>по «'+esc(c)+'»</option>').join('')+'</select>'+
-    '<button class="btn ghost sm" data-a="dir">'+(((S.sort[m.id]||{}).dir||'desc')==='desc'?'↓':'↑')+'</button>'+
+    '<button class="btn ghost sm" data-a="dir" title="Направление сортировки">'+(((S.sort[m.id]||{}).dir||'desc')==='desc'?'↓':'↑')+'</button>'+
     (m.orderCol?'<button class="btn '+(S.orderMode?'warn':'ghost')+' sm" data-a="order">⇅ Порядок</button>':'')+
+    '<div class="pop-wrap"><button class="btn ghost sm" data-a="cols">▦ Колонки</button><div class="pop" id="colPop">'+
+      m.cols.map(c=>'<label class="chk"><input type="checkbox" class="colChk" value="'+esc(c)+'"'+(colsOf(m).indexOf(c)>-1?' checked':'')+'><i></i><span>'+esc(c)+'</span></label>').join('')+
+      '<button class="btn ghost sm" data-a="colsReset">Все колонки</button></div></div>'+
+    '<div class="seg" role="group" aria-label="Плотность">'+
+      ['compact','normal','roomy'].map(d=>'<button class="seg-b'+(S.prefs.density===d?' on':'')+'" data-a="dens" data-v="'+d+'" title="'+({compact:'Компактно',normal:'Обычно',roomy:'Просторно'}[d])+'">'+({compact:'▤',normal:'▦',roomy:'▩'}[d])+'</button>').join('')+'</div>'+
     '<div class="tb-views"><select id="fView" class="tb-sel"><option value="">Виды…</option>'+names.map(n=>'<option'+(((S.views[m.id]||{}).active===n)?' selected':'')+'>'+esc(n)+'</option>').join('')+'</select>'+
     '<button class="btn ghost sm" data-a="saveview" title="Сохранить вид">💾</button>'+
     (names.length?'<button class="btn ghost sm" data-a="delview" title="Удалить вид">🗑</button>':'')+'</div>'+
@@ -109,40 +121,52 @@ function onToolbarChange(e){
   if(e.target.id==='fStatus'){S.filter[m.id]=e.target.value;S.page[m.id]=1;renderList(m,++renderToken);}
   if(e.target.id==='fSort'){S.sort[m.id]={col:e.target.value,dir:(S.sort[m.id]||{}).dir||'desc'};renderToolbar(m);renderList(m,++renderToken);}
   if(e.target.id==='fView'){
-    const n=e.target.value; S.views[m.id]=S.views[m.id]||{list:{}}; S.views[m.id].active=n||null;
+    const n=e.target.value;S.views[m.id]=S.views[m.id]||{list:{}};S.views[m.id].active=n||null;
     const v=n?S.views[m.id].list[n]:null;
     S.q[m.id]=v?v.q:'';S.filter[m.id]=v?v.status:'';S.sort[m.id]=v?v.sort:null;
     saveViews();renderToolbar(m);renderList(m,++renderToken);
   }
+  if(e.target.classList.contains('colChk')){
+    S.cols[m.id]=$$('.colChk').filter(c=>c.checked).map(c=>c.value);
+    if(!S.cols[m.id].length) S.cols[m.id]=[m.cols[0]];
+    renderList(m,++renderToken);
+  }
 }
 function onToolbarClick(e){
-  const t=e.target.closest('[data-a]'); if(!t) return; const m=MOD[S.mod];
+  const t=e.target.closest('[data-a]');if(!t) return;const m=MOD[S.mod];
   if(t.dataset.a==='dir'){const s=S.sort[m.id]||{col:m.cols[0],dir:'desc'};s.dir=s.dir==='desc'?'asc':'desc';S.sort[m.id]=s;renderToolbar(m);renderList(m,++renderToken);}
   if(t.dataset.a==='order'){
     S.orderMode=!S.orderMode;
     if(S.orderMode){S.sort[m.id]={col:m.orderCol,dir:'asc'};S.q[m.id]='';S.filter[m.id]='';toast('Режим порядка: перетаскивайте строки','info');}
     renderToolbar(m);renderList(m,++renderToken);
   }
+  if(t.dataset.a==='cols'){const p=$('#colPop');p.classList.toggle('on');e.stopPropagation();}
+  if(t.dataset.a==='colsReset'){S.cols[m.id]=m.cols.slice();renderToolbar(m);$('#colPop').classList.add('on');renderList(m,++renderToken);}
+  if(t.dataset.a==='dens'){setDensity(t.dataset.v);renderToolbar(m);renderList(m,++renderToken);}
   if(t.dataset.a==='saveview'){
-    const n=prompt('Название вида:','Мой вид'); if(!n) return;
+    const n=prompt('Название вида:','Мой вид');if(!n) return;
     S.views[m.id]=S.views[m.id]||{list:{}};
     S.views[m.id].list[n]={q:S.q[m.id]||'',status:S.filter[m.id]||'',sort:S.sort[m.id]||null};
     S.views[m.id].active=n;saveViews();renderToolbar(m);toast('Вид «'+n+'» сохранён','ok');
   }
   if(t.dataset.a==='delview'){
-    const n=(S.views[m.id]||{}).active; if(!n){toast('Выберите вид','warn');return;}
+    const n=(S.views[m.id]||{}).active;if(!n){toast('Выберите вид','warn');return;}
     delete S.views[m.id].list[n];S.views[m.id].active=null;saveViews();renderToolbar(m);toast('Вид удалён','ok');
   }
 }
+document.addEventListener('click',e=>{if(!e.target.closest('.pop-wrap')) $$('.pop.on').forEach(p=>p.classList.remove('on'));});
 function onActionsClick(e){
-  const t=e.target.closest('[data-a]'); if(!t) return;
+  const t=e.target.closest('[data-a]');if(!t) return;
   if(t.dataset.a==='new') openForm(MOD[S.mod],null);
   if(t.dataset.a==='csv') exportCurrent('csv');
   if(t.dataset.a==='xls') exportCurrent('xls');
+  if(t.dataset.a==='print') printRegister();
   if(t.dataset.a==='refresh') loadData();
 }
+
+/* ---------- выборка ---------- */
 function selectRows(m){
-  const rows=S.snap[m.id]||[], q=(S.q[m.id]||'').trim().toLowerCase(), f=S.filter[m.id]||'', s=S.sort[m.id];
+  const rows=S.snap[m.id]||[],q=(S.q[m.id]||'').trim().toLowerCase(),f=S.filter[m.id]||'',s=S.sort[m.id];
   const key=m.id+'|'+q+'|'+f+'|'+(s?s.col+s.dir:'')+'|'+rows.length+'|'+S.lastTs;
   if(qCache.has(key)) return qCache.get(key);
   let out=rows;
@@ -157,7 +181,7 @@ function selectRows(m){
     });
   }
   if(qCache.size>60) qCache.clear();
-  qCache.set(key,out); return out;
+  qCache.set(key,out);return out;
 }
 function statusKind(v){
   const s=String(v||'');
@@ -172,18 +196,13 @@ function cell(m,c,r){
   if(/^(Сумма|Общая_сумма|Наша_цена|Начальная_цена|Цена|Сумма_договорная|Сумма_закрытая)$/.test(c)) return '<b class="num">'+(v!==''&&v!=null?money(v):'—')+'</b>';
   if(/^Дата|Дедлайн|Срок/.test(c)){
     const d=daysLeft(v);
-    if(m.deadline===c&&d!==null&&d<=3&&!/Выполнено|Исполнено|Устранено|Закрыто/.test(String(r[m.statusCol])))
+    if(m.deadline===c&&d!==null&&d<=S.prefs.dash.threshold&&!/Выполнено|Исполнено|Устранено|Закрыто/.test(String(r[m.statusCol])))
       return '<span class="dt '+(d<0?'late':'soon')+'">'+esc(dstr(v))+' <i>'+(d<0?Math.abs(d)+' дн. назад':d+' дн.')+'</i></span>';
     return '<span class="dt">'+esc(dstr(v)||'—')+'</span>';
   }
-  if(c==='ID_Договора') return '<span class="ref">'+esc(short(refLabel('contracts',v),26)||'—')+'</span>';
-  if(c==='ID_Позиции') return '<span class="ref">'+esc(short(refLabel('estimateItems',v),28)||'—')+'</span>';
-  if(c==='ID_Сметы') return '<span class="ref">'+esc(short(refLabel('estimates',v),24)||'—')+'</span>';
-  if(c==='ID_Проекта') return '<span class="ref">'+esc(short(refLabel('architecture',v),24)||'—')+'</span>';
-  if(c==='ID_Подрядчика') return '<span class="ref">'+esc(short(refLabel('contractors',v),24)||'—')+'</span>';
-  if(c==='ID_Сотрудника') return '<span class="ref">'+esc(short(refLabel('personnel',v),24)||'—')+'</span>';
-  if(c==='ID_КС2') return '<span class="ref">'+esc(short(refLabel('ks2',v),20)||'—')+'</span>';
-  if(c==='Кому') return '<span class="ref">'+esc(short(refLabel('users',v),22)||'—')+'</span>';
+  const refs={'ID_Договора':'contracts','ID_Позиции':'estimateItems','ID_Сметы':'estimates','ID_Проекта':'architecture',
+    'ID_Подрядчика':'contractors','ID_Сотрудника':'personnel','ID_КС2':'ks2','ID_Объекта':'objects','Кому':'users','ID_Работы_подрядчика':'contractorWorks'};
+  if(refs[c]) return '<span class="ref">'+esc(short(refLabel(refs[c],v),26)||'—')+'</span>';
   if(c==='Приоритет') return '<span class="chip '+(/Срочный/.test(v)?'bad':/Высокий/.test(v)?'warn':'neutral')+'">'+esc(v||'—')+'</span>';
   if(c==='Согласовано_КГИОП'||c==='Подтверждение') return (v===true||String(v)==='true')?'<span class="chip ok">Да</span>':'<span class="chip neutral">Нет</span>';
   if(c==='Закрыто_объём'){
@@ -195,8 +214,8 @@ function cell(m,c,r){
 }
 function renderList(m,tok){
   if(tok!==renderToken) return;
-  const rows=selectRows(m),page=S.page[m.id]||1,lim=page*APP.page,slice=rows.slice(0,lim);
-  const cnt=$('#tbCount'); if(cnt) cnt.textContent=rows.length+' из '+(S.snap[m.id]||[]).length;
+  const rows=selectRows(m),page=S.page[m.id]||1,lim=page*APP.page,slice=rows.slice(0,lim),cols=colsOf(m);
+  const cnt=$('#tbCount');if(cnt) cnt.textContent=rows.length+' из '+(S.snap[m.id]||[]).length;
   if(!rows.length){
     $('#modBody').innerHTML='<div class="empty"><div class="empty-ico">'+m.icon+'</div><h3>Ничего не найдено</h3><p>'+
       ((S.q[m.id]||S.filter[m.id])?'Измените запрос или сбросьте фильтр.':'Создайте первую запись — она сразу появится здесь и в Google Таблице.')+'</p>'+
@@ -207,13 +226,13 @@ function renderList(m,tok){
   const drag=S.orderMode&&can(m.id,'edit');
   let html;
   if(isMobile()){
-    html='<div class="cards">'+slice.map(r=>{
+    html='<div class="cards">'+slice.map((r,i)=>{
       const id=r[m.idCol],on=S.sel.has(String(id));
-      return '<article class="rcard'+(on?' sel':'')+'" data-id="'+esc(id)+'">'+
+      return '<article class="rcard'+(on?' sel':'')+(i===S.focusRow?' focus':'')+'" data-id="'+esc(id)+'" data-i="'+i+'">'+
         '<div class="rcard-top"><label class="cb"><input type="checkbox" data-a="sel" data-id="'+esc(id)+'"'+(on?' checked':'')+'><i></i></label>'+
         '<button class="rcard-title" data-a="open" data-id="'+esc(id)+'">'+esc(short(r[m.titleCol]||id,60))+'</button>'+
         (m.statusCol?'<span class="chip '+statusKind(r[m.statusCol])+'">'+esc(short(r[m.statusCol],16)||'—')+'</span>':'')+'</div>'+
-        '<div class="rcard-grid">'+m.cols.filter(c=>c!==m.titleCol&&c!==m.statusCol).slice(0,4).map(c=>'<div><span>'+esc(c)+'</span>'+cell(m,c,r)+'</div>').join('')+'</div>'+
+        '<div class="rcard-grid">'+cols.filter(c=>c!==m.titleCol&&c!==m.statusCol).slice(0,4).map(c=>'<div><span>'+esc(c)+'</span>'+cell(m,c,r)+'</div>').join('')+'</div>'+
         '<div class="rcard-foot"><span class="fid">'+esc(id)+'</span>'+
         (atts(m.id,id).length?'<span class="fcount">📎 '+atts(m.id,id).length+'</span>':'')+'<span class="grow"></span>'+
         (can(m.id,'edit')?'<button class="btn ghost sm" data-a="edit" data-id="'+esc(id)+'">✎</button>':'')+
@@ -225,30 +244,49 @@ function renderList(m,tok){
       '<div class="tw"><table class="grid'+(drag?' dragging':'')+'"><thead><tr>'+
       (drag?'<th class="cdh"></th>':'')+
       '<th class="cbs"><label class="cb"><input type="checkbox" data-a="selall"'+(allOn?' checked':'')+'><i></i></label></th>'+
-      '<th class="cid">ID</th>'+m.cols.map(c=>'<th data-a="sort" data-col="'+esc(c)+'" class="sortable'+(((S.sort[m.id]||{}).col===c)?' act':'')+'">'+esc(c)+(((S.sort[m.id]||{}).col===c)?(((S.sort[m.id]||{}).dir==='asc')?' ↑':' ↓'):'')+'</th>').join('')+
+      '<th class="cid">ID</th>'+cols.map(c=>'<th data-a="sort" data-col="'+esc(c)+'" class="sortable'+(((S.sort[m.id]||{}).col===c)?' act':'')+'">'+esc(c)+(((S.sort[m.id]||{}).col===c)?(((S.sort[m.id]||{}).dir==='asc')?' ↑':' ↓'):'')+'</th>').join('')+
       '<th class="cf">📎</th><th class="ca"></th></tr></thead><tbody>'+
-      slice.map(r=>{
+      slice.map((r,i)=>{
         const id=r[m.idCol],on=S.sel.has(String(id));
-        return '<tr class="'+(on?'sel':'')+'" data-id="'+esc(id)+'"'+(drag?' draggable="true"':'')+'>'+
+        return '<tr class="'+(on?'sel':'')+(i===S.focusRow?' focus':'')+'" data-id="'+esc(id)+'" data-i="'+i+'"'+(drag?' draggable="true"':'')+'>'+
           (drag?'<td class="cdh"><span class="dh">⠿</span></td>':'')+
           '<td class="cbs"><label class="cb"><input type="checkbox" data-a="sel" data-id="'+esc(id)+'"'+(on?' checked':'')+'><i></i></label></td>'+
           '<td class="cid"><button class="idbtn" data-a="open" data-id="'+esc(id)+'">'+esc(id)+'</button></td>'+
-          m.cols.map(c=>'<td>'+cell(m,c,r)+'</td>').join('')+
+          cols.map(c=>'<td>'+cell(m,c,r)+'</td>').join('')+
           '<td class="cf">'+(atts(m.id,id).length?'<span class="fcount">'+atts(m.id,id).length+'</span>':'<span class="dim">—</span>')+'</td>'+
           '<td class="ca"><div class="rowacts">'+
             '<button class="btn ghost sm" data-a="open" data-id="'+esc(id)+'" title="Карточка">👁</button>'+
-            (can(m.id,'edit')?'<button class="btn ghost sm" data-a="edit" data-id="'+esc(id)+'" title="Изменить">✎</button>':'')+
-            (can(m.id,'delete')?'<button class="btn danger sm" data-a="del" data-id="'+esc(id)+'" title="Удалить">🗑</button>':'')+
+            (can(m.id,'edit')?'<button class="btn ghost sm" data-a="edit" data-id="'+esc(id)+'" title="Изменить (E)">✎</button>':'')+
+            (can(m.id,'delete')?'<button class="btn danger sm" data-a="del" data-id="'+esc(id)+'" title="Удалить (Del)">🗑</button>':'')+
           '</div></td></tr>';
-      }).join('')+'</tbody></table></div>';
+      }).join('')+'</tbody></table></div>'+
+      '<div class="kbd-hint">↑↓ строка · Enter карточка · E правка · Space выбор · Del удалить</div>';
   }
   if(rows.length>lim) html+='<div class="more-row"><button class="btn ghost" data-a="more">Показать ещё '+Math.min(APP.page,rows.length-lim)+' из '+(rows.length-lim)+'</button></div>';
   $('#modBody').innerHTML=html;
 }
 function resetFilters(){const m=MOD[S.mod];S.q[m.id]='';S.filter[m.id]='';S.page[m.id]=1;renderToolbar(m);renderList(m,++renderToken);}
 function findRec(m,id){return (S.snap[m.id]||[]).filter(r=>String(r[m.idCol])===String(id))[0]||null;}
+function tableKeys(e){
+  const m=MOD[S.mod];if(!m||m.special||!S.snap) return;
+  const rows=selectRows(m).slice(0,(S.page[m.id]||1)*APP.page);if(!rows.length) return;
+  const k=e.key;
+  if(k==='ArrowDown'||k==='ArrowUp'){
+    e.preventDefault();
+    S.focusRow=clamp(S.focusRow+(k==='ArrowDown'?1:-1),0,rows.length-1);
+    renderList(m,++renderToken);
+    const el=$('[data-i="'+S.focusRow+'"]');if(el) el.scrollIntoView({block:'nearest'});
+    return;
+  }
+  if(S.focusRow<0) return;
+  const id=rows[S.focusRow][m.idCol];
+  if(k==='Enter'){e.preventDefault();openDrawer(m,id);}
+  if(k.toLowerCase()==='e'&&can(m.id,'edit')){e.preventDefault();openForm(m,findRec(m,id));}
+  if(k===' '){e.preventDefault();S.sel.has(String(id))?S.sel.delete(String(id)):S.sel.add(String(id));renderBulk(m);renderList(m,++renderToken);}
+  if((k==='Delete'||k==='Backspace')&&can(m.id,'delete')){e.preventDefault();if(confirm('Удалить '+id+'?')) removeRecords(m.id,[id]);}
+}
 function onBodyClick(e){
-  const m=MOD[S.mod],t=e.target.closest('[data-a]'); if(!t) return;
+  const m=MOD[S.mod],t=e.target.closest('[data-a]');if(!t) return;
   const a=t.dataset.a,id=t.dataset.id;
   if(a==='more'){S.page[m.id]=(S.page[m.id]||1)+1;renderList(m,++renderToken);return;}
   if(a==='sort'){const c=t.dataset.col,s=S.sort[m.id]||{};S.sort[m.id]={col:c,dir:s.col===c&&s.dir==='desc'?'asc':'desc'};renderToolbar(m);renderList(m,++renderToken);return;}
@@ -258,7 +296,7 @@ function onBodyClick(e){
     if(e.shiftKey&&lastSelIndex>-1){const a1=Math.min(lastSelIndex,idx),b1=Math.max(lastSelIndex,idx);
       for(let i=a1;i<=b1;i++) S.sel.add(String(rows[i][m.idCol]));}
     else{S.sel.has(String(id))?S.sel.delete(String(id)):S.sel.add(String(id));}
-    lastSelIndex=idx;renderBulk(m);renderList(m,++renderToken);return;
+    lastSelIndex=idx;S.focusRow=idx;renderBulk(m);renderList(m,++renderToken);return;
   }
   if(a==='selall'){
     const rows=selectRows(m).slice(0,(S.page[m.id]||1)*APP.page);
@@ -272,14 +310,14 @@ function onBodyClick(e){
 }
 function onDragStart(e){
   if(!S.orderMode) return;
-  const tr=e.target.closest('tr[data-id]'); if(!tr) return;
-  S.dragId=tr.dataset.id; tr.classList.add('drag-src');
-  e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain',S.dragId);}catch(x){}
+  const tr=e.target.closest('tr[data-id]');if(!tr) return;
+  S.dragId=tr.dataset.id;tr.classList.add('drag-src');
+  e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',S.dragId);}catch(x){}
 }
 function onDragOver(e){
   if(!S.orderMode||!S.dragId) return;
   e.preventDefault();
-  const tr=e.target.closest('tr[data-id]'); if(!tr||tr.dataset.id===S.dragId) return;
+  const tr=e.target.closest('tr[data-id]');if(!tr||tr.dataset.id===S.dragId) return;
   $$('.grid tr.drop-target').forEach(x=>x.classList.remove('drop-target'));
   tr.classList.add('drop-target');
 }
@@ -287,19 +325,18 @@ function onDragEnd(){S.dragId=null;$$('.drag-src,.drop-target').forEach(x=>x.cla
 async function onDrop(e){
   if(!S.orderMode||!S.dragId) return;
   e.preventDefault();
-  const tr=e.target.closest('tr[data-id]'); const m=MOD[S.mod];
-  const from=S.dragId; onDragEnd();
+  const tr=e.target.closest('tr[data-id]'),m=MOD[S.mod],from=S.dragId;onDragEnd();
   if(!tr||tr.dataset.id===from) return;
   const rows=selectRows(m).slice();
   const fi=rows.findIndex(r=>String(r[m.idCol])===String(from));
   const ti=rows.findIndex(r=>String(r[m.idCol])===String(tr.dataset.id));
   if(fi<0||ti<0) return;
-  const moved=rows.splice(fi,1)[0]; rows.splice(ti,0,moved);
-  rows.forEach((r,i)=>{r[m.orderCol]=i+1;r.__s=null;});
-  qCache.clear(); renderList(m,++renderToken);
+  const moved=rows.splice(fi,1)[0];rows.splice(ti,0,moved);
+  rows.forEach((r,i)=>{r[m.orderCol]=i+1;});
+  qCache.clear();renderList(m,++renderToken);
   try{
     await api('reorder',{module:m.id,ids:rows.map(r=>r[m.idCol])});
-    bustLocal(); toast('Порядок сохранён','ok');
+    bustLocal();toast('Порядок сохранён','ok');
     fetchSnap().then(()=>{renderActive();paintBadges();}).catch(()=>{});
   }catch(err){toast(err.message,'bad');loadData();}
 }
@@ -313,22 +350,24 @@ function renderBulk(m){
     '<button class="btn ghost sm" data-a="bclear">Снять</button>';
 }
 async function onBulkClick(e){
-  const t=e.target.closest('[data-a]'); if(!t) return;
+  const t=e.target.closest('[data-a]');if(!t) return;
   const m=MOD[S.mod],ids=Array.from(S.sel);
   if(t.dataset.a==='bclear'){S.sel.clear();renderBulk(m);renderList(m,++renderToken);}
   if(t.dataset.a==='bdel'){if(confirm('Удалить '+ids.length+' записей?')) await removeRecords(m.id,ids);}
   if(t.dataset.a==='bstatus'){
-    const v=val('bulkStatus'); if(!v){toast('Выберите статус','warn');return;}
+    const v=val('bulkStatus');if(!v){toast('Выберите статус','warn');return;}
     const patch={};patch[m.statusCol]=v;
     const bak=ids.map(id=>({id:id,old:(findRec(m,id)||{})[m.statusCol]}));
-    ids.forEach(id=>localPatch(m.id,id,patch)); qCache.clear(); renderList(m,++renderToken);
+    ids.forEach(id=>localPatch(m.id,id,patch));qCache.clear();renderList(m,++renderToken);
     try{
       for(const id of ids) await api('updateRecord',{module:m.id,id:id,values:patch});
       toast('Статус обновлён: '+ids.length,'ok');S.sel.clear();renderBulk(m);
-      bustLocal(); await fetchSnap(); renderActive(); paintBadges();
+      bustLocal();await fetchSnap();renderActive();paintBadges();paintNotif();
     }catch(err){bak.forEach(b=>{const p={};p[m.statusCol]=b.old;localPatch(m.id,b.id,p);});qCache.clear();renderList(m,++renderToken);toast(err.message,'bad');}
   }
 }
+
+/* ---------- форма ---------- */
 function fieldHtml(m,f,rec){
   const id='f_'+f.c,v=rec?rec[f.c]:'';
   const req=f.req?' <em>*</em>':'';
@@ -364,38 +403,40 @@ function openForm(m,rec){
     inp.onchange=()=>{$('#newFileList').innerHTML=Array.from(inp.files).map(f=>'<span class="fchip">'+esc(f.name)+' <i>'+(f.size/1024).toFixed(0)+' КБ</i></span>').join('');};}
   setTimeout(()=>{const f=$('#recForm input, #recForm select, #recForm textarea');if(f)f.focus();},60);
 }
-function closeModal(){$('#modal').classList.remove('on');if(!$('#drawer').classList.contains('on'))document.body.classList.remove('lock');formCtx=null;}
+function closeModal(){$('#modal').classList.remove('on');unlockBody();formCtx=null;}
 async function submitForm(){
   if(!formCtx) return;
   const m=MOD[formCtx.mod],values={};
   for(const f of m.fields){
-    const e=document.getElementById('f_'+f.c); if(!e) continue;
-    let v=e.value; if(f.t==='number') v=v===''?'':num(v);
+    const e=document.getElementById('f_'+f.c);if(!e) continue;
+    let v=e.value;if(f.t==='number') v=v===''?'':num(v);
     if(f.req&&(v===''||v==null)){e.classList.add('bad');e.focus();toast('Заполните «'+f.l+'»','warn');return;}
-    e.classList.remove('bad'); values[f.c]=v;
+    e.classList.remove('bad');values[f.c]=v;
   }
   if(m.calc){const a=num(values[m.calc[0]]),b=num(values[m.calc[1]]);if(a&&b) values['Сумма']=a*b;}
   const btn=$('#saveBtn');btn.disabled=true;btn.classList.add('busy');
   try{
     if(formCtx.id){
-      const id=formCtx.id,bak=Object.assign({},findRec(m,id));
+      const id=formCtx.id;
       localPatch(m.id,id,values);qCache.clear();safeRenderList();
       await api('updateRecord',{module:m.id,id:id,values:values});
       toast('Изменения сохранены','ok');closeModal();bustLocal();
-      await fetchSnap();renderActive();paintBadges();
+      await fetchSnap();renderActive();paintBadges();paintNotif();
       if(S.drawer&&S.drawer.id===id) openDrawer(MOD[S.drawer.mod],id);
     } else {
       const r=await api('createRecord',{module:m.id,values:values});
       const nf=$('#newFiles'),files=nf?Array.from(nf.files):[];
       if(files.length) await uploadTo(m.id,r.id,files,true);
       toast('Создано: '+r.id,'ok');closeModal();bustLocal();
-      await fetchSnap();renderActive();paintBadges();openDrawer(m,r.id);
+      await fetchSnap();renderActive();paintBadges();paintNotif();openDrawer(m,r.id);
     }
   }catch(e){toast(e.message,'bad');loadData(true);}
   finally{if(btn){btn.disabled=false;btn.classList.remove('busy');}}
 }
+
+/* ---------- drawer ---------- */
 function openDrawer(m,id){
-  const r=findRec(m,id); if(!r){toast('Запись не найдена','warn');return;}
+  const r=findRec(m,id);if(!r){toast('Запись не найдена','warn');return;}
   S.drawer={mod:m.id,id:id};
   $('#drawerTitle').innerHTML='<span class="dh-ico">'+m.icon+'</span><div style="min-width:0"><b>'+esc(short(r[m.titleCol]||id,54))+'</b><span>'+esc(m.title)+' · '+esc(id)+'</span></div>';
   let body='<div class="dgrid">'+(m.fields||[]).map(f=>
@@ -421,8 +462,7 @@ function openDrawer(m,id){
   }
   if(m.summary) body+='<div class="dblock"><div class="dsub">Финансовая сводка</div><div id="dSummary"><p class="dim">Загрузка…</p></div></div>';
   if(m.children&&MOD[m.children]){
-    const kids=(S.snap[m.children]||[]).filter(x=>String(x[m.childKey])===String(id));
-    const cm=MOD[m.children];
+    const kids=(S.snap[m.children]||[]).filter(x=>String(x[m.childKey])===String(id)),cm=MOD[m.children];
     body+='<div class="dblock"><div class="dsub">'+esc(cm.title)+' ('+kids.length+')</div>'+
       (kids.length?'<div class="kids">'+kids.slice(0,25).map(k=>'<button class="kid" onclick="openDrawer(MOD[\''+m.children+'\'],\''+esc(k[cm.idCol])+'\')"><span>'+cm.icon+'</span><b>'+esc(short(k[cm.titleCol]||k[cm.idCol],40))+'</b>'+(k[cm.statusCol]?'<i class="chip '+statusKind(k[cm.statusCol])+'">'+esc(short(k[cm.statusCol],14))+'</i>':'')+'</button>').join('')+'</div>':'<p class="dim">Связанных записей нет.</p>')+
       (can(m.children,'create')?'<button class="btn ghost sm" style="margin-top:9px" onclick="openChildForm(\''+m.children+'\',\''+esc(m.childKey)+'\',\''+esc(id)+'\')">＋ Добавить</button>':'')+'</div>';
@@ -454,21 +494,20 @@ function openDrawer(m,id){
   }
   if(m.summary) loadSummary(m,id);
 }
-function editFromDrawer(){if(!S.drawer)return;const m=MOD[S.drawer.mod];openForm(m,findRec(m,S.drawer.id));}
-function closeDrawer(){$('#drawer').classList.remove('on');$('#scrim').classList.remove('on');if(!$('#modal').classList.contains('on'))document.body.classList.remove('lock');S.drawer=null;}
-function drawerDelete(){if(!S.drawer)return;const d=S.drawer;if(confirm('Удалить '+d.id+'?')){closeDrawer();removeRecords(d.mod,[d.id]);}}
-function openChildForm(childId,key,val_){
-  const cm=MOD[childId]; if(!cm) return;
+function editFromDrawer(){if(!S.drawer) return;const m=MOD[S.drawer.mod];openForm(m,findRec(m,S.drawer.id));}
+function closeDrawer(){$('#drawer').classList.remove('on');$('#scrim').classList.remove('on');unlockBody();S.drawer=null;}
+function drawerDelete(){if(!S.drawer) return;const d=S.drawer;if(confirm('Удалить '+d.id+'?')){closeDrawer();removeRecords(d.mod,[d.id]);}}
+function openChildForm(childId,key,v){
+  const cm=MOD[childId];if(!cm) return;
   openForm(cm,null);
-  setTimeout(()=>{const e=document.getElementById('f_'+key);if(e){e.value=val_;e.disabled=true;}},80);
+  setTimeout(()=>{const e=document.getElementById('f_'+key);if(e){e.value=v;e.disabled=true;}},80);
 }
 async function loadSummary(m,id){
   try{
-    const r=await api(m.summary,{contractorId:id});
-    const s=r.summary,host=$('#dSummary'); if(!host) return;
+    const r=await api(m.summary,{contractorId:id}),s=r.summary,host=$('#dSummary');if(!host) return;
     host.innerHTML='<div class="pg-sum">'+
       [['Договор',s.totalContract],['Закрыто',s.totalClosed],['Авансы',s.totalAdvances],['Выплачено',s.totalPaid],['Баланс',s.totalBalance]]
-      .map((x,i)=>'<div class="pgs" style="--k:'+(i===4?(x[1]>=0?'#12b886':'#e03131'):CHART_HUES[i%8])+'"><span>'+x[0]+'</span><b>'+money(x[1])+'</b></div>').join('')+'</div>'+
+      .map((x,i)=>'<div class="pgs" style="--k:'+(i===4?(x[1]>=0?'#12b886':'#e03131'):hues()[i%8])+'"><span>'+x[0]+'</span><b>'+money(x[1])+'</b></div>').join('')+'</div>'+
       (r.works.length?'<div class="kids" style="margin-top:10px">'+r.works.map(w=>'<div class="kid static"><span>🔨</span><b>'+esc(short(w['Вид_работ'],34))+'</b><i>'+num(w['Закрыто_объём'])+'/'+num(w['Договорной_объём'])+' '+esc(w['Ед_изм']||'')+'</i></div>').join('')+'</div>':'');
   }catch(e){const h=$('#dSummary');if(h)h.innerHTML='<p class="dim">'+esc(e.message)+'</p>';}
 }
@@ -478,7 +517,7 @@ function commentsHtml(mod,id){
   return list.map(c=>'<div class="msg"><b>'+esc(c['Пользователь'])+'</b><i>'+esc(pretty(c['Дата']))+'</i><p>'+esc(c['Текст'])+'</p></div>').join('');
 }
 async function sendComment(mod,id){
-  const t=val('comText').trim(); if(!t){toast('Введите комментарий','warn');return;}
+  const t=val('comText').trim();if(!t){toast('Введите комментарий','warn');return;}
   try{
     const r=await api('addComment',{module:mod,recordId:id,text:t});
     (S.snap.comments=S.snap.comments||[]).push(r.comment);
@@ -487,7 +526,7 @@ async function sendComment(mod,id){
   }catch(e){toast(e.message,'bad');}
 }
 async function sendReply(taskId){
-  const t=val('replyText').trim(); if(!t){toast('Введите ответ','warn');return;}
+  const t=val('replyText').trim();if(!t){toast('Введите ответ','warn');return;}
   try{
     const r=await api('addTaskReply',{taskId:taskId,text:t});
     (S.snap.taskReplies=S.snap.taskReplies||[]).push(r.reply);
@@ -498,15 +537,15 @@ async function sendReply(taskId){
   }catch(e){toast(e.message,'bad');}
 }
 function quickClosure(srcMod,id){
-  const r=findRec(MOD[srcMod],id); if(!r) return;
+  const r=findRec(MOD[srcMod],id);if(!r) return;
   openForm(MOD.closures,null);
   setTimeout(()=>{
     const set=(k,v)=>{const e=document.getElementById('f_'+k);if(e){e.value=v;e.disabled=true;}};
     set('Тип_закрытия',srcMod==='estimateItems'?'ПТО':'Подрядчик');
-    if(srcMod==='estimateItems') set('ID_Позиции',id); else set('ID_Работы_подрядчика',id);
+    if(srcMod==='estimateItems') set('ID_Позиции',id);else set('ID_Работы_подрядчика',id);
     const rest=num(r['Количество']||r['Договорной_объём'])-num(r['Закрыто_объём']);
-    const v=document.getElementById('f_Объём'); if(v) v.value=Math.max(0,rest);
-    const c=document.getElementById('f_Комментарий'); if(c) c.value='Закрытие по '+id;
+    const v=document.getElementById('f_Объём');if(v) v.value=Math.max(0,rest);
+    const c=document.getElementById('f_Комментарий');if(c) c.value='Закрытие по '+id;
   },80);
 }
 function filesHtml(mod,id){
@@ -544,8 +583,7 @@ async function uploadTo(mod,id,files,quiet){
     ATT[mod+'::'+id]=(ATT[mod+'::'+id]||[]).concat(added);
     S.snap.attachments=(S.snap.attachments||[]).concat(added);
     if(!quiet&&S.drawer&&$('#dFiles')) $('#dFiles').innerHTML=filesHtml(S.drawer.mod,S.drawer.id);
-    bustLocal();safeRenderList();
-    toast('Загружено файлов: '+ok.length,'ok');
+    bustLocal();safeRenderList();toast('Загружено файлов: '+ok.length,'ok');
   }catch(e){const b=$('#upBar');if(b)b.remove();toast(e.message,'bad');}
 }
 async function dropFile(fid){
@@ -564,9 +602,141 @@ async function doReview(id,status){
   try{
     await api('reviewSubmission',{id:id,status:status,volume:v,comment:c});
     toast('Подача '+status.toLowerCase()+' · объём '+(status==='Отклонено'?0:v),'ok');
-    closeDrawer();bustLocal();await fetchSnap();renderActive();paintBadges();
+    closeDrawer();bustLocal();await fetchSnap();renderActive();paintBadges();paintNotif();
   }catch(e){toast(e.message,'bad');}
 }
+
+/* ---------- командная палитра ---------- */
+function openPalette(){
+  if(!S.user) return;
+  S.pal.open=true;S.pal.idx=0;
+  $('#palette').classList.add('on');document.body.classList.add('lock');
+  const i=$('#palInput');i.value='';palSearch('');i.focus();
+}
+function closePalette(){S.pal.open=false;$('#palette').classList.remove('on');unlockBody();}
+function palSearch(q){
+  q=String(q||'').trim().toLowerCase();
+  const items=[];
+  visibleModules().forEach(m=>{
+    if(!q||m.title.toLowerCase().indexOf(q)>-1||m.id.indexOf(q)>-1)
+      items.push({t:'Раздел',icon:m.icon,title:m.title,sub:(m.sheet?'лист «'+m.sheet+'»':'аналитика'),run:()=>{closePalette();setModule(m.id);}});
+  });
+  if(q){
+    visibleModules().filter(m=>m.sheet&&can(m.id,'create')).forEach(m=>{
+      if(('создать '+m.title).toLowerCase().indexOf(q)>-1||m.title.toLowerCase().indexOf(q)>-1)
+        items.push({t:'Действие',icon:'＋',title:'Создать · '+m.title,sub:'новая запись',run:()=>{closePalette();setModule(m.id);openForm(m,null);}});
+    });
+  }
+  if(q.length>=2){
+    let count=0;
+    visibleModules().filter(m=>m.sheet).forEach(m=>{
+      if(count>=40) return;
+      const rows=S.snap[m.id]||[];
+      for(let i=0;i<rows.length&&count<40;i++){
+        const r=rows[i];
+        if((r.__s||'').indexOf(q)>-1){
+          count++;
+          items.push({t:m.title,icon:m.icon,title:String(r[m.titleCol]||r[m.idCol]),
+            sub:r[m.idCol]+(r[m.statusCol]?' · '+r[m.statusCol]:''),
+            run:()=>{closePalette();setModule(m.id);setTimeout(()=>openDrawer(m,r[m.idCol]),60);}});
+        }
+      }
+    });
+  }
+  items.push({t:'Команда',icon:'🌓',title:'Переключить тему',sub:'светлая / тёмная',run:()=>{toggleTheme();}});
+  items.push({t:'Команда',icon:'🔔',title:'Центр уведомлений',sub:unreadCount()+' непрочитанных',run:()=>{closePalette();openNotif();}});
+  items.push({t:'Команда',icon:'⟳',title:'Обновить данные',sub:'сбросить кэш снимка',run:()=>{closePalette();loadData();}});
+  if(S.queue.length) items.push({t:'Команда',icon:'📤',title:'Отправить отложенные ('+S.queue.length+')',sub:'очередь операций',run:()=>{closePalette();flushQueue();}});
+  S.pal.items=items.slice(0,60);
+  renderPal(q);
+}
+function renderPal(q){
+  const host=$('#palResults');
+  if(!S.pal.items.length){host.innerHTML='<div class="pal-empty">Ничего не найдено. Попробуйте номер договора, ФИО или название раздела.</div>';return;}
+  let last='',html='';
+  S.pal.items.forEach((it,i)=>{
+    if(it.t!==last){html+='<div class="pal-group">'+esc(it.t)+'</div>';last=it.t;}
+    html+='<button class="pal-item'+(i===S.pal.idx?' on':'')+'" data-i="'+i+'"><span class="pal-ico">'+it.icon+'</span>'+
+      '<span class="pal-txt"><b>'+hl(it.title,q)+'</b><i>'+hl(it.sub,q)+'</i></span><em>↵</em></button>';
+  });
+  host.innerHTML=html;
+  $$('.pal-item',host).forEach(b=>{
+    b.onmouseenter=()=>{S.pal.idx=+b.dataset.i;$$('.pal-item').forEach(x=>x.classList.toggle('on',+x.dataset.i===S.pal.idx));};
+    b.onclick=()=>S.pal.items[+b.dataset.i].run();
+  });
+  const on=$('.pal-item.on',host);if(on) on.scrollIntoView({block:'nearest'});
+}
+function hl(text,q){
+  const s=esc(String(text||''));
+  if(!q) return s;
+  const i=s.toLowerCase().indexOf(q);
+  if(i<0) return s;
+  return s.slice(0,i)+'<mark>'+s.slice(i,i+q.length)+'</mark>'+s.slice(i+q.length);
+}
+function palKey(e){
+  if(!S.pal.open) return;
+  if(e.key==='ArrowDown'){e.preventDefault();S.pal.idx=clamp(S.pal.idx+1,0,S.pal.items.length-1);renderPal($('#palInput').value.trim().toLowerCase());}
+  if(e.key==='ArrowUp'){e.preventDefault();S.pal.idx=clamp(S.pal.idx-1,0,S.pal.items.length-1);renderPal($('#palInput').value.trim().toLowerCase());}
+  if(e.key==='Enter'){e.preventDefault();const it=S.pal.items[S.pal.idx];if(it) it.run();}
+}
+
+/* ---------- уведомления ---------- */
+function openNotif(){
+  S.notifOpen=true;buildNotif();
+  $('#notifDrawer').classList.add('on');$('#scrim').classList.add('on');document.body.classList.add('lock');
+  renderNotif();
+}
+function closeNotif(){S.notifOpen=false;$('#notifDrawer').classList.remove('on');$('#scrim').classList.remove('on');unlockBody();}
+function renderNotif(){
+  const groups=[['late','Просрочено','bad'],['review','Ждут проверки','warn'],['remark','Замечания','bad'],['soon','Близкие сроки','warn'],['new','Новое вам','info']];
+  let html='';
+  if(!NOTIF.length) html='<div class="empty"><div class="empty-ico">✅</div><h3>Всё под контролем</h3><p>Просрочек, замечаний и близких сроков не найдено.</p></div>';
+  groups.forEach(([kind,label,tone])=>{
+    const list=NOTIF.filter(n=>n.kind===kind);if(!list.length) return;
+    html+='<div class="nt-group"><div class="nt-head"><span class="chip '+tone+'">'+label+'</span><em>'+list.length+'</em>'+
+      '<button class="btn ghost sm" onclick="markGroupRead(\''+kind+'\')">Прочитано</button></div>';
+    list.slice(0,40).forEach(n=>{
+      const m=MOD[n.mod]||{icon:'📄',title:n.mod};
+      html+='<button class="nt-item'+(S.read[n.key]?' read':'')+'" onclick="openFromNotif(\''+n.mod+'\',\''+esc(n.id)+'\',\''+n.key+'\')">'+
+        '<span class="nt-ico">'+m.icon+'</span><span class="nt-txt"><b>'+esc(n.title)+'</b><i>'+esc(n.sub||m.title)+'</i></span>'+
+        (n.days!=null?'<span class="nt-days '+(n.days<0?'late':'soon')+'">'+(n.days<0?'−'+Math.abs(n.days):'+'+n.days)+' дн</span>':'')+
+        '</button>';
+    });
+    html+='</div>';
+  });
+  $('#notifBody').innerHTML=html;
+  $('#notifCount').textContent=NOTIF.length+' событий · '+unreadCount()+' новых';
+}
+function markGroupRead(kind){NOTIF.filter(n=>n.kind===kind).forEach(n=>S.read[n.key]=1);saveRead();renderNotif();paintNotif();}
+function markAllRead(){NOTIF.forEach(n=>S.read[n.key]=1);saveRead();renderNotif();paintNotif();toast('Все уведомления отмечены','ok');}
+function openFromNotif(mod,id,key){
+  S.read[key]=1;saveRead();paintNotif();closeNotif();
+  setModule(mod);setTimeout(()=>openDrawer(MOD[mod],id),80);
+}
+
+/* ---------- печать ---------- */
+function printRegister(){
+  const m=MOD[S.mod];if(!m||!m.sheet) return;
+  const rows=selectRows(m),cols=colsOf(m);
+  const w=window.open('','_blank');
+  if(!w){toast('Разрешите всплывающие окна для печати','warn');return;}
+  const css='body{font:12px/1.45 Arial,sans-serif;color:#101a27;padding:26px}h1{font-size:19px;margin:0 0 4px}'+
+    '.meta{color:#5a6b80;font-size:11px;margin-bottom:14px;border-bottom:2px solid #ff6b35;padding-bottom:8px}'+
+    'table{width:100%;border-collapse:collapse;font-size:11px}th{background:#16202f;color:#fff;text-align:left;padding:6px 7px}'+
+    'td{border-bottom:1px solid #d7dee7;padding:5px 7px}tr:nth-child(even) td{background:#f4f7fb}'+
+    '.sign{margin-top:26px;display:flex;gap:40px;font-size:12px}.foot{margin-top:18px;color:#7b8ea6;font-size:10px}';
+  w.document.write('<html><head><meta charset="utf-8"><title>'+esc(m.title)+' — реестр</title><style>'+css+'</style></head><body>'+
+    '<h1>'+m.icon+' '+esc(m.title)+' — реестр записей</h1>'+
+    '<div class="meta">СтройРеестр · '+esc(S.user.fio)+' ('+esc(S.user.role)+') · '+new Date().toLocaleString('ru-RU')+
+    ' · записей: '+rows.length+(S.filter[m.id]?' · фильтр: '+esc(S.filter[m.id]):'')+(S.q[m.id]?' · поиск: «'+esc(S.q[m.id])+'»':'')+'</div>'+
+    '<table><thead><tr><th>ID</th>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+
+    rows.map(r=>'<tr><td>'+esc(r[m.idCol])+'</td>'+cols.map(c=>'<td>'+esc(pretty(r[c]))+'</td>').join('')+'</tr>').join('')+
+    '</tbody></table><div class="sign"><span>Составил: ______________ / '+esc(S.user.fio)+'</span><span>Проверил: ______________ / ______________</span></div>'+
+    '<div class="foot">Лист «'+esc(m.sheet)+'» · всего в разделе '+(S.snap[m.id]||[]).length+' записей</div></body></html>');
+  w.document.close();setTimeout(()=>w.print(),350);
+}
+
+/* ---------- спец-разделы ---------- */
 function renderSpecial(m,tok){
   if(m.special==='dashboard') return renderDashboard(tok);
   if(m.special==='progress') return renderProgressShell();
@@ -575,62 +745,244 @@ function renderSpecial(m,tok){
   if(m.special==='audit') return renderAudit(m);
   if(m.special==='admin') return renderAdmin();
 }
+function dashData(){
+  const d=S.prefs.dash,snap=S.snap;
+  const cutoff=d.period==='all'?null:new Date(Date.now()-parseInt(d.period,10)*864e5);
+  const inRange=r=>{
+    if(!cutoff) return true;
+    const m=MOD[Object.keys(MOD).find(k=>MOD[k].sheet&&snap[k]&&snap[k].indexOf(r)>-1)];
+    const dc=(m&&m.dateCol)||'Дата';
+    const s=dstr(r[dc]);if(!s) return true;
+    const t=new Date(s+'T00:00:00');return isNaN(t)?true:t>=cutoff;
+  };
+  const byContract=r=>!d.contract||String(r['ID_Договора']||'')===String(d.contract)||String(r['ID_Договора']||'')==='';
+  const docs=(snap.documents||[]).filter(r=>inRange(r)&&byContract(r));
+  const metric=r=>d.metric==='sum'?num(r['Сумма']||r['Общая_сумма']||r['Наша_цена']||0):1;
+  const group=(rows,key)=>{const o={};rows.forEach(r=>{const k=r[key]||'Другое';o[k]=(o[k]||0)+metric(r);});return o;};
+  const months={};
+  docs.forEach(r=>{const s=dstr(r['Дата']);if(!s) return;const k=s.slice(0,7);months[k]=(months[k]||0)+metric(r);});
+  const mk=Object.keys(months).sort().slice(-12);
+  return {docs:docs,byCat:group(docs,'Категория'),byStatus:group(docs,'Статус_согласования'),
+    trend:mk.map(k=>({label:k,value:months[k]})),
+    contracts:(snap.contracts||[]).filter(byContract),
+    subs:(snap.submissions||[]).filter(byContract),
+    ks2:(snap.ks2||[]).filter(byContract)};
+}
 function renderDashboard(tok){
-  const snap=S.snap,c=S.counts;
-  const docs=snap.documents||[];
-  const noOrig=docs.filter(d=>String(d['Статус_оригинала'])==='Только скан').length;
-  const pend=(snap.submissions||[]).filter(s=>String(s['Статус'])==='На_проверке').length;
-  const over=(snap.prescriptions||[]).filter(p=>String(p['Статус'])!=='Исполнено'&&daysLeft(p['Срок_исполнения'])!==null&&daysLeft(p['Срок_исполнения'])<0).length;
-  const soon=(snap.reminders||[]).filter(r=>String(r['Статус'])!=='Выполнено'&&daysLeft(r['Дата'])!==null&&daysLeft(r['Дата'])<=7).length;
-  const pdocs=(snap.personnelDocs||[]).filter(d=>daysLeft(d['Срок_действия'])!==null&&daysLeft(d['Срок_действия'])<=30).length;
-  const pres=(snap.preservation||[]).filter(p=>/Требует|Аварийное|Утрачено/.test(String(p['Статус_сохранности']))).length;
-  const ks2sum=(snap.ks2||[]).reduce((a,k)=>a+num(k['Общая_сумма']),0);
-  const csum=(snap.contracts||[]).reduce((a,k)=>a+num(k['Сумма']),0);
-  const kpi=[['Договоры',c.contracts||0,money(csum),'#ff6b35'],['Документы',docs.length,noOrig+' без оригинала','#2f6df6'],
-    ['На проверке',pend,'подачи объёмов','#f59f00'],['КС-2',c.ks2||0,money(ks2sum),'#12b886'],
-    ['Просрочено',over,'предписания','#e8437f'],['Предметы охраны',pres,'требуют работ','#7c5cff'],
-    ['Допуски ≤30 дн.',pdocs,'персонал','#00b8d9'],['Сроки ≤7 дн.',soon,'напоминания','#e03131']];
-  const byCat={},byStatus={};
-  docs.forEach(d=>{const k=d['Категория']||'Другое';byCat[k]=(byCat[k]||0)+1;});
-  docs.forEach(d=>{const k=d['Статус_согласования']||'—';byStatus[k]=(byStatus[k]||0)+1;});
-  const top=(snap.contracts||[]).slice().sort((a,b)=>num(b['Сумма'])-num(a['Сумма'])).slice(0,6);
-  const maxTop=top.length?num(top[0]['Сумма']):1;
   if(tok!==renderToken) return;
-  $('#modBody').innerHTML='<div class="kpis">'+kpi.map(k=>'<div class="kpi" style="--k:'+k[3]+'"><span class="kpi-l">'+esc(k[0])+'</span><b class="kpi-n">'+k[1]+'</b><span class="kpi-s">'+esc(k[2])+'</span></div>').join('')+'</div>'+
+  const d=S.prefs.dash;
+  const contracts=(S.snap.contracts||[]).map(c=>'<option value="'+esc(c['ID_Договора'])+'"'+(d.contract===c['ID_Договора']?' selected':'')+'>'+esc(short(c['Контрагент'],34))+' · №'+esc(c['Номер_Договора'])+'</option>').join('');
+  $('#modBody').innerHTML=
+    '<div class="dash-layout"><aside class="rail" id="dashRail">'+
+      '<div class="rail-title">🎛 Панель вида</div>'+
+      ctlSelect('Период','dPeriod',[['7','7 дней'],['30','30 дней'],['90','Квартал'],['365','Год'],['all','Всё время']],d.period)+
+      ctlSelect('Договор','dContract','<option value="">Все договоры</option>'+contracts,d.contract)+
+      ctlSelect('Метрика','dMetric',[['count','Количество'],['sum','Сумма, ₽']],d.metric)+
+      ctlSeg('График','dChart',[['donut','◕'],['bars','▥'],['line','⌇']],d.chart)+
+      ctlSelect('Палитра','dPalette',Object.keys(PALETTES).map(k=>[k,PALETTES[k].name]),d.palette)+
+      ctlRange('Порог срока, дней','dThreshold',3,60,1,d.threshold)+
+      ctlRange('Толщина сегментов','dThickness',8,30,1,d.thickness)+
+      ctlRange('Сглаживание линии','dCurve',0,60,2,d.curve)+
+      ctlToggle('Подписи значений','dLabels',d.labels)+
+      ctlToggle('Сетка и оси','dGrid',d.grid)+
+      ctlToggle('Свечение','dGlow',d.glow)+
+      '<div class="rail-acts"><button class="btn ghost sm" data-d="reset">↺ Сброс</button>'+
+      '<button class="btn ghost sm" data-d="random">🎲 Случайно</button>'+
+      '<button class="btn primary sm" data-d="png">⤓ PNG</button></div>'+
+      '<div class="rail-note">Настройки применяются мгновенно и сохраняются в браузере.</div>'+
+    '</aside><div class="dash-main" id="dashMain"></div></div>';
+  const rail=$('#dashRail');
+  rail.addEventListener('input',onDashCtl);
+  rail.addEventListener('change',onDashCtl);
+  rail.addEventListener('click',e=>{
+    const s=e.target.closest('[data-seg]');
+    if(s){S.prefs.dash[s.dataset.seg]=s.dataset.v;savePrefs();renderDashboard(++renderToken);return;}
+    const b=e.target.closest('[data-d]');if(!b) return;
+    if(b.dataset.d==='reset'){S.prefs.dash=Object.assign({},DASH_DEFAULT);savePrefs();buildNotif();renderDashboard(++renderToken);paintNotif();toast('Вид сброшен','ok');}
+    if(b.dataset.d==='random'){
+      const keys=Object.keys(PALETTES),charts=['donut','bars','line'];
+      S.prefs.dash.palette=keys[Math.floor(Math.random()*keys.length)];
+      S.prefs.dash.chart=charts[Math.floor(Math.random()*charts.length)];
+      S.prefs.dash.thickness=8+Math.floor(Math.random()*22);
+      S.prefs.dash.curve=Math.floor(Math.random()*60);
+      S.prefs.dash.threshold=5+Math.floor(Math.random()*40);
+      savePrefs();buildNotif();renderDashboard(++renderToken);paintNotif();toast('Вид перемешан','ok');
+    }
+    if(b.dataset.d==='png') exportChartPng();
+  });
+  paintDashMain();
+}
+function ctlSelect(label,id,opts,v){
+  const o=typeof opts==='string'?opts:opts.map(x=>'<option value="'+esc(x[0])+'"'+(String(v)===String(x[0])?' selected':'')+'>'+esc(x[1])+'</option>').join('');
+  return '<div class="ctl"><label for="'+id+'">'+esc(label)+'</label><select id="'+id+'" data-c="'+id+'">'+o+'</select></div>';
+}
+function ctlSeg(label,key,opts,v){
+  return '<div class="ctl"><label>'+esc(label)+'</label><div class="seg wide">'+
+    opts.map(x=>'<button class="seg-b'+(v===x[0]?' on':'')+'" data-seg="'+key+'" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div></div>';
+}
+function ctlRange(label,id,min,max,step,v){
+  return '<div class="ctl"><label for="'+id+'">'+esc(label)+' <b id="'+id+'V">'+v+'</b></label>'+
+    '<input id="'+id+'" data-c="'+id+'" type="range" min="'+min+'" max="'+max+'" step="'+step+'" value="'+v+'"></div>';
+}
+function ctlToggle(label,id,on){
+  return '<div class="ctl row"><label class="chk"><input type="checkbox" id="'+id+'" data-c="'+id+'"'+(on?' checked':'')+'><i></i><span>'+esc(label)+'</span></label></div>';
+}
+function onDashCtl(e){
+  const t=e.target,key=t.dataset.c;if(!key) return;
+  const map={dPeriod:'period',dContract:'contract',dMetric:'metric',dPalette:'palette',dThreshold:'threshold',dThickness:'thickness',dCurve:'curve',dLabels:'labels',dGrid:'grid',dGlow:'glow'};
+  const p=map[key];if(!p) return;
+  S.prefs.dash[p]=t.type==='checkbox'?t.checked:(t.type==='range'?parseInt(t.value,10):t.value);
+  const vlab=document.getElementById(key+'V');if(vlab) vlab.textContent=t.value;
+  savePrefs();
+  if(p==='threshold'){buildNotif();paintNotif();}
+  paintDashMain();
+}
+function paintDashMain(){
+  const host=$('#dashMain');if(!host) return;
+  const d=S.prefs.dash,D=dashData(),H=hues();
+  const pend=D.subs.filter(s=>String(s['Статус'])==='На_проверке').length;
+  const noOrig=D.docs.filter(x=>String(x['Статус_оригинала'])==='Только скан').length;
+  const late=NOTIF.filter(n=>n.kind==='late').length;
+  const soon=NOTIF.filter(n=>n.kind==='soon').length;
+  const pres=(S.snap.preservation||[]).filter(p=>/Требует|Аварийное|Утрачено/.test(String(p['Статус_сохранности']))).length;
+  const csum=D.contracts.reduce((a,c)=>a+num(c['Сумма']),0);
+  const ksum=D.ks2.reduce((a,k)=>a+num(k['Общая_сумма']),0);
+  const fmt=v=>d.metric==='sum'?compact(v):String(Math.round(v));
+  const kpi=[['Договоры',D.contracts.length,money(csum),H[0]],['Документы',D.docs.length,noOrig+' без оригинала',H[1]],
+    ['На проверке',pend,'подачи объёмов',H[3]],['КС-2',D.ks2.length,money(ksum),H[2]],
+    ['Просрочено',late,'требуют действия',H[4]],['Сроки ≤'+d.threshold+' дн.',soon,'на контроль',H[5]],
+    ['Охрана ОКН',pres,'требуют работ',H[6]]];
+  const top=D.contracts.slice().sort((a,b)=>num(b['Сумма'])-num(a['Сумма'])).slice(0,6);
+  const maxTop=top.length?num(top[0]['Сумма']):1;
+  host.innerHTML='<div class="kpis">'+kpi.map(k=>'<div class="kpi" style="--k:'+k[3]+'"><span class="kpi-l">'+esc(k[0])+'</span><b class="kpi-n">'+k[1]+'</b><span class="kpi-s">'+esc(k[2])+'</span></div>').join('')+'</div>'+
     '<div class="dash-grid">'+
-    '<section class="panel"><h3>Документы по категориям</h3>'+donut(byCat)+'</section>'+
-    '<section class="panel"><h3>Статусы согласования</h3>'+bars(byStatus)+'</section>'+
-    '<section class="panel wide"><h3>Крупнейшие договоры</h3><div class="hbars">'+
-      (top.length?top.map((t,i)=>'<button class="hbar" onclick="openDrawer(MOD.contracts,\''+esc(t['ID_Договора'])+'\')"><span class="hb-l">'+esc(short(t['Контрагент'],30))+'</span><div class="hb-t"><i style="width:'+Math.max(4,num(t['Сумма'])/maxTop*100)+'%;background:'+CHART_HUES[i%8]+'"></i></div><b>'+money(t['Сумма'])+'</b></button>').join(''):'<p class="dim">Договоров пока нет.</p>')+'</div></section>'+
-    '<section class="panel"><h3>Требуют внимания</h3><div class="feed">'+attentionList()+'</div></section>'+
-    '<section class="panel"><h3>Последние действия</h3><div class="feed">'+
-      ((snap.actions||[]).length?(snap.actions||[]).slice(0,10).map(a=>'<div class="feed-i"><span class="fd-dot"></span><div><b>'+esc(a['Действие'])+'</b><i>'+esc(a['Пользователь'])+' · '+esc(pretty(a['Дата']))+'</i><p>'+esc(short(a['Объект'],40))+'</p></div></div>').join(''):'<p class="dim">Журнал пуст.</p>')+'</div></section>'+
+      '<section class="panel"><h3>Документы по категориям <em>'+fmt(Object.values(D.byCat).reduce((a,b)=>a+b,0))+'</em></h3><div id="chartA">'+chartSvg(D.byCat,'cat')+'</div></section>'+
+      '<section class="panel"><h3>Статусы согласования</h3><div id="chartB">'+chartSvg(D.byStatus,'status')+'</div></section>'+
+      '<section class="panel wide"><h3>Динамика документов по месяцам</h3><div id="chartC">'+trendSvg(D.trend)+'</div></section>'+
+      '<section class="panel wide"><h3>Крупнейшие договоры</h3><div class="hbars">'+
+        (top.length?top.map((t,i)=>'<button class="hbar" onclick="openDrawer(MOD.contracts,\''+esc(t['ID_Договора'])+'\')"><span class="hb-l">'+esc(short(t['Контрагент'],30))+'</span><div class="hb-t"><i style="width:'+Math.max(4,num(t['Сумма'])/maxTop*100)+'%;background:linear-gradient(90deg,'+H[i%8]+','+H[(i+3)%8]+')"></i></div><b>'+money(t['Сумма'])+'</b></button>').join(''):'<p class="dim">Договоров в выборке нет.</p>')+'</div></section>'+
+      '<section class="panel"><h3>Требуют внимания</h3><div class="feed">'+attentionList()+'</div></section>'+
+      '<section class="panel"><h3>Последние действия</h3><div class="feed">'+
+        ((S.snap.actions||[]).length?(S.snap.actions||[]).slice(0,10).map(a=>'<div class="feed-i"><span class="fd-dot"></span><div><b>'+esc(a['Действие'])+'</b><i>'+esc(a['Пользователь'])+' · '+esc(pretty(a['Дата']))+'</i><p>'+esc(short(a['Объект'],40))+'</p></div></div>').join(''):'<p class="dim">Журнал пуст.</p>')+'</div></section>'+
     '</div>';
 }
+function chartSvg(obj,tag){
+  const d=S.prefs.dash,keys=Object.keys(obj),H=hues();
+  if(!keys.length) return '<p class="dim">Нет данных в выбранном периоде.</p>';
+  const total=keys.reduce((a,k)=>a+obj[k],0);
+  const fmt=v=>d.metric==='sum'?compact(v):String(Math.round(v));
+  if(d.chart==='bars'){
+    const max=Math.max.apply(null,keys.map(k=>obj[k]));
+    const w=Math.max(320,keys.length*66),h=210,pad=d.grid?26:8;
+    let g='';
+    if(d.grid) for(let i=0;i<=4;i++){const y=pad+(h-pad*2)*i/4;g+='<line x1="'+pad+'" y1="'+y+'" x2="'+(w-pad)+'" y2="'+y+'" stroke="currentColor" stroke-opacity=".12"/><text x="4" y="'+(y+3)+'" class="ax">'+fmt(max*(1-i/4))+'</text>';}
+    const bw=(w-pad*2)/keys.length;
+    const bars=keys.map((k,i)=>{
+      const bh=Math.max(3,(obj[k]/max)*(h-pad*2)),x=pad+i*bw+bw*0.18,y=h-pad-bh;
+      return '<g><rect x="'+x+'" y="'+y+'" width="'+(bw*0.64)+'" height="'+bh+'" rx="5" fill="url(#g'+tag+i+')"'+(d.glow?' filter="url(#glow)"':'')+'><title>'+esc(k)+': '+fmt(obj[k])+'</title></rect>'+
+        (d.labels?'<text x="'+(x+bw*0.32)+'" y="'+(y-5)+'" text-anchor="middle" class="vl">'+fmt(obj[k])+'</text>':'')+
+        '<text x="'+(x+bw*0.32)+'" y="'+(h-6)+'" text-anchor="middle" class="ax">'+esc(short(k,9))+'</text></g>';
+    }).join('');
+    const defs=keys.map((k,i)=>'<linearGradient id="g'+tag+i+'" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="'+H[i%8]+'"/><stop offset="1" stop-color="'+H[(i+2)%8]+'"/></linearGradient>').join('');
+    return '<svg viewBox="0 0 '+w+' '+h+'" class="chart" data-chart="'+tag+'"><defs>'+defs+glowDef()+'</defs>'+g+bars+'</svg>'+legendHtml(keys,obj,fmt);
+  }
+  if(d.chart==='line'){
+    const w=460,h=210,pad=d.grid?30:10;
+    const max=Math.max.apply(null,keys.map(k=>obj[k]))||1;
+    const pts=keys.map((k,i)=>[pad+(w-pad*2)*(keys.length===1?0.5:i/(keys.length-1)),h-pad-(obj[k]/max)*(h-pad*2)]);
+    const path=smoothPath(pts,d.curve/100);
+    let g='';
+    if(d.grid) for(let i=0;i<=4;i++){const y=pad+(h-pad*2)*i/4;g+='<line x1="'+pad+'" y1="'+y+'" x2="'+(w-pad)+'" y2="'+y+'" stroke="currentColor" stroke-opacity=".12"/><text x="4" y="'+(y+3)+'" class="ax">'+fmt(max*(1-i/4))+'</text>';}
+    return '<svg viewBox="0 0 '+w+' '+h+'" class="chart" data-chart="'+tag+'"><defs><linearGradient id="ln'+tag+'" x1="0" x2="1"><stop offset="0" stop-color="'+H[0]+'"/><stop offset=".5" stop-color="'+H[1]+'"/><stop offset="1" stop-color="'+H[4]+'"/></linearGradient>'+
+      '<linearGradient id="ar'+tag+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+H[1]+'" stop-opacity=".35"/><stop offset="1" stop-color="'+H[1]+'" stop-opacity="0"/></linearGradient>'+glowDef()+'</defs>'+g+
+      '<path d="'+path+' L '+(w-pad)+' '+(h-pad)+' L '+pad+' '+(h-pad)+' Z" fill="url(#ar'+tag+')"/>'+
+      '<path d="'+path+'" fill="none" stroke="url(#ln'+tag+')" stroke-width="'+(d.thickness/4+2)+'" stroke-linecap="round"'+(d.glow?' filter="url(#glow)"':'')+'/>'+
+      pts.map((p,i)=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="'+H[i%8]+'"><title>'+esc(keys[i])+': '+fmt(obj[keys[i]])+'</title></circle>'+
+        (d.labels?'<text x="'+p[0]+'" y="'+(p[1]-9)+'" text-anchor="middle" class="vl">'+fmt(obj[keys[i]])+'</text>':'')+
+        '<text x="'+p[0]+'" y="'+(h-6)+'" text-anchor="middle" class="ax">'+esc(short(keys[i],8))+'</text>').join('')+'</svg>';
+  }
+  const R=54,C=2*Math.PI*R;let acc=0,segs='';
+  keys.forEach((k,i)=>{
+    const len=obj[k]/total*C;
+    segs+='<circle r="'+R+'" cx="80" cy="80" fill="none" stroke="'+H[i%8]+'" stroke-width="'+d.thickness+'" stroke-dasharray="'+len.toFixed(2)+' '+C.toFixed(2)+'" stroke-dashoffset="'+(-acc).toFixed(2)+'" transform="rotate(-90 80 80)" stroke-linecap="butt"'+(d.glow?' filter="url(#glow)"':'')+'><title>'+esc(k)+': '+fmt(obj[k])+'</title></circle>';
+    acc+=len;
+  });
+  return '<div class="donut-wrap"><svg viewBox="0 0 160 160" class="donut chart" data-chart="'+tag+'"><defs>'+glowDef()+'</defs>'+segs+
+    '<text x="80" y="76" text-anchor="middle" class="dn">'+fmt(total)+'</text><text x="80" y="94" text-anchor="middle" class="dl">'+(d.metric==='sum'?'₽ всего':'всего')+'</text></svg>'+
+    legendHtml(keys,obj,fmt)+'</div>';
+}
+function glowDef(){return '<filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';}
+function legendHtml(keys,obj,fmt){
+  const H=hues(),total=keys.reduce((a,k)=>a+obj[k],0)||1;
+  return '<ul class="legend">'+keys.map((k,i)=>'<li><i style="background:'+H[i%8]+'"></i><span>'+esc(k)+'</span><b>'+fmt(obj[k])+'</b><em>'+Math.round(obj[k]/total*100)+'%</em></li>').join('')+'</ul>';
+}
+function smoothPath(pts,t){
+  if(!pts.length) return '';
+  if(pts.length<3||t<=0) return 'M '+pts.map(p=>p[0]+' '+p[1]).join(' L ');
+  let d='M '+pts[0][0]+' '+pts[0][1];
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+    const c1x=p1[0]+(p2[0]-p0[0])/6*t*2,c1y=p1[1]+(p2[1]-p0[1])/6*t*2;
+    const c2x=p2[0]-(p3[0]-p1[0])/6*t*2,c2y=p2[1]-(p3[1]-p1[1])/6*t*2;
+    d+=' C '+c1x+' '+c1y+', '+c2x+' '+c2y+', '+p2[0]+' '+p2[1];
+  }
+  return d;
+}
+function trendSvg(trend){
+  const d=S.prefs.dash,H=hues();
+  if(!trend.length) return '<p class="dim">Нет датированных документов в выбранном периоде.</p>';
+  const w=900,h=230,pad=d.grid?38:12;
+  const max=Math.max.apply(null,trend.map(t=>t.value))||1;
+  const pts=trend.map((t,i)=>[pad+(w-pad*2)*(trend.length===1?0.5:i/(trend.length-1)),h-pad-(t.value/max)*(h-pad*2)]);
+  const path=smoothPath(pts,d.curve/100);
+  const fmt=v=>d.metric==='sum'?compact(v):String(Math.round(v));
+  let g='';
+  if(d.grid) for(let i=0;i<=4;i++){const y=pad+(h-pad*2)*i/4;g+='<line x1="'+pad+'" y1="'+y+'" x2="'+(w-pad)+'" y2="'+y+'" stroke="currentColor" stroke-opacity=".12"/><text x="6" y="'+(y+4)+'" class="ax">'+fmt(max*(1-i/4))+'</text>';}
+  return '<svg viewBox="0 0 '+w+' '+h+'" class="chart wide" data-chart="trend"><defs>'+
+    '<linearGradient id="tl" x1="0" x2="1"><stop offset="0" stop-color="'+H[0]+'"/><stop offset=".35" stop-color="'+H[3]+'"/><stop offset=".7" stop-color="'+H[2]+'"/><stop offset="1" stop-color="'+H[1]+'"/></linearGradient>'+
+    '<linearGradient id="ta" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+H[1]+'" stop-opacity=".34"/><stop offset="1" stop-color="'+H[1]+'" stop-opacity="0"/></linearGradient>'+glowDef()+'</defs>'+g+
+    '<path d="'+path+' L '+(w-pad)+' '+(h-pad)+' L '+pad+' '+(h-pad)+' Z" fill="url(#ta)"/>'+
+    '<path d="'+path+'" fill="none" stroke="url(#tl)" stroke-width="'+(d.thickness/4+2.5)+'" stroke-linecap="round" stroke-linejoin="round"'+(d.glow?' filter="url(#glow)"':'')+'/>'+
+    pts.map((p,i)=>'<g><circle cx="'+p[0]+'" cy="'+p[1]+'" r="5" fill="'+H[i%8]+'" stroke="var(--surface)" stroke-width="2"><title>'+trend[i].label+': '+fmt(trend[i].value)+'</title></circle>'+
+      (d.labels?'<text x="'+p[0]+'" y="'+(p[1]-11)+'" text-anchor="middle" class="vl">'+fmt(trend[i].value)+'</text>':'')+
+      '<text x="'+p[0]+'" y="'+(h-8)+'" text-anchor="middle" class="ax">'+esc(trend[i].label)+'</text></g>').join('')+'</svg>';
+}
+function exportChartPng(){
+  const svg=$('#chartC svg')||$('#chartA svg');
+  if(!svg){toast('Нет графика для экспорта','warn');return;}
+  const clone=svg.cloneNode(true);
+  const cs=getComputedStyle(document.documentElement);
+  clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  clone.querySelectorAll('.ax,.vl,.dn,.dl').forEach(t=>{
+    t.setAttribute('fill',t.classList.contains('vl')?cs.getPropertyValue('--txt').trim()||'#101a27':cs.getPropertyValue('--txt3').trim()||'#7b8ea6');
+    t.setAttribute('font-family','Arial, sans-serif');
+    t.setAttribute('font-size',t.classList.contains('dn')?'22':'10');
+  });
+  clone.querySelectorAll('[stroke="currentColor"]').forEach(l=>l.setAttribute('stroke','#94a3b8'));
+  const vb=(clone.getAttribute('viewBox')||'0 0 900 230').split(' ').map(Number);
+  const scale=2,W=vb[2]*scale,Hh=vb[3]*scale;
+  const data=new XMLSerializer().serializeToString(clone);
+  const img=new Image();
+  img.onload=()=>{
+    const cv=document.createElement('canvas');cv.width=W;cv.height=Hh;
+    const ctx=cv.getContext('2d');
+    ctx.fillStyle=cs.getPropertyValue('--surface').trim()||'#fff';ctx.fillRect(0,0,W,Hh);
+    ctx.drawImage(img,0,0,W,Hh);
+    const a=document.createElement('a');
+    a.download='СтройРеестр_график_'+iso(new Date())+'.png';
+    a.href=cv.toDataURL('image/png');a.click();
+    toast('PNG сохранён','ok');
+  };
+  img.onerror=()=>toast('Не удалось отрисовать PNG','bad');
+  img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(data)));
+}
 function attentionList(){
-  const out=[];
-  (S.snap.prescriptions||[]).forEach(p=>{const d=daysLeft(p['Срок_исполнения']);if(String(p['Статус'])!=='Исполнено'&&d!==null&&d<=3)out.push(['⚠️','Предписание '+p['Номер'],d<0?('просрочено '+Math.abs(d)+' дн.'):('осталось '+d+' дн.'),'prescriptions',p['ID']]);});
-  (S.snap.supervision||[]).forEach(p=>{const d=daysLeft(p['Срок_устранения']);if(String(p['Статус_устранения'])!=='Устранено'&&d!==null&&d<=7)out.push(['🔍','Авторский надзор',d<0?('просрочено '+Math.abs(d)+' дн.'):('осталось '+d+' дн.'),'supervision',p['ID']]);});
-  (S.snap.personnelDocs||[]).forEach(p=>{const d=daysLeft(p['Срок_действия']);if(d!==null&&d<=30)out.push(['🪪',p['Тип_документа']+' · '+refLabel('personnel',p['ID_Сотрудника']),d<0?('просрочен '+Math.abs(d)+' дн.'):('истекает через '+d+' дн.'),'personnelDocs',p['ID']]);});
-  (S.snap.reminders||[]).forEach(r=>{const d=daysLeft(r['Дата']);if(String(r['Статус'])!=='Выполнено'&&d!==null&&d<=7)out.push(['⏰',r['Тип']+' · '+short(r['Объект'],24),d<0?('просрочено '+Math.abs(d)+' дн.'):('через '+d+' дн.'),'reminders',r['ID']]);});
-  (S.snap.tasks||[]).forEach(t=>{const d=daysLeft(t['Дедлайн']);if(['Выполнено','Отклонено'].indexOf(String(t['Статус']))===-1&&d!==null&&d<=3)out.push(['📨',short(t['Тема'],28),d<0?('просрочено '+Math.abs(d)+' дн.'):('дедлайн через '+d+' дн.'),'tasks',t['ID']]);});
-  if(!out.length) return '<p class="dim">Просрочек и близких сроков нет.</p>';
-  return out.slice(0,14).map(x=>'<button class="att-i" onclick="openDrawer(MOD[\''+x[3]+'\',\''+esc(x[4])+'\')"><span>'+x[0]+'</span><div><b>'+esc(x[1])+'</b><i>'+esc(x[2])+'</i></div><em>→</em></button>').join('');
+  if(!NOTIF.length) return '<p class="dim">Просрочек и близких сроков нет.</p>';
+  const ico={late:'⚠️',soon:'⏳',review:'📝',remark:'❗',new:'📨'};
+  return NOTIF.slice(0,14).map(n=>'<button class="att-i" onclick="openFromNotif(\''+n.mod+'\',\''+esc(n.id)+'\',\''+n.key+'\')"><span>'+ico[n.kind]+'</span><div><b>'+esc(n.title)+'</b><i>'+esc(n.sub||'')+(n.days!=null?' · '+(n.days<0?'просрочено '+Math.abs(n.days)+' дн.':'через '+n.days+' дн.'):'')+'</i></div><em>→</em></button>').join('');
 }
-function donut(obj){
-  const keys=Object.keys(obj); if(!keys.length) return '<p class="dim">Нет данных.</p>';
-  const total=keys.reduce((a,k)=>a+obj[k],0); let acc=0,segs='';
-  keys.forEach((k,i)=>{const len=obj[k]/total*276.46;
-    segs+='<circle r="44" cx="60" cy="60" fill="none" stroke="'+CHART_HUES[i%8]+'" stroke-width="16" stroke-dasharray="'+len.toFixed(2)+' 276.46" stroke-dashoffset="'+(-acc).toFixed(2)+'" transform="rotate(-90 60 60)"><title>'+esc(k)+': '+obj[k]+'</title></circle>';
-    acc+=len;});
-  return '<div class="donut-wrap"><svg viewBox="0 0 120 120" class="donut">'+segs+'<text x="60" y="57" text-anchor="middle" class="dn">'+total+'</text><text x="60" y="72" text-anchor="middle" class="dl">всего</text></svg>'+
-    '<ul class="legend">'+keys.map((k,i)=>'<li><i style="background:'+CHART_HUES[i%8]+'"></i><span>'+esc(k)+'</span><b>'+obj[k]+'</b><em>'+Math.round(obj[k]/total*100)+'%</em></li>').join('')+'</ul></div>';
-}
-function bars(obj){
-  const keys=Object.keys(obj); if(!keys.length) return '<p class="dim">Нет данных.</p>';
-  const max=Math.max.apply(null,keys.map(k=>obj[k]));
-  return '<div class="vbars">'+keys.map((k,i)=>'<div class="vbar"><b>'+obj[k]+'</b><div class="vb-t"><i style="height:'+Math.max(6,obj[k]/max*100)+'%;background:'+CHART_HUES[i%8]+'"></i></div><span>'+esc(short(k,14))+'</span></div>').join('')+'</div>';
-}
+
+/* ---------- прогресс ---------- */
 function renderProgressShell(){
   const opts=(S.snap.contracts||[]).map(c=>'<option value="'+esc(c['ID_Договора'])+'">'+esc(c['Контрагент'])+' · №'+esc(c['Номер_Договора'])+'</option>').join('');
   $('#modBody').innerHTML='<div class="panel"><div class="pg-pick"><div><label>Договор</label><select id="pgContract"><option value="">— выберите договор —</option>'+opts+'</select></div><button class="btn primary" onclick="loadProgress()">Показать</button></div><div id="pgOut"><p class="dim">Выберите договор — увидите две параллельные шкалы по каждой позиции: подтверждённое выполнение и подачу КС-2.</p></div></div>';
@@ -641,12 +993,12 @@ async function loadProgress(){
   if(!id){out.innerHTML='<p class="dim">Выберите договор.</p>';return;}
   out.innerHTML='<div class="sk-wrap"><div class="sk-row"><span class="sk a"></span><span class="sk b"></span><span class="sk c"></span></div><div class="sk-row"><span class="sk a"></span><span class="sk b"></span><span class="sk c"></span></div></div>';
   try{
-    const r=await api('progress',{contractId:id}),s=r.summary;
+    const r=await api('progress',{contractId:id}),s=r.summary,H=hues();
     const pct=(a,b)=>b?Math.min(100,a/b*100):0;
     const fmt=n=>(+n).toFixed(2).replace(/\.00$/,'');
     out.innerHTML='<div class="pg-sum">'+
       [['Объём по смете',s.total,''],['Выполнено',s.done,money(s.doneAmount)],['На проверке',s.review,''],['Осталось',s.rest,''],['Подано КС-2',s.billed,money(s.billedAmount)],['Не подано',s.unbilled,'']]
-      .map((x,i)=>'<div class="pgs" style="--k:'+CHART_HUES[i%8]+'"><span>'+x[0]+'</span><b>'+fmt(x[1])+'</b><i>'+esc(x[2]||'')+'</i></div>').join('')+'</div>'+
+      .map((x,i)=>'<div class="pgs" style="--k:'+H[i%8]+'"><span>'+x[0]+'</span><b>'+fmt(x[1])+'</b><i>'+esc(x[2]||'')+'</i></div>').join('')+'</div>'+
       (r.positions.length?r.positions.map(p=>
         '<div class="pg-row"><div class="pg-head"><b>'+esc(p.name)+'</b><span>'+esc(p.section||'')+' · '+esc(p.unit||'')+' · '+money(p.amount)+'</span></div>'+
         '<div class="pg-line"><label>Выполнение</label><div class="stack">'+
@@ -664,18 +1016,20 @@ async function loadProgress(){
         r.ks2.map(k=>'<tr><td class="cid">'+esc(k.id)+'</td><td>'+esc(k.number)+'</td><td class="dt">'+esc(dstr(k.date))+'</td><td><b class="num">'+money(k.amount)+'</b></td><td><span class="chip '+statusKind(k.status)+'">'+esc(k.status)+'</span></td></tr>').join('')+'</tbody></table></div>':'');
   }catch(e){out.innerHTML='<div class="empty"><div class="empty-ico">⚠️</div><p>'+esc(e.message)+'</p></div>';}
 }
+
+/* ---------- календарь / корзина / журнал ---------- */
 let calDate=new Date();
 function renderCalendar(){
   const y=calDate.getFullYear(),mo=calDate.getMonth();
   const first=new Date(y,mo,1),last=new Date(y,mo+1,0),off=(first.getDay()+6)%7;
-  const ev=S.snap.calendar||[],rem=S.snap.reminders||[],today=new Date().toISOString().slice(0,10);
+  const ev=S.snap.calendar||[],rem=S.snap.reminders||[],today=iso(new Date());
   let cells=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=>'<div class="cal-dow">'+d+'</div>').join('');
   for(let i=0;i<off;i++) cells+='<div class="cal-cell off"></div>';
   for(let d=1;d<=last.getDate();d++){
     const ds=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     const de=ev.filter(e=>dstr(e['Дата'])===ds),dr=rem.filter(r=>dstr(r['Дата'])===ds);
     cells+='<div class="cal-cell'+(ds===today?' today':'')+'"><b>'+d+'</b>'+
-      de.map((e,i)=>'<button class="cal-ev" style="--k:'+CHART_HUES[i%8]+'" onclick="openDrawer(MOD.calendar,\''+esc(e['ID'])+'\')">'+esc(short(e['Тип'],12))+'</button>').join('')+
+      de.map((e,i)=>'<button class="cal-ev" style="--k:'+hues()[i%8]+'" onclick="openDrawer(MOD.calendar,\''+esc(e['ID'])+'\')">'+esc(short(e['Тип'],12))+'</button>').join('')+
       dr.map(r=>'<button class="cal-rem" onclick="openDrawer(MOD.reminders,\''+esc(r['ID'])+'\')">⏰ '+esc(short(r['Объект'],12))+'</button>').join('')+'</div>';
   }
   $('#modBody').innerHTML='<div class="panel"><div class="cal-head"><button class="btn ghost sm" onclick="calShift(-1)">←</button><h3>'+
@@ -697,12 +1051,12 @@ function renderTrash(){
   }).join('');
 }
 async function trashRestore(mod,id){
-  try{await api('restoreRecords',{module:mod,ids:[id]});bustLocal();await fetchSnap();renderActive();paintBadges();toast('Восстановлено: '+id,'ok');}
+  try{await api('restoreRecords',{module:mod,ids:[id]});bustLocal();await fetchSnap();renderActive();paintBadges();paintNotif();toast('Восстановлено: '+id,'ok');}
   catch(e){toast(e.message,'bad');}
 }
 async function trashPurge(mod,id){
   if(!confirm('Удалить '+id+' НАВСЕГДА? Действие необратимо.')) return;
-  try{await api('purgeRecords',{module:mod,ids:[id]});bustLocal();await fetchSnap();renderActive();paintBadges();toast('Удалено навсегда','ok');}
+  try{await api('purgeRecords',{module:mod,ids:[id]});bustLocal();await fetchSnap();renderActive();paintBadges();paintNotif();toast('Удалено навсегда','ok');}
   catch(e){toast(e.message,'bad');}
 }
 function renderAudit(m){
