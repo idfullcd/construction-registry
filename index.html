@@ -15,13 +15,13 @@
     <div class="brand">
       <div class="brand-ico">🏗️</div>
       <h1>СтройРеестр</h1>
-      <p>Договоры · Исполнительная · КС-2 · Надзор · Персонал</p>
+      <p>Договоры · Исполнительная · КС-2 · Охрана ОКН · Надзор</p>
     </div>
     <div class="fg"><label for="loginInput">Логин</label><input id="loginInput" type="text" autocomplete="username" placeholder="admin"></div>
     <div class="fg"><label for="passwordInput">Пароль</label><input id="passwordInput" type="password" autocomplete="current-password" placeholder="••••••••"></div>
     <button class="btn primary btn-full" id="loginBtn" onclick="login()">Войти в систему</button>
     <div class="error" id="loginError"></div>
-    <div class="login-meta">Сессия 6 часов · пароль хранится как SHA-256 хэш<br>Первый вход: <b>admin</b> / <b>admin123</b></div>
+    <div class="login-meta">Сессия 6 часов · пароли SHA-256 · 33 разделов<br>Первый вход: <b>admin</b> / <b>admin123</b></div>
   </div>
 </div>
 
@@ -33,12 +33,11 @@
     <span class="net ok" id="netBadge">онлайн</span>
     <span class="sync">обновлено <b id="syncTime">—</b></span>
     <div class="grow"></div>
-    <button class="btn" onclick="exportCurrent()">⤓ CSV</button>
+    <button class="btn" onclick="exportCurrent('xls')">⤓ Excel</button>
     <button class="btn" onclick="loadData()">⟳</button>
     <button class="btn" onclick="toggleTheme()" title="Светлая / тёмная тема">🌓</button>
     <button class="btn" onclick="logout()">Выйти</button>
   </header>
-
   <nav id="navGroups"></nav>
   <main id="modHost"></main>
 </div>
@@ -84,9 +83,9 @@
 <script src="admin.js"></script>
 <script>
 function fabAction(){
-  const m = MOD[S.mod];
-  if(m && m.sheet && can(m.id,'create')) openForm(m,null);
-  else { setModule('contracts'); openForm(MOD.contracts,null); }
+  const m=MOD[S.mod];
+  if(m&&m.sheet&&can(m.id,'create')) openForm(m,null);
+  else{setModule('contracts');openForm(MOD.contracts,null);}
 }
 </script>
 </body>
