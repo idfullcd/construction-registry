@@ -1,6 +1,6 @@
 "use strict";
 /* ⚠️ URL веб-приложения Apps Script, заканчивается на /exec */
-var API_URL='https://script.google.com/macros/s/AKfycby0NXF3ZPUmMmfZCG6mX5SrVZ6N46hQjdHkd9-bvLm4le-oWBqYuEibDPnm6YbN3ZQxxA/exec';
+var API_URL='https://docs.google.com/spreadsheets/d/1BTQH-B4WnycpdcIizVB5d1YjvI7YmgXrhawWX0BWkdM/edit';
 
 var PAL={site:{n:'Площадка',h:['#ff6b35','#2f6df6','#0fbd8c','#f59f00','#e8437f','#7c5cff','#00b8d9','#8aa2b8']},
  blue:{n:'Синька',h:['#2f6df6','#00b8d9','#7c5cff','#0fbd8c','#5c7cfa','#22b8cf','#4dabf7','#9fb3c8']},
