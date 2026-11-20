@@ -1,4 +1,4 @@
-var API_URL='https://docs.google.com/spreadsheets/d/1n_9oxLDyngZmQSFid-IxpNEaGhXtK70H9vA8CTTPq3U/edit';
+var API_URL='https://script.google.com/macros/s/AKfycbw7mLMaEQs_GVNu6X02vnKsi0MvsGnllZMC2trvVx_jDAr8Sn-b-D0iV_1vYRTj6PIbJw/exec';
 const APP={name:'СтройРеестр',ver:'4.2',page:40,cacheKey:'sr_snap_v42',viewKey:'sr_views_v42',prefKey:'sr_prefs_v42',queueKey:'sr_queue_v42',readKey:'sr_read_v42'};
 const GROUPS=[['flow','Рабочие процессы'],['docs','Документация и сметы'],['money','Коммерция и финансы'],
  ['people','Люди и допуски'],['plan','Планирование и надзор'],['misc','Ресурсы'],['analytics','Аналитика'],['admin','Администрирование']];
