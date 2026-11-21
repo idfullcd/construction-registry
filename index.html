@@ -5,40 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>СтройРеестр - Вход</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; background-color: #f9f9f9; }
-        .hidden { display: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #f4f6f8; color: #333; }
+        .hidden { display: none !important; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 10px 15px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        button { padding: 10px 20px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 500; transition: background 0.2s; }
         button:hover { background-color: #0056b3; }
-        .btn-danger { background-color: #dc3545; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .btn-danger { background-color: #dc3545; padding: 6px 12px; font-size: 14px; }
         .btn-danger:hover { background-color: #c82333; }
-        .error { color: #dc3545; }
-        .success { color: #28a745; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .error { color: #dc3545; font-size: 14px; margin-top: 5px; }
+        .success { color: #28a745; font-size: 14px; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: left; }
+        th { background-color: #f8f9fa; font-weight: 600; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h1, h2, h3 { margin-top: 0; color: #2c3e50; }
+        .role-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .role-admin { background-color: #ffebee; color: #c62828; }
+        .role-moderator { background-color: #fff3e0; color: #ef6c00; }
+        .role-user { background-color: #e3f2fd; color: #1565c0; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>СтройРеестр</h1>
+        <h1>🏗️ СтройРеестр</h1>
         
         <!-- Секция Входа -->
         <div id="auth-section">
-            <h2>Вход</h2>
+            <h2>Вход в систему</h2>
             <div class="form-group">
                 <label>Имя пользователя:</label>
-                <input type="text" id="login-username">
+                <input type="text" id="login-username" autocomplete="username">
             </div>
             <div class="form-group">
                 <label>Пароль:</label>
-                <input type="password" id="login-password">
+                <input type="password" id="login-password" autocomplete="current-password">
             </div>
             <button onclick="login()">Войти</button>
-            <p>Нет аккаунта? <a href="#" onclick="showRegister()">Зарегистрироваться</a></p>
+            <p style="margin-top: 15px;">Нет аккаунта? <a href="#" onclick="showRegister()">Зарегистрироваться</a></p>
             <p id="login-message" class="error"></p>
         </div>
 
@@ -46,27 +52,31 @@
         <div id="register-section" class="hidden">
             <h2>Регистрация</h2>
             <div class="form-group">
-                <label>Имя пользователя:</label>
-                <input type="text" id="reg-username">
+                <label>Придумайте имя пользователя:</label>
+                <input type="text" id="reg-username" autocomplete="username">
             </div>
             <div class="form-group">
-                <label>Пароль:</label>
-                <input type="password" id="reg-password">
+                <label>Придумайте пароль:</label>
+                <input type="password" id="reg-password" autocomplete="new-password">
             </div>
             <button onclick="register()">Зарегистрироваться</button>
-            <p>Уже есть аккаунт? <a href="#" onclick="showLogin()">Войти</a></p>
+            <p style="margin-top: 15px;">Уже есть аккаунт? <a href="#" onclick="showLogin()">Войти</a></p>
             <p id="reg-message" class="error"></p>
         </div>
 
         <!-- Основной раздел (после входа) -->
         <div id="main-section" class="hidden">
-            <h2>Добро пожаловать, <span id="current-user"></span> <small>(<span id="current-role"></span>)</small></h2>
-            <button onclick="logout()" class="btn-danger">Выйти</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Добро пожаловать, <span id="current-user"></span></h2>
+                <button onclick="logout()" class="btn-danger">Выйти</button>
+            </div>
+            <p>Ваша роль: <span id="current-role-badge" class="role-badge"></span></p>
             
             <!-- Админ-панель (видна только admin) -->
             <div id="admin-panel" class="hidden">
-                <h3>Панель администратора</h3>
-                <button onclick="loadUsers()">Обновить список пользователей</button>
+                <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+                <h3>⚙️ Панель администратора</h3>
+                <button onclick="loadUsers()" style="margin-bottom: 10px;">🔄 Обновить список пользователей</button>
                 <table id="users-table">
                     <thead>
                         <tr>
@@ -82,7 +92,7 @@
     </div>
 
     <script>
-        // Вставьте сюда URL вашего развернутого веб-приложения Google Apps Script
+        // ССЫЛКА УЖЕ ВСТАВЛЕНА ПРАВИЛЬНО
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNWo1oYzMyv332prE-QSbyYbu5HISdKN4MhXe6XFh9S6H9PCvJVMIPMXxp1yW8UAYS4w/exec';
 
         let currentUser = null;
@@ -110,15 +120,20 @@
             el.className = isError ? 'error' : 'success';
         }
 
-        // text/plain используется для предотвращения CORS preflight (OPTIONS) запросов, которые не поддерживает GAS
+        // Используем text/plain для обхода CORS preflight в Google Apps Script
         async function callGAS(action, data) {
             const payload = { action, ...data };
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
-            });
-            return await response.json();
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Ошибка соединения:', error);
+                return { success: false, message: 'Ошибка сети. Проверьте URL скрипта.' };
+            }
         }
 
         async function register() {
@@ -171,7 +186,10 @@
             document.getElementById('register-section').classList.add('hidden');
             document.getElementById('main-section').classList.remove('hidden');
             document.getElementById('current-user').textContent = currentUser.username;
-            document.getElementById('current-role').textContent = currentUser.role;
+            
+            const roleBadge = document.getElementById('current-role-badge');
+            roleBadge.textContent = currentUser.role;
+            roleBadge.className = 'role-badge role-' + currentUser.role;
 
             if (currentUser.role === 'admin') {
                 document.getElementById('admin-panel').classList.remove('hidden');
@@ -183,22 +201,24 @@
 
         async function loadUsers() {
             const tbody = document.getElementById('users-tbody');
-            tbody.innerHTML = '<tr><td colspan="3">Загрузка...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3">Загрузка данных...</td></tr>';
             const result = await callGAS('getUsers', { adminUsername: currentUser.username });
+            
             if (result.success) {
                 tbody.innerHTML = '';
                 result.users.forEach(user => {
+                    const isSelf = user.username === currentUser.username;
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${user.username}</td>
-                        <td><strong>${user.role}</strong></td>
+                        <td><span class="role-badge role-${user.role}">${user.role}</span></td>
                         <td>
-                            <select onchange="changeRole('${user.username}', this.value)" ${user.username === currentUser.username ? 'disabled' : ''}>
+                            <select onchange="changeRole('${user.username}', this.value)" ${isSelf ? 'disabled' : ''} style="width: auto; display: inline-block; padding: 6px;">
                                 <option value="user" ${user.role === 'user' ? 'selected' : ''}>user</option>
                                 <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>moderator</option>
                                 <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>admin</option>
                             </select>
-                            <button onclick="deleteUser('${user.username}')" class="btn-danger" style="margin-left: 5px;" ${user.username === currentUser.username ? 'disabled' : ''}>Удалить</button>
+                            <button onclick="deleteUser('${user.username}')" class="btn-danger" ${isSelf ? 'disabled' : ''} title="${isSelf ? 'Нельзя удалить себя' : 'Удалить'}">Удалить</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -218,7 +238,7 @@
         }
 
         async function deleteUser(targetUsername) {
-            if (!confirm(`Вы уверены, что хотите удалить пользователя ${targetUsername}?`)) return;
+            if (!confirm(`Вы уверены, что хотите БЕЗВОЗВРАТНО удалить пользователя "${targetUsername}"?`)) return;
             const result = await callGAS('deleteUser', { targetUsername, adminUsername: currentUser.username });
             if (result.success) {
                 loadUsers();
