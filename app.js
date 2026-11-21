@@ -1,15 +1,16 @@
 // ФАЙЛ: app.js
-// Сборка: FINAL-3-FILES-V1
+// Версия: WITH-PASSWORD-RECOVERY
 
-// ⚠️ ВСТАВЬТЕ СЮДА НОВУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT (ШАГ 1) ⚠️
+// ⚠️ ВСТАВЬТЕ СЮДА ВАШУ РАБОЧУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT ⚠️
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQFSn0PCJ6ffyf3_rTb1jq1LpSilORYVqlW_SZtMHb_7wYHnl3cYQjJCaGoYWuJfgFDg/exec";
 
 const $ = id => document.getElementById(id);
 let currentUser = null;
+let recoverUsername = null; // Временное хранение логина при восстановлении
 
 window.addEventListener('load', () => {
   const dbg = $('debug');
-  if (dbg) dbg.innerHTML = 'Сборка: <b>FINAL-3-FILES-V1</b><br>API: ' + SCRIPT_URL;
+  if (dbg) dbg.innerHTML = 'Сборка: <b>WITH-PASSWORD-RECOVERY</b><br>API: ' + SCRIPT_URL;
   
   const saved = localStorage.getItem('currentUser');
   if (saved) {
@@ -20,28 +21,21 @@ window.addEventListener('load', () => {
 
 async function api(action, data = {}) {
   const payload = { action, ...data };
-  // Добавляем timestamp, чтобы браузер не кэшировал запросы к Google
-  const url = SCRIPT_URL + '?t=' + Date.now(); 
+  const url = SCRIPT_URL + '?t=' + Date.now();
   
   try {
     const response = await fetch(url, {
       method: 'POST',
-      // text/plain предотвращает CORS preflight (OPTIONS) запрос, который не поддерживает Google
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
       redirect: 'follow'
     });
-    
     const text = await response.text();
-    
     try {
       return JSON.parse(text);
     } catch (e) {
-      console.error("Сервер вернул не JSON, а текст:", text);
-      return { 
-        success: false, 
-        message: 'Ошибка сервера Google. Проверьте, что в Apps Script доступ установлен в "Все" (Anyone). Ответ сервера: ' + text.substring(0, 200) 
-      };
+      console.error("Сервер вернул не JSON:", text);
+      return { success: false, message: 'Ошибка сервера. Ответ: ' + text.substring(0, 200) };
     }
   } catch (error) {
     return { success: false, message: 'Ошибка сети: ' + error.message };
@@ -56,20 +50,35 @@ function msg(id, text, ok = false) {
 }
 
 function show(section) {
-  ['auth-section', 'register-section', 'main-section'].forEach(s => {
+  ['auth-section', 'register-section', 'recover-section', 'main-section'].forEach(s => {
     const el = $(s); if (el) el.classList.add('hidden');
   });
   $(section).classList.remove('hidden');
 }
 
+function showRecoverStep(step) {
+  $('recover-step1').classList.add('hidden');
+  $('recover-step2').classList.add('hidden');
+  $(step).classList.remove('hidden');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Навигация
   $('link-reg').onclick   = e => { e.preventDefault(); msg('login-message', ''); show('register-section'); };
-  $('link-login').onclick = e => { e.preventDefault(); msg('reg-message', '');   show('auth-section'); };
-  $('btn-login').onclick  = login;
-  $('btn-reg').onclick    = register;
+  $('link-recover').onclick = e => { e.preventDefault(); msg('login-message', ''); show('recover-section'); showRecoverStep('recover-step1'); };
+  $('link-login-from-reg').onclick = e => { e.preventDefault(); msg('reg-message', ''); show('auth-section'); };
+  $('link-login-from-recover').onclick = e => { e.preventDefault(); msg('recover-message', ''); show('auth-section'); };
+  $('link-login-from-recover2').onclick = e => { e.preventDefault(); msg('recover-message2', ''); show('auth-section'); };
+  
+  // Кнопки
+  $('btn-login').onclick = login;
+  $('btn-reg').onclick = register;
   $('btn-logout').onclick = logout;
   $('btn-refresh').onclick = loadUsers;
+  $('btn-recover-next').onclick = recoverStep1;
+  $('btn-recover-submit').onclick = recoverStep2;
 
+  // Делегирование событий для таблицы пользователей
   $('users-tbody').addEventListener('change', async e => {
     const el = e.target;
     if (el.dataset.act !== 'role') return;
@@ -79,25 +88,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('users-tbody').addEventListener('click', async e => {
     const el = e.target;
-    if (el.dataset.act !== 'del') return;
-    if (!confirm('Безвозвратно удалить пользователя "' + el.dataset.user + '"?')) return;
-    const r = await api('deleteUser', { targetUsername: el.dataset.user, adminUsername: currentUser.username });
-    if (!r.success) alert(r.message); else loadUsers();
+    if (el.dataset.act === 'del') {
+      if (!confirm('Безвозвратно удалить пользователя "' + el.dataset.user + '"?')) return;
+      const r = await api('deleteUser', { targetUsername: el.dataset.user, adminUsername: currentUser.username });
+      if (!r.success) alert(r.message); else loadUsers();
+    }
+    if (el.dataset.act === 'reset') {
+      if (!confirm('Сбросить пароль пользователю "' + el.dataset.user + '"? Ему будет выдан временный пароль.')) return;
+      const r = await api('resetPasswordByAdmin', { targetUsername: el.dataset.user, adminUsername: currentUser.username });
+      alert(r.message);
+    }
   });
 });
 
+// ========== РЕГИСТРАЦИЯ ==========
 async function register() {
   const username = $('reg-username').value.trim();
   const password = $('reg-password').value;
-  if (!username || !password) return msg('reg-message', 'Заполните все поля');
+  const question = $('reg-question').value;
+  const answer = $('reg-answer').value.trim();
+  
+  if (!username || !password || !question || !answer) {
+    return msg('reg-message', 'Заполните все поля, включая секретный вопрос');
+  }
+  if (password.length < 4) return msg('reg-message', 'Пароль должен быть не короче 4 символов');
+  
   msg('reg-message', 'Регистрация…', true);
-  const r = await api('register', { username, password });
+  const r = await api('register', { username, password, secretQuestion: question, secretAnswer: answer });
   if (r.success) {
     msg('reg-message', r.message, true);
-    setTimeout(() => { show('auth-section'); msg('login-message', 'Теперь войдите', true); }, 1200);
+    setTimeout(() => { show('auth-section'); msg('login-message', 'Теперь войдите', true); }, 1500);
   } else msg('reg-message', r.message);
 }
 
+// ========== ВХОД ==========
 async function login() {
   const username = $('login-username').value.trim();
   const password = $('login-password').value;
@@ -132,6 +156,48 @@ function renderMain() {
   }
 }
 
+// ========== ВОССТАНОВЛЕНИЕ ПАРОЛЯ ==========
+async function recoverStep1() {
+  const username = $('recover-username').value.trim();
+  if (!username) return msg('recover-message', 'Введите имя пользователя');
+  
+  msg('recover-message', 'Поиск…', true);
+  const r = await api('getSecretQuestion', { username });
+  if (r.success) {
+    recoverUsername = username;
+    $('recover-question').textContent = r.question;
+    showRecoverStep('recover-step2');
+  } else {
+    msg('recover-message', r.message);
+  }
+}
+
+async function recoverStep2() {
+  const answer = $('recover-answer').value.trim();
+  const newPass = $('recover-newpass').value;
+  
+  if (!answer || !newPass) return msg('recover-message2', 'Заполните все поля');
+  if (newPass.length < 4) return msg('recover-message2', 'Пароль должен быть не короче 4 символов');
+  
+  msg('recover-message2', 'Смена пароля…', true);
+  const r = await api('recoverPassword', { 
+    username: recoverUsername, 
+    secretAnswer: answer, 
+    newPassword: newPass 
+  });
+  
+  if (r.success) {
+    msg('recover-message2', r.message, true);
+    setTimeout(() => { 
+      show('auth-section'); 
+      msg('login-message', 'Пароль изменён. Войдите с новым паролем.', true); 
+    }, 2000);
+  } else {
+    msg('recover-message2', r.message);
+  }
+}
+
+// ========== АДМИН-ПАНЕЛЬ ==========
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 async function loadUsers() {
@@ -150,6 +216,7 @@ async function loadUsers() {
         <select data-act="role" data-user="${esc(u.username)}" ${self ? 'disabled' : ''} style="width:auto;display:inline-block;padding:6px">
           ${opt('user', 'user')}${opt('moderator', 'moderator')}${opt('admin', 'admin')}
         </select>
+        <button class="btn-warning" data-act="reset" data-user="${esc(u.username)}" ${self ? 'disabled' : ''} title="Сбросить пароль">🔑 Сброс</button>
         <button class="btn-danger" data-act="del" data-user="${esc(u.username)}" ${self ? 'disabled' : ''}>Удалить</button>
       </td></tr>`;
   }).join('');
