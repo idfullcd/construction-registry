@@ -16,6 +16,10 @@
   button:disabled{background:#bbb;cursor:not-allowed}
   .btn-danger{background:#dc3545;padding:6px 12px;font-size:14px}
   .btn-danger:hover{background:#c82333}
+  .btn-warning{background:#fd7e14;padding:6px 12px;font-size:14px}
+  .btn-warning:hover{background:#e36a07}
+  .btn-secondary{background:#6c757d;padding:6px 12px;font-size:14px}
+  .btn-secondary:hover{background:#5a6268}
   .error{color:#dc3545;font-size:14px}
   .success{color:#28a745;font-size:14px}
   table{width:100%;border-collapse:collapse;margin-top:16px}
@@ -25,6 +29,8 @@
   .role-admin{background:#ffebee;color:#c62828}
   .role-moderator{background:#fff3e0;color:#ef6c00}
   .role-user{background:#e3f2fd;color:#1565c0}
+  .link{color:#007bff;cursor:pointer;text-decoration:underline}
+  .link:hover{color:#0056b3}
   #debug{margin-top:18px;font-size:12px;color:#888;word-break:break-all;border-top:1px dashed #ddd;padding-top:10px}
 </style>
 </head>
@@ -32,24 +38,66 @@
 <div class="card">
   <h1>🏗️ СтройРеестр</h1>
 
+  <!-- ВХОД -->
   <div id="auth-section">
     <h2>Вход в систему</h2>
     <div class="form-group"><label>Имя пользователя</label><input id="login-username" autocomplete="username"></div>
     <div class="form-group"><label>Пароль</label><input id="login-password" type="password" autocomplete="current-password"></div>
     <button id="btn-login">Войти</button>
-    <p>Нет аккаунта? <a href="#" id="link-reg">Зарегистрироваться</a></p>
+    <p style="margin-top:15px">
+      <span class="link" id="link-reg">Зарегистрироваться</span> · 
+      <span class="link" id="link-recover">Забыли пароль?</span>
+    </p>
     <p id="login-message" class="error"></p>
   </div>
 
+  <!-- РЕГИСТРАЦИЯ -->
   <div id="register-section" class="hidden">
     <h2>Регистрация</h2>
-    <div class="form-group"><label>Придумайте имя пользователя</label><input id="reg-username" autocomplete="username"></div>
-    <div class="form-group"><label>Придумайте пароль</label><input id="reg-password" type="password" autocomplete="new-password"></div>
+    <div class="form-group"><label>Имя пользователя</label><input id="reg-username" autocomplete="username"></div>
+    <div class="form-group"><label>Пароль</label><input id="reg-password" type="password" autocomplete="new-password"></div>
+    <div class="form-group">
+      <label>Секретный вопрос (для восстановления пароля)</label>
+      <select id="reg-question">
+        <option value="">-- Выберите вопрос --</option>
+        <option value="Кличка вашей первой собаки?">Кличка вашей первой собаки?</option>
+        <option value="Город, в котором вы родились?">Город, в котором вы родились?</option>
+        <option value="Девичья фамилия матери?">Девичья фамилия матери?</option>
+        <option value="Название первой школы?">Название первой школы?</option>
+        <option value="Любимое блюдо в детстве?">Любимое блюдо в детстве?</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Ответ на секретный вопрос</label><input id="reg-answer" type="text"></div>
     <button id="btn-reg">Зарегистрироваться</button>
-    <p>Уже есть аккаунт? <a href="#" id="link-login">Войти</a></p>
+    <p style="margin-top:15px"><span class="link" id="link-login-from-reg">Уже есть аккаунт? Войти</span></p>
     <p id="reg-message" class="error"></p>
   </div>
 
+  <!-- ВОССТАНОВЛЕНИЕ ПАРОЛЯ -->
+  <div id="recover-section" class="hidden">
+    <h2>Восстановление пароля</h2>
+    
+    <!-- Шаг 1: Ввод логина -->
+    <div id="recover-step1">
+      <p>Введите имя пользователя, чтобы увидеть ваш секретный вопрос:</p>
+      <div class="form-group"><label>Имя пользователя</label><input id="recover-username"></div>
+      <button id="btn-recover-next">Далее →</button>
+      <p style="margin-top:15px"><span class="link" id="link-login-from-recover">← Вернуться ко входу</span></p>
+      <p id="recover-message" class="error"></p>
+    </div>
+
+    <!-- Шаг 2: Ответ на вопрос + новый пароль -->
+    <div id="recover-step2" class="hidden">
+      <p><strong>Ваш секретный вопрос:</strong> <span id="recover-question" style="color:#007bff"></span></p>
+      <div class="form-group"><label>Ответ на вопрос</label><input id="recover-answer" type="text"></div>
+      <div class="form-group"><label>Новый пароль (мин. 4 символа)</label><input id="recover-newpass" type="password"></div>
+      <button id="btn-recover-submit">Сменить пароль</button>
+      <p style="margin-top:15px"><span class="link" id="link-login-from-recover2">← Вернуться ко входу</span></p>
+      <p id="recover-message2" class="error"></p>
+    </div>
+  </div>
+
+  <!-- ГЛАВНЫЙ ЭКРАН -->
   <div id="main-section" class="hidden">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h2>Привет, <span id="current-user"></span></h2>
@@ -71,7 +119,6 @@
   <div id="debug"></div>
 </div>
 
-<!-- Подключаем внешний файл с логикой -->
 <script src="app.js"></script>
 </body>
 </html>
