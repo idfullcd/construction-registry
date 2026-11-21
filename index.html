@@ -3,994 +3,238 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>СтройРеестр</title>
+    <title>СтройРеестр - Вход</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a2332, #2c5282);
-            min-height: 100vh;
-            color: #333;
-        }
-        .login-screen {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .login-card {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 420px;
-        }
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo-icon {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 12px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            font-size: 32px;
-        }
-        .login-card h1 { color: #1a2332; margin-bottom: 8px; }
-        .login-card p { color: #718096; font-size: 13px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-            font-size: 13px;
-        }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: #ff6b35;
-            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
-        }
-        .btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
-        }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-secondary {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-        }
-        .error {
-            color: #e74c3c;
-            margin-top: 15px;
-            font-size: 14px;
-            text-align: center;
-            min-height: 20px;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        .header h1 { color: #1a2332; font-size: 24px; }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .user-info span { font-weight: 600; color: #1a2332; }
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .tab {
-            padding: 10px 20px;
-            background: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            color: #718096;
-            transition: all 0.2s;
-        }
-        .tab:hover { background: #f0f3f7; }
-        .tab.active {
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            color: white;
-        }
-        .tab-content {
-            display: none;
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .tab-content.active { display: block; }
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .btn-small {
-            width: auto;
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
-        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        th {
-            background: #f0f3f7;
-            font-weight: 600;
-            color: #718096;
-            font-size: 12px;
-            text-transform: uppercase;
-        }
-        tr:hover { background: #f9fafb; }
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .badge-admin {
-            background: rgba(239, 68, 68, 0.12);
-            color: #ef4444;
-        }
-        .badge-user {
-            background: rgba(59, 130, 246, 0.12);
-            color: #3b82f6;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .modal-content h2 {
-            margin-bottom: 20px;
-            color: #1a2332;
-        }
-        .close {
-            float: right;
-            font-size: 28px;
-            cursor: pointer;
-            color: #718096;
-        }
-        .close:hover { color: #ef4444; }
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1a2332;
-            margin: 20px 0 10px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #ff6b35;
-        }
-        .info-box {
-            background: rgba(59, 130, 246, 0.1);
-            border-left: 4px solid #3b82f6;
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-            font-size: 13px;
-        }
-        .warning-box {
-            background: rgba(245, 158, 11, 0.1);
-            border-left: 4px solid #f59e0b;
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-            font-size: 13px;
-        }
-        .backup-item {
-            padding: 12px;
-            background: #f9fafb;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        @media (max-width: 768px) {
-            .header { flex-direction: column; align-items: stretch; }
-            .tabs { overflow-x: auto; }
-            table { font-size: 12px; }
-            th, td { padding: 8px; }
-        }
+        body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; background-color: #f9f9f9; }
+        .hidden { display: none; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 15px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-danger:hover { background-color: #c82333; }
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
-
-<!-- ЭКРАН ВХОДА -->
-<div id="loginScreen" class="login-screen">
-    <div class="login-card">
-        <div class="logo">
-            <div class="logo-icon">🏗️</div>
-            <h1>СтройРеестр</h1>
-            <p>Система управления строительной документацией</p>
-        </div>
-        <div class="form-group">
-            <label>Логин</label>
-            <input type="text" id="loginInput" placeholder="admin">
-        </div>
-        <div class="form-group">
-            <label>Пароль</label>
-            <input type="password" id="passwordInput" placeholder="admin123">
-        </div>
-        <button class="btn" onclick="login()">Войти</button>
-        <div id="loginError" class="error"></div>
+    <div class="card">
+        <h1>СтройРеестр</h1>
         
-        <div style="margin-top: 20px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-            <p style="color: #718096; font-size: 13px; margin-bottom: 10px;">Нет аккаунта?</p>
-            <button class="btn btn-secondary" onclick="openRegisterModal()">
-                📝 Зарегистрироваться
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ГЛАВНЫЙ ЭКРАН -->
-<div id="mainScreen" class="container" style="display:none;">
-    <div class="header">
-        <h1>🏗️ СтройРеестр</h1>
-        <div class="user-info">
-            <span id="userName"></span>
-            <span id="userRole" class="badge badge-admin"></span>
-            <button class="btn btn-small btn-danger" onclick="logout()">Выйти</button>
-        </div>
-    </div>
-
-    <div class="tabs">
-        <button class="tab active" onclick="switchTab('users')">👥 Пользователи</button>
-        <button class="tab" onclick="switchTab('journal')">📜 Журнал</button>
-        <button class="tab" onclick="switchTab('history')">🕘 История</button>
-        <button class="tab" onclick="switchTab('trash')">🗑️ Корзина</button>
-        <button class="tab" onclick="switchTab('backups')">💾 Бэкапы</button>
-    </div>
-
-    <!-- ПОЛЬЗОВАТЕЛИ -->
-    <div id="tab-users" class="tab-content active">
-        <div class="controls">
-            <button class="btn btn-small btn-success" onclick="openUserModal()">➕ Новый пользователь</button>
-            <button class="btn btn-small" onclick="loadData()">🔄 Обновить</button>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Логин</th>
-                    <th>ФИО</th>
-                    <th>Роль</th>
-                    <th>Email</th>
-                    <th>Действия</th>
-                </tr>
-            </thead>
-            <tbody id="usersList"></tbody>
-        </table>
-    </div>
-
-    <!-- ЖУРНАЛ -->
-    <div id="tab-journal" class="tab-content">
-        <div class="info-box">
-            ℹ️ Журнал содержит последние 200 действий всех пользователей.
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Дата</th>
-                    <th>Пользователь</th>
-                    <th>Действие</th>
-                    <th>Объект</th>
-                    <th>Детали</th>
-                </tr>
-            </thead>
-            <tbody id="journalList"></tbody>
-        </table>
-    </div>
-
-    <!-- ИСТОРИЯ -->
-    <div id="tab-history" class="tab-content">
-        <div class="info-box">
-            ℹ️ История содержит последние 100 изменений с указанием старых и новых значений.
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Дата</th>
-                    <th>Пользователь</th>
-                    <th>Действие</th>
-                    <th>Сущность</th>
-                    <th>Запись</th>
-                    <th>Изменения</th>
-                </tr>
-            </thead>
-            <tbody id="historyList"></tbody>
-        </table>
-    </div>
-
-    <!-- КОРЗИНА -->
-    <div id="tab-trash" class="tab-content">
-        <div class="warning-box">
-            ⚠️ Здесь хранятся удалённые пользователи. Восстановление возможно в любой момент.
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Тип</th>
-                    <th>Данные</th>
-                    <th>Удалил</th>
-                    <th>Дата</th>
-                    <th>Действия</th>
-                </tr>
-            </thead>
-            <tbody id="trashList"></tbody>
-        </table>
-    </div>
-
-    <!-- БЭКАПЫ -->
-    <div id="tab-backups" class="tab-content">
-        <div class="controls">
-            <button class="btn btn-small btn-success" onclick="createBackup()">💾 Создать резервную копию</button>
-            <button class="btn btn-small btn-warning" onclick="setupAutoBackup()">⏰ Установить автобэкап (23:00)</button>
-            <button class="btn btn-small" onclick="loadData()">🔄 Обновить</button>
-        </div>
-        <div class="section-title">Последние резервные копии</div>
-        <div id="backupsList"></div>
-    </div>
-</div>
-
-<!-- МОДАЛЬНОЕ ОКНО ПОЛЬЗОВАТЕЛЯ -->
-<div id="userModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeUserModal()">&times;</span>
-        <h2 id="modalTitle">Новый пользователь</h2>
-        <div class="form-group">
-            <label>Логин *</label>
-            <input type="text" id="userLogin">
-        </div>
-        <div class="form-group">
-            <label>Пароль *</label>
-            <input type="text" id="userPassword">
-        </div>
-        <div class="form-group">
-            <label>ФИО *</label>
-            <input type="text" id="userFio">
-        </div>
-        <div class="form-group">
-            <label>Роль</label>
-            <select id="userRoleSelect">
-                <option>Администратор</option>
-                <option>ПТО</option>
-                <option>Бухгалтерия</option>
-                <option>Прораб</option>
-                <option>Архитектор</option>
-                <option>Дизайнер</option>
-                <option>ГАП</option>
-                <option>ГИП</option>
-                <option>Тендерный_специалист</option>
-                <option>Отдел_кадров</option>
-                <option>Снабжение</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="userEmail">
-        </div>
-        <button class="btn" onclick="saveUser()">Сохранить</button>
-    </div>
-</div>
-
-<!-- МОДАЛЬНОЕ ОКНО РЕГИСТРАЦИИ -->
-<div id="registerModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeRegisterModal()">&times;</span>
-        <h2>📝 Регистрация</h2>
-        <p style="color: #718096; font-size: 13px; margin-bottom: 20px;">
-            После регистрации вам будет назначена роль "Прораб". Администратор может изменить вашу роль позже.
-        </p>
-        <div class="form-group">
-            <label>Логин *</label>
-            <input type="text" id="regLogin" placeholder="Минимум 3 символа (буквы, цифры, _)">
-        </div>
-        <div class="form-group">
-            <label>Пароль *</label>
-            <input type="password" id="regPassword" placeholder="Минимум 6 символов">
-        </div>
-        <div class="form-group">
-            <label>Подтвердите пароль *</label>
-            <input type="password" id="regPasswordConfirm" placeholder="Повторите пароль">
-        </div>
-        <div class="form-group">
-            <label>ФИО *</label>
-            <input type="text" id="regFio" placeholder="Иванов Иван Иванович">
-        </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="regEmail" placeholder="example@mail.ru">
-        </div>
-        <button class="btn" onclick="register()">Зарегистрироваться</button>
-        <div id="registerError" class="error"></div>
-    </div>
-</div>
-
-<script>
-// ⚠️ ВСТАВЬТЕ СЮДА ВАШ URL ИЗ APPS SCRIPT (заканчивается на /exec)
-const API_URL = 'ВАШ_URL_ИЗ_APPS_SCRIPT';
-
-let currentUser = null;
-let allData = {};
-
-// ==========================================
-// API
-// ==========================================
-async function api(action, payload = {}) {
-    const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action, ...payload })
-    });
-    return await response.json();
-}
-
-// ==========================================
-// АВТОРИЗАЦИЯ
-// ==========================================
-async function login() {
-    const login = document.getElementById('loginInput').value.trim();
-    const password = document.getElementById('passwordInput').value.trim();
-    const error = document.getElementById('loginError');
-    
-    error.textContent = 'Проверка...';
-    
-    try {
-        const result = await api('login', { login, password });
-        
-        if (result.success) {
-            currentUser = result.user;
-            localStorage.setItem('user', JSON.stringify(currentUser));
-            showMainScreen();
-        } else {
-            error.textContent = result.error || 'Неверный логин или пароль';
-        }
-    } catch (e) {
-        error.textContent = 'Ошибка соединения: ' + e.message;
-    }
-}
-
-function logout() {
-    currentUser = null;
-    localStorage.removeItem('user');
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('mainScreen').style.display = 'none';
-}
-
-function showMainScreen() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainScreen').style.display = 'block';
-    document.getElementById('userName').textContent = currentUser.fio;
-    document.getElementById('userRole').textContent = currentUser.role;
-    document.getElementById('userRole').className = 'badge ' + 
-        (currentUser.role === 'Администратор' ? 'badge-admin' : 'badge-user');
-    loadData();
-}
-
-// ==========================================
-// РЕГИСТРАЦИЯ
-// ==========================================
-function openRegisterModal() {
-    document.getElementById('registerError').textContent = '';
-    document.getElementById('regLogin').value = '';
-    document.getElementById('regPassword').value = '';
-    document.getElementById('regPasswordConfirm').value = '';
-    document.getElementById('regFio').value = '';
-    document.getElementById('regEmail').value = '';
-    document.getElementById('registerModal').classList.add('active');
-}
-
-function closeRegisterModal() {
-    document.getElementById('registerModal').classList.remove('active');
-}
-
-async function register() {
-    const login = document.getElementById('regLogin').value.trim();
-    const password = document.getElementById('regPassword').value.trim();
-    const passwordConfirm = document.getElementById('regPasswordConfirm').value.trim();
-    const fio = document.getElementById('regFio').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const error = document.getElementById('registerError');
-    
-    error.textContent = '';
-    
-    if (!login || !password || !passwordConfirm || !fio) {
-        error.textContent = 'Заполните все обязательные поля';
-        return;
-    }
-    
-    if (login.length < 3) {
-        error.textContent = 'Логин должен быть минимум 3 символа';
-        return;
-    }
-    
-    if (!/^[a-zA-Z0-9_]+$/.test(login)) {
-        error.textContent = 'Логин может содержать только буквы, цифры и _';
-        return;
-    }
-    
-    if (password.length < 6) {
-        error.textContent = 'Пароль должен быть минимум 6 символов';
-        return;
-    }
-    
-    if (password !== passwordConfirm) {
-        error.textContent = 'Пароли не совпадают';
-        return;
-    }
-    
-    error.textContent = 'Регистрация...';
-    
-    try {
-        const result = await api('register', { login, password, fio, email });
-        
-        if (result.success) {
-            alert('✅ Регистрация успешна!\n\n' + result.message + '\n\nТеперь вы можете войти в систему.');
-            closeRegisterModal();
-            document.getElementById('loginInput').value = login;
-            document.getElementById('passwordInput').value = '';
-            document.getElementById('passwordInput').focus();
-        } else {
-            error.textContent = result.error || 'Ошибка регистрации';
-        }
-    } catch (e) {
-        error.textContent = 'Ошибка соединения: ' + e.message;
-    }
-}
-
-// ==========================================
-// ЗАГРУЗКА ДАННЫХ
-// ==========================================
-async function loadData() {
-    try {
-        const response = await fetch(API_URL);
-        allData = await response.json();
-        renderUsers();
-        renderJournal();
-        renderHistory();
-        renderTrash();
-        renderBackups();
-    } catch (e) {
-        console.error('Ошибка загрузки:', e);
-    }
-}
-
-// ==========================================
-// РЕНДЕРИНГ
-// ==========================================
-function renderUsers() {
-    const list = document.getElementById('usersList');
-    if (!allData.users || allData.users.length === 0) {
-        list.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: #718096;">Нет пользователей</td></tr>';
-        return;
-    }
-    list.innerHTML = allData.users.map(u => `
-        <tr>
-            <td>${u['Логин']}</td>
-            <td>${u['ФИО']}</td>
-            <td><span class="badge ${u['Роль'] === 'Администратор' ? 'badge-admin' : 'badge-user'}">${u['Роль']}</span></td>
-            <td>${u['Email'] || '—'}</td>
-            <td>
-                <button class="btn btn-small" onclick="editUser('${u['Логин']}')" ${currentUser.role !== 'Администратор' ? 'disabled' : ''}>✏️ Изменить</button>
-                <button class="btn btn-small btn-danger" onclick="deleteUser('${u['Логин']}')" ${u['Логин'] === currentUser.login || currentUser.role !== 'Администратор' ? 'disabled' : ''}>🗑️ Удалить</button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function renderJournal() {
-    const list = document.getElementById('journalList');
-    if (!allData.journal || allData.journal.length === 0) {
-        list.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: #718096;">Журнал пуст</td></tr>';
-        return;
-    }
-    list.innerHTML = allData.journal.map(j => `
-        <tr>
-            <td>${new Date(j['Дата']).toLocaleString('ru-RU')}</td>
-            <td>${j['Пользователь']}</td>
-            <td>${j['Действие']}</td>
-            <td>${j['Объект']}</td>
-            <td>${j['Детали'] || ''}</td>
-        </tr>
-    `).join('');
-}
-
-function renderHistory() {
-    const list = document.getElementById('historyList');
-    if (!allData.history || allData.history.length === 0) {
-        list.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color: #718096;">История пуста</td></tr>';
-        return;
-    }
-    list.innerHTML = allData.history.map(h => {
-        let changes = '';
-        try {
-            const oldV = JSON.parse(h['Старые_значения'] || '{}');
-            const newV = JSON.parse(h['Новые_значения'] || '{}');
-            changes = Object.keys(newV).map(k => 
-                `<b>${k}:</b> ${oldV[k] || '—'} → ${newV[k]}`
-            ).join('<br>');
-        } catch (e) {}
-        return `
-            <tr>
-                <td>${new Date(h['Дата']).toLocaleString('ru-RU')}</td>
-                <td>${h['Пользователь']}</td>
-                <td>${h['Действие']}</td>
-                <td>${h['Сущность']}</td>
-                <td>${h['ID_записи']}</td>
-                <td>${changes || h['Комментарий'] || ''}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function renderTrash() {
-    const list = document.getElementById('trashList');
-    if (!allData.trash || allData.trash.length === 0) {
-        list.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: #718096;">Корзина пуста</td></tr>';
-        return;
-    }
-    list.innerHTML = allData.trash.map(t => {
-        let data = '';
-        try {
-            const d = JSON.parse(t['Данные']);
-            data = Object.entries(d).map(([k, v]) => `${k}: ${v}`).join(', ');
-        } catch (e) {
-            data = t['Данные'];
-        }
-        return `
-            <tr>
-                <td>${t['Тип']}</td>
-                <td>${data}</td>
-                <td>${t['Удалил']}</td>
-                <td>${new Date(t['Дата']).toLocaleString('ru-RU')}</td>
-                <td>
-                    <button class="btn btn-small btn-success" onclick="restoreUser('${t['Тип']}', '${t['ID']}')">↺ Восстановить</button>
-                    <button class="btn btn-small btn-danger" onclick="purgeUser('${t['Тип']}', '${t['ID']}')" ${currentUser.role !== 'Администратор' ? 'disabled' : ''}>✕ Навсегда</button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function renderBackups() {
-    const list = document.getElementById('backupsList');
-    if (!allData.backups || allData.backups.length === 0) {
-        list.innerHTML = '<p style="color: #718096; padding: 20px;">Резервных копий пока нет.</p>';
-        return;
-    }
-    list.innerHTML = allData.backups.map(b => `
-        <div class="backup-item">
-            <div>
-                <b>${b['Имя_файла']}</b><br>
-                <small style="color: #718096;">${new Date(b['Дата']).toLocaleString('ru-RU')} · ${(b['Размер'] / 1024).toFixed(1)} КБ · ${b['Статус']}</small>
+        <!-- Секция Входа -->
+        <div id="auth-section">
+            <h2>Вход</h2>
+            <div class="form-group">
+                <label>Имя пользователя:</label>
+                <input type="text" id="login-username">
             </div>
-            <a href="${b['Ссылка']}" target="_blank" class="btn btn-small">📂 Открыть</a>
+            <div class="form-group">
+                <label>Пароль:</label>
+                <input type="password" id="login-password">
+            </div>
+            <button onclick="login()">Войти</button>
+            <p>Нет аккаунта? <a href="#" onclick="showRegister()">Зарегистрироваться</a></p>
+            <p id="login-message" class="error"></p>
         </div>
-    `).join('');
-}
 
-// ==========================================
-// ВКЛАДКИ
-// ==========================================
-function switchTab(tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
-    document.getElementById('tab-' + tab).classList.add('active');
-}
+        <!-- Секция Регистрации -->
+        <div id="register-section" class="hidden">
+            <h2>Регистрация</h2>
+            <div class="form-group">
+                <label>Имя пользователя:</label>
+                <input type="text" id="reg-username">
+            </div>
+            <div class="form-group">
+                <label>Пароль:</label>
+                <input type="password" id="reg-password">
+            </div>
+            <button onclick="register()">Зарегистрироваться</button>
+            <p>Уже есть аккаунт? <a href="#" onclick="showLogin()">Войти</a></p>
+            <p id="reg-message" class="error"></p>
+        </div>
 
-// ==========================================
-// УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ
-// ==========================================
-let editingUser = null;
+        <!-- Основной раздел (после входа) -->
+        <div id="main-section" class="hidden">
+            <h2>Добро пожаловать, <span id="current-user"></span> <small>(<span id="current-role"></span>)</small></h2>
+            <button onclick="logout()" class="btn-danger">Выйти</button>
+            
+            <!-- Админ-панель (видна только admin) -->
+            <div id="admin-panel" class="hidden">
+                <h3>Панель администратора</h3>
+                <button onclick="loadUsers()">Обновить список пользователей</button>
+                <table id="users-table">
+                    <thead>
+                        <tr>
+                            <th>Имя пользователя</th>
+                            <th>Роль</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-function openUserModal(login = null) {
-    editingUser = login;
-    document.getElementById('modalTitle').textContent = login ? 'Редактировать пользователя' : 'Новый пользователь';
-    
-    if (login) {
-        const user = allData.users.find(u => u['Логин'] === login);
-        if (user) {
-            document.getElementById('userLogin').value = user['Логин'];
-            document.getElementById('userLogin').disabled = true;
-            document.getElementById('userPassword').value = '';
-            document.getElementById('userFio').value = user['ФИО'];
-            document.getElementById('userRoleSelect').value = user['Роль'];
-            document.getElementById('userEmail').value = user['Email'] || '';
+    <script>
+        // Вставьте сюда URL вашего развернутого веб-приложения Google Apps Script
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNWo1oYzMyv332prE-QSbyYbu5HISdKN4MhXe6XFh9S6H9PCvJVMIPMXxp1yW8UAYS4w/exec';
+
+        let currentUser = null;
+
+        function showRegister() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('register-section').classList.remove('hidden');
+            clearMessages();
         }
-    } else {
-        document.getElementById('userLogin').value = '';
-        document.getElementById('userLogin').disabled = false;
-        document.getElementById('userPassword').value = '';
-        document.getElementById('userFio').value = '';
-        document.getElementById('userRoleSelect').value = 'Прораб';
-        document.getElementById('userEmail').value = '';
-    }
-    
-    document.getElementById('userModal').classList.add('active');
-}
 
-function closeUserModal() {
-    document.getElementById('userModal').classList.remove('active');
-    editingUser = null;
-}
+        function showLogin() {
+            document.getElementById('register-section').classList.add('hidden');
+            document.getElementById('auth-section').classList.remove('hidden');
+            clearMessages();
+        }
 
-function editUser(login) {
-    openUserModal(login);
-}
+        function clearMessages() {
+            document.getElementById('login-message').textContent = '';
+            document.getElementById('reg-message').textContent = '';
+        }
 
-async function saveUser() {
-    const login = document.getElementById('userLogin').value.trim();
-    const password = document.getElementById('userPassword').value.trim();
-    const fio = document.getElementById('userFio').value.trim();
-    const role = document.getElementById('userRoleSelect').value;
-    const email = document.getElementById('userEmail').value.trim();
+        function showMessage(elementId, message, isError = true) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = isError ? 'error' : 'success';
+        }
 
-    if (!login || !fio) {
-        alert('Заполните обязательные поля');
-        return;
-    }
-
-    if (!editingUser && !password) {
-        alert('Введите пароль');
-        return;
-    }
-
-    if (!editingUser && password.length < 6) {
-        alert('Пароль должен быть минимум 6 символов');
-        return;
-    }
-
-    try {
-        let result;
-        if (editingUser) {
-            const payload = { login, fio, role, email, adminLogin: currentUser.login, adminRole: currentUser.role };
-            if (password) payload.password = password;
-            result = await api('updateUser', payload);
-        } else {
-            result = await api('createUser', {
-                login, password, fio, role, email,
-                adminLogin: currentUser.login, adminRole: currentUser.role
+        // text/plain используется для предотвращения CORS preflight (OPTIONS) запросов, которые не поддерживает GAS
+        async function callGAS(action, data) {
+            const payload = { action, ...data };
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
             });
+            return await response.json();
         }
 
-        if (result.success) {
-            closeUserModal();
-            loadData();
-            alert(editingUser ? '✅ Пользователь обновлён' : '✅ Пользователь создан');
-        } else {
-            alert(result.error);
+        async function register() {
+            const username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value;
+            if (!username || !password) {
+                showMessage('reg-message', 'Заполните все поля');
+                return;
+            }
+            showMessage('reg-message', 'Регистрация...');
+            const result = await callGAS('register', { username, password });
+            if (result.success) {
+                showMessage('reg-message', result.message, false);
+                setTimeout(showLogin, 1500);
+            } else {
+                showMessage('reg-message', result.message);
+            }
         }
-    } catch (e) {
-        alert('Ошибка: ' + e.message);
-    }
-}
 
-async function deleteUser(login) {
-    if (!confirm('Удалить пользователя ' + login + '? Его можно будет восстановить из корзины.')) return;
-    
-    try {
-        const result = await api('deleteUser', { login, adminLogin: currentUser.login });
-        if (result.success) {
-            loadData();
-            alert('✅ Пользователь удалён в корзину');
-        } else {
-            alert(result.error);
+        async function login() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            if (!username || !password) {
+                showMessage('login-message', 'Заполните все поля');
+                return;
+            }
+            showMessage('login-message', 'Вход...');
+            const result = await callGAS('login', { username, password });
+            if (result.success) {
+                currentUser = result.user;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showMain();
+            } else {
+                showMessage('login-message', result.message);
+            }
         }
-    } catch (e) {
-        alert('Ошибка: ' + e.message);
-    }
-}
 
-async function restoreUser(type, id) {
-    if (type !== 'Пользователь') {
-        alert('Восстановление других типов пока не реализовано');
-        return;
-    }
-    
-    // Находим логин пользователя в корзине
-    const trashItem = allData.trash.find(t => t['ID'] === id);
-    if (!trashItem) {
-        alert('Запись не найдена');
-        return;
-    }
-    
-    let login = '';
-    try {
-        const data = JSON.parse(trashItem['Данные']);
-        login = data['Логин'];
-    } catch (e) {
-        alert('Не удалось получить данные');
-        return;
-    }
-    
-    try {
-        const result = await api('restoreUser', { login, adminLogin: currentUser.login });
-        if (result.success) {
-            loadData();
-            alert('✅ Пользователь восстановлен');
-        } else {
-            alert(result.error);
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('main-section').classList.add('hidden');
+            document.getElementById('auth-section').classList.remove('hidden');
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            clearMessages();
         }
-    } catch (e) {
-        alert('Ошибка: ' + e.message);
-    }
-}
 
-async function purgeUser(type, id) {
-    if (type !== 'Пользователь') {
-        alert('Окончательное удаление других типов пока не реализовано');
-        return;
-    }
-    
-    const trashItem = allData.trash.find(t => t['ID'] === id);
-    if (!trashItem) {
-        alert('Запись не найдена');
-        return;
-    }
-    
-    let login = '';
-    try {
-        const data = JSON.parse(trashItem['Данные']);
-        login = data['Логин'];
-    } catch (e) {
-        alert('Не удалось получить данные');
-        return;
-    }
-    
-    if (!confirm('Удалить пользователя ' + login + ' НАВСЕГДА? Это действие необратимо!')) return;
-    
-    try {
-        const result = await api('purgeUser', { 
-            login, 
-            adminLogin: currentUser.login,
-            adminRole: currentUser.role
-        });
-        if (result.success) {
-            loadData();
-            alert('✅ Пользователь удалён навсегда');
-        } else {
-            alert(result.error);
+        function showMain() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('register-section').classList.add('hidden');
+            document.getElementById('main-section').classList.remove('hidden');
+            document.getElementById('current-user').textContent = currentUser.username;
+            document.getElementById('current-role').textContent = currentUser.role;
+
+            if (currentUser.role === 'admin') {
+                document.getElementById('admin-panel').classList.remove('hidden');
+                loadUsers();
+            } else {
+                document.getElementById('admin-panel').classList.add('hidden');
+            }
         }
-    } catch (e) {
-        alert('Ошибка: ' + e.message);
-    }
-}
 
-// ==========================================
-// БЭКАПЫ
-// ==========================================
-async function createBackup() {
-    if (!confirm('Создать резервную копию таблицы?')) return;
-    
-    try {
-        const result = await api('createBackup', { 
-            adminLogin: currentUser.login,
-            adminRole: currentUser.role
-        });
-        if (result.success) {
-            loadData();
-            alert('✅ Резервная копия создана: ' + result.backupName);
-        } else {
-            alert(result.error);
+        async function loadUsers() {
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = '<tr><td colspan="3">Загрузка...</td></tr>';
+            const result = await callGAS('getUsers', { adminUsername: currentUser.username });
+            if (result.success) {
+                tbody.innerHTML = '';
+                result.users.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${user.username}</td>
+                        <td><strong>${user.role}</strong></td>
+                        <td>
+                            <select onchange="changeRole('${user.username}', this.value)" ${user.username === currentUser.username ? 'disabled' : ''}>
+                                <option value="user" ${user.role === 'user' ? 'selected' : ''}>user</option>
+                                <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>moderator</option>
+                                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>admin</option>
+                            </select>
+                            <button onclick="deleteUser('${user.username}')" class="btn-danger" style="margin-left: 5px;" ${user.username === currentUser.username ? 'disabled' : ''}>Удалить</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="3" class="error">${result.message}</td></tr>`;
+            }
         }
-    } catch (e) {
-        alert('Ошибка: ' + e.message);
-    }
-}
 
-async function setupAutoBackup() {
-    if (!confirm('Установить автоматический бэкап каждый день в 23:00?')) return;
-    
-    try {
-        const result = await api('setupBackup');
-        if (result.success) {
-            alert('✅ ' + result.message);
-        } else {
-            alert(result.error);
+        async function changeRole(targetUsername, newRole) {
+            const result = await callGAS('changeRole', { targetUsername, newRole, adminUsername: currentUser.username });
+            if (result.success) {
+                loadUsers();
+            } else {
+                alert(result.message);
+            }
         }
-    } catch (e) {
-        alert('Ошибка: ' + e.message);
-    }
-}
 
-// ==========================================
-// ИНИЦИАЛИЗАЦИЯ
-// ==========================================
-window.onload = () => {
-    const saved = localStorage.getItem('user');
-    if (saved) {
-        try {
-            currentUser = JSON.parse(saved);
-            showMainScreen();
-        } catch (e) {
-            localStorage.removeItem('user');
+        async function deleteUser(targetUsername) {
+            if (!confirm(`Вы уверены, что хотите удалить пользователя ${targetUsername}?`)) return;
+            const result = await callGAS('deleteUser', { targetUsername, adminUsername: currentUser.username });
+            if (result.success) {
+                loadUsers();
+            } else {
+                alert(result.message);
+            }
         }
-    }
-};
 
-document.getElementById('passwordInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') login();
-});
-
-document.getElementById('regPasswordConfirm').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') register();
-});
-</script>
+        // Проверка сессии при загрузке страницы
+        window.onload = () => {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showMain();
+            }
+        };
+    </script>
 </body>
 </html>
