@@ -1,16 +1,16 @@
 // ФАЙЛ: app.js
-// Версия: WITH-PASSWORD-RECOVERY
+// Версия: FINAL-WITH-RECOVERY
 
 // ⚠️ ВСТАВЬТЕ СЮДА ВАШУ РАБОЧУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT ⚠️
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQFSn0PCJ6ffyf3_rTb1jq1LpSilORYVqlW_SZtMHb_7wYHnl3cYQjJCaGoYWuJfgFDg/exec";
 
 const $ = id => document.getElementById(id);
 let currentUser = null;
-let recoverUsername = null; // Временное хранение логина при восстановлении
+let recoverUsername = null;
 
 window.addEventListener('load', () => {
   const dbg = $('debug');
-  if (dbg) dbg.innerHTML = 'Сборка: <b>WITH-PASSWORD-RECOVERY</b><br>API: ' + SCRIPT_URL;
+  if (dbg) dbg.innerHTML = 'Сборка: <b>FINAL-WITH-RECOVERY</b><br>API: ' + SCRIPT_URL;
   
   const saved = localStorage.getItem('currentUser');
   if (saved) {
@@ -204,9 +204,23 @@ async function loadUsers() {
   const tb = $('users-tbody');
   tb.innerHTML = '<tr><td colspan="3">Загрузка…</td></tr>';
   const r = await api('getUsers', { adminUsername: currentUser.username });
-  if (!r.success) { tb.innerHTML = ''; return msg('admin-message', r.message); }
+  
+  if (!r.success) { 
+    tb.innerHTML = ''; 
+    return msg('admin-message', r.message); 
+  }
+  
   msg('admin-message', '');
-  tb.innerHTML = r.users.map(u => {
+  
+  // Фильтруем массив, убирая пустые или некорректные строки
+  const validUsers = r.users.filter(u => u && u.username && u.role);
+  
+  if (validUsers.length === 0) {
+    tb.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#888">Нет пользователей</td></tr>';
+    return;
+  }
+  
+  tb.innerHTML = validUsers.map(u => {
     const self = u.username === currentUser.username;
     const opt = (v, l) => `<option value="${v}" ${u.role === v ? 'selected' : ''}>${l}</option>`;
     return `<tr>
