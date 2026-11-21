@@ -1,5 +1,5 @@
 // ⚠️ ВАЖНО: Замените на ваш URL из Apps Script (должен заканчиваться на /exec)
-const API_URL = 'https://script.google.com/macros/s/AKfycbw7mLMaEQs_GVNu6X02vnKsi0MvsGnllZMC2trvVx_jDAr8Sn-b-D0iV_1vYRTj6PIbJw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwNWo1oYzMyv332prE-QSbyYbu5HISdKN4MhXe6XFh9S6H9PCvJVMIPMXxp1yW8UAYS4w/exec';
 
 let currentUser = null;
 let allData = {};
