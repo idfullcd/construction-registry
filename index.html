@@ -1,376 +1,566 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>СтройРеестр · База</title>
-<style>
-:root {
-  --bg: #0f1419;
-  --card: #1a2332;
-  --card2: #243044;
-  --text: #f1f5f9;
-  --muted: #94a3b8;
-  --border: #2d3748;
-  --accent: #ff6b35;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-}
-.login-screen {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #1a2332, #2c5282);
-  padding: 20px;
-}
-.login-card {
-  width: 100%;
-  max-width: 420px;
-  background: var(--card);
-  border-radius: 18px;
-  padding: 36px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-}
-.logo { text-align: center; margin-bottom: 24px; }
-.logo-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 12px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--accent), #f7931e);
-  font-size: 32px;
-}
-h1 { font-size: 24px; margin-bottom: 8px; }
-.subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
-.form-group { margin-bottom: 16px; }
-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-input, select, textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1.5px solid var(--border);
-  background: var(--card);
-  color: var(--text);
-  font-family: inherit;
-  font-size: 14px;
-}
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-.btn {
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-.btn-primary {
-  background: linear-gradient(135deg, var(--accent), #f7931e);
-  color: white;
-}
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,53,0.4); }
-.btn-success { background: var(--success); color: white; }
-.btn-danger { background: var(--danger); color: white; }
-.btn-warning { background: var(--warning); color: white; }
-.btn-info { background: var(--info); color: white; }
-.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
-.btn-ghost:hover { background: var(--card2); }
-.btn-sm { padding: 6px 10px; font-size: 12px; }
-.btn-full { width: 100%; }
-.error { color: var(--danger); font-size: 13px; margin-top: 12px; text-align: center; min-height: 18px; }
-.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-.header {
-  background: linear-gradient(135deg, #1a2332, #2c5282);
-  color: white;
-  border-radius: 12px;
-  padding: 16px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.header-left, .header-right { display: flex; align-items: center; gap: 10px; }
-.header-logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, var(--accent), #f7931e);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-}
-.tabs {
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 6px;
-  margin-bottom: 16px;
-}
-.tab {
-  white-space: nowrap;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--muted);
-  font-weight: 600;
-  font-size: 13px;
-}
-.tab.active {
-  background: linear-gradient(135deg, var(--accent), #f7931e);
-  color: white;
-}
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 14px;
-  margin-bottom: 16px;
-  align-items: center;
-}
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--info);
-  border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 14px;
-}
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-.card-title { font-weight: 700; font-size: 15px; }
-.card-meta { color: var(--muted); font-size: 12px; line-height: 1.5; }
-.badge {
-  display: inline-flex;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-}
-.badge-info { background: rgba(59,130,246,0.15); color: var(--info); }
-.badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
-.badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
-.badge-danger { background: rgba(239,68,68,0.15); color: var(--danger); }
-.table-wrap {
-  overflow-x: auto;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-table { width: 100%; border-collapse: collapse; }
-th, td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-  font-size: 13px;
-}
-th {
-  background: var(--card2);
-  color: var(--muted);
-  text-transform: uppercase;
-  font-size: 11px;
-  font-weight: 700;
-}
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(6px);
-  overflow-y: auto;
-}
-.modal-content {
-  width: 92%;
-  max-width: 600px;
-  margin: 40px auto;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 24px;
-}
-.close {
-  float: right;
-  font-size: 28px;
-  cursor: pointer;
-  color: var(--muted);
-}
-.close:hover { color: var(--danger); }
-.toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--info);
-  border-radius: 10px;
-  padding: 14px 18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  z-index: 2000;
-  animation: slideIn 0.3s;
-}
-.toast.success { border-left-color: var(--success); }
-.toast.error { border-left-color: var(--danger); }
-.toast.warning { border-left-color: var(--warning); }
-@keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-.loader { text-align: center; padding: 40px; color: var(--muted); }
-.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-.empty-icon { font-size: 48px; margin-bottom: 12px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>СтройРеестр</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2332, #2c5282);
+            min-height: 100vh;
+            color: #333;
+        }
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 420px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 12px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            font-size: 32px;
+        }
+        .login-card h1 {
+            color: #1a2332;
+            margin-bottom: 8px;
+        }
+        .login-card p {
+            color: #718096;
+            font-size: 13px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 13px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            color: #1a2332;
+            font-size: 24px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info span {
+            font-weight: 600;
+            color: #1a2332;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #718096;
+            transition: all 0.2s;
+        }
+        .tab:hover {
+            background: #f0f3f7;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn-small {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #f0f3f7;
+            font-weight: 600;
+            color: #718096;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-admin {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+        }
+        .badge-user {
+            background: rgba(59, 130, 246, 0.12);
+            color: #3b82f6;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #1a2332;
+        }
+        .close {
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+            color: #718096;
+        }
+        .close:hover {
+            color: #ef4444;
+        }
+    </style>
 </head>
 <body>
+    <!-- ЭКРАН ВХОДА -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+            <div class="logo">
+                <div class="logo-icon">🏗️</div>
+                <h1>СтройРеестр</h1>
+                <p>Система управления строительной документацией</p>
+            </div>
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" id="loginInput" placeholder="admin">
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" id="passwordInput" placeholder="admin123">
+            </div>
+            <button class="btn" onclick="login()">Войти</button>
+            <div id="loginError" class="error"></div>
+        </div>
+    </div>
 
-<!-- ЭКРАН ВХОДА -->
-<div id="loginScreen" class="login-screen">
-  <div class="login-card">
-    <div class="logo">
-      <div class="logo-icon">🏗️</div>
-      <h1>СтройРеестр</h1>
-      <p class="subtitle">Система управления строительной документацией</p>
-    </div>
-    <div class="form-group">
-      <label for="loginInput">Логин</label>
-      <input type="text" id="loginInput" placeholder="admin" autocomplete="username">
-    </div>
-    <div class="form-group">
-      <label for="passwordInput">Пароль</label>
-      <input type="password" id="passwordInput" placeholder="••••••••" autocomplete="current-password">
-    </div>
-    <button class="btn btn-primary btn-full" onclick="login()">Войти в систему</button>
-    <div id="loginError" class="error"></div>
-  </div>
-</div>
+    <!-- ГЛАВНЫЙ ЭКРАН -->
+    <div id="mainScreen" class="container" style="display:none;">
+        <div class="header">
+            <h1>🏗️ СтройРеестр</h1>
+            <div class="user-info">
+                <span id="userName"></span>
+                <span id="userRole" class="badge badge-admin"></span>
+                <button class="btn btn-small btn-danger" onclick="logout()">Выйти</button>
+            </div>
+        </div>
 
-<!-- ГЛАВНЫЙ ЭКРАН -->
-<div id="mainScreen" class="container" style="display:none;">
-  <div class="header">
-    <div class="header-left">
-      <div class="header-logo">🏗️</div>
-      <div>
-        <div id="userName" style="font-weight:700;"></div>
-        <div id="userRole" style="font-size:12px;opacity:0.8;"></div>
-      </div>
-    </div>
-    <div class="header-right">
-      <button class="btn btn-ghost" onclick="loadData()" style="color:white;">🔄 Обновить</button>
-      <button class="btn btn-danger" onclick="logout()">Выйти</button>
-    </div>
-  </div>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('users')">👥 Пользователи</button>
+            <button class="tab" onclick="switchTab('journal')">📜 Журнал действий</button>
+            <button class="tab" onclick="switchTab('trash')">🗑️ Корзина</button>
+        </div>
 
-  <div class="tabs">
-    <div class="tab active" data-tab="users" onclick="switchTab('users')">👥 Пользователи</div>
-    <div class="tab" data-tab="journal" onclick="switchTab('journal')">📜 Журнал</div>
-    <div class="tab" data-tab="history" onclick="switchTab('history')">🕘 История</div>
-    <div class="tab" data-tab="trash" onclick="switchTab('trash')">🗑️ Корзина</div>
-    <div class="tab" data-tab="settings" onclick="switchTab('settings')">⚙️ Настройки</div>
-  </div>
+        <!-- ПОЛЬЗОВАТЕЛИ -->
+        <div id="tab-users" class="tab-content active">
+            <div class="controls">
+                <button class="btn btn-small btn-success" onclick="openUserModal()">➕ Новый пользователь</button>
+                <button class="btn btn-small" onclick="loadData()">🔄 Обновить</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Логин</th>
+                        <th>ФИО</th>
+                        <th>Роль</th>
+                        <th>Email</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="usersList"></tbody>
+            </table>
+        </div>
 
-  <!-- ПОЛЬЗОВАТЕЛИ -->
-  <div id="tab-users" class="tab-content active">
-    <div class="controls">
-      <button class="btn btn-primary" onclick="openUserModal()">➕ Новый пользователь</button>
-      <input type="text" id="userSearch" placeholder="🔍 Поиск..." oninput="renderUsers()" style="flex:1;min-width:200px;">
+        <!-- ЖУРНАЛ -->
+        <div id="tab-journal" class="tab-content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Пользователь</th>
+                        <th>Действие</th>
+                        <th>Объект</th>
+                        <th>Детали</th>
+                    </tr>
+                </thead>
+                <tbody id="journalList"></tbody>
+            </table>
+        </div>
+
+        <!-- КОРЗИНА -->
+        <div id="tab-trash" class="tab-content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Логин</th>
+                        <th>ФИО</th>
+                        <th>Роль</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="trashList"></tbody>
+            </table>
+        </div>
     </div>
-    <div id="usersList"></div>
-  </div>
 
-  <!-- ЖУРНАЛ -->
-  <div id="tab-journal" class="tab-content">
-    <div class="controls">
-      <button class="btn btn-success" onclick="loadData()">🔄 Обновить</button>
+    <!-- МОДАЛЬНОЕ ОКНО -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeUserModal()">&times;</span>
+            <h2 id="modalTitle">Новый пользователь</h2>
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" id="userLogin">
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="text" id="userPassword">
+            </div>
+            <div class="form-group">
+                <label>ФИО</label>
+                <input type="text" id="userFio">
+            </div>
+            <div class="form-group">
+                <label>Роль</label>
+                <select id="userRole">
+                    <option>Администратор</option>
+                    <option>ПТО</option>
+                    <option>Бухгалтерия</option>
+                    <option>Прораб</option>
+                    <option>Архитектор</option>
+                    <option>Дизайнер</option>
+                    <option>ГАП</option>
+                    <option>ГИП</option>
+                    <option>Тендерный_специалист</option>
+                    <option>Отдел_кадров</option>
+                    <option>Снабжение</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="userEmail">
+            </div>
+            <button class="btn" onclick="saveUser()">Сохранить</button>
+        </div>
     </div>
-    <div id="journalList"></div>
-  </div>
 
-  <!-- ИСТОРИЯ -->
-  <div id="tab-history" class="tab-content">
-    <div class="controls">
-      <button class="btn btn-success" onclick="loadData()">🔄 Обновить</button>
-    </div>
-    <div id="historyList"></div>
-  </div>
+    <script>
+        // ⚠️ ВСТАВЬТЕ СЮДА ВАШ URL ИЗ APPS SCRIPT
+        const API_URL = 'ВАШ_URL_ИЗ_APPS_SCRIPT';
+        
+        let currentUser = null;
+        let allData = {};
 
-  <!-- КОРЗИНА -->
-  <div id="tab-trash" class="tab-content">
-    <div class="controls">
-      <button class="btn btn-success" onclick="loadData()">🔄 Обновить</button>
-    </div>
-    <div id="trashList"></div>
-  </div>
+        async function api(action, payload = {}) {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action, ...payload })
+            });
+            return await response.json();
+        }
 
-  <!-- НАСТРОЙКИ -->
-  <div id="tab-settings" class="tab-content">
-    <div class="card">
-      <h3>💾 Резервные копии</h3>
-      <p class="card-meta" style="margin:10px 0;">Создайте резервную копию таблицы прямо сейчас</p>
-      <button class="btn btn-primary" onclick="createBackup()">Создать копию</button>
-    </div>
-    <div class="card">
-      <h3>⏱ Автоматические бэкапы</h3>
-      <p class="card-meta" style="margin:10px 0;">Ежедневное создание копии в 23:00. Хранение 30 дней.</p>
-      <button class="btn btn-info" onclick="installTriggers()">Установить триггеры</button>
-    </div>
-    <div class="card">
-      <h3>📧 Email-уведомления</h3>
-      <div class="form-group" style="margin-top:10px;">
-        <label>Имя отправителя</label>
-        <input type="text" id="setSender" value="СтройРеестр">
-      </div>
-      <button class="btn btn-primary" onclick="saveSettings()">Сохранить настройки</button>
-    </div>
-  </div>
-</div>
+        async function login() {
+            const login = document.getElementById('loginInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+            const error = document.getElementById('loginError');
+            
+            error.textContent = 'Проверка...';
+            
+            const result = await api('login', { login, password });
+            
+            if (result.success) {
+                currentUser = result.user;
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                showMainScreen();
+            } else {
+                error.textContent = result.error || 'Неверный логин или пароль';
+            }
+        }
 
-<!-- МОДАЛЬНОЕ ОКНО -->
-<div id="userModal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal()">&times;</span>
-    <div id="modalBody"></div>
-  </div>
-</div>
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('user');
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainScreen').style.display = 'none';
+        }
 
-<!-- ТОСТЫ -->
-<div id="toasts"></div>
+        function showMainScreen() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'block';
+            document.getElementById('userName').textContent = currentUser.fio;
+            document.getElementById('userRole').textContent = currentUser.role;
+            loadData();
+        }
 
-<script src="app.js"></script>
+        async function loadData() {
+            const response = await fetch(API_URL);
+            allData = await response.json();
+            renderUsers();
+            renderJournal();
+            renderTrash();
+        }
+
+        function renderUsers() {
+            const list = document.getElementById('usersList');
+            list.innerHTML = allData.users.map(u => `
+                <tr>
+                    <td>${u['Логин']}</td>
+                    <td>${u['ФИО']}</td>
+                    <td><span class="badge ${u['Роль'] === 'Администратор' ? 'badge-admin' : 'badge-user'}">${u['Роль']}</span></td>
+                    <td>${u['Email'] || '—'}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="editUser('${u['Логин']}')">✏️</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteUser('${u['Логин']}')" ${u['Логин'] === currentUser.login ? 'disabled' : ''}>🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderJournal() {
+            const list = document.getElementById('journalList');
+            list.innerHTML = allData.journal.map(j => `
+                <tr>
+                    <td>${new Date(j['Дата']).toLocaleString('ru-RU')}</td>
+                    <td>${j['Пользователь']}</td>
+                    <td>${j['Действие']}</td>
+                    <td>${j['Объект']}</td>
+                    <td>${j['Детали'] || ''}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderTrash() {
+            const list = document.getElementById('trashList');
+            list.innerHTML = allData.deletedUsers.map(u => `
+                <tr>
+                    <td>${u['Логин']}</td>
+                    <td>${u['ФИО']}</td>
+                    <td>${u['Роль']}</td>
+                    <td>
+                        <button class="btn btn-small btn-success" onclick="restoreUser('${u['Логин']}')">↺ Восстановить</button>
+                        <button class="btn btn-small btn-danger" onclick="purgeUser('${u['Логин']}')">✕ Навсегда</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+        }
+
+        function openUserModal() {
+            document.getElementById('modalTitle').textContent = 'Новый пользователь';
+            document.getElementById('userLogin').value = '';
+            document.getElementById('userPassword').value = '';
+            document.getElementById('userFio').value = '';
+            document.getElementById('userEmail').value = '';
+            document.getElementById('userModal').classList.add('active');
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('active');
+        }
+
+        async function saveUser() {
+            const login = document.getElementById('userLogin').value.trim();
+            const password = document.getElementById('userPassword').value.trim();
+            const fio = document.getElementById('userFio').value.trim();
+            const role = document.getElementById('userRole').value;
+            const email = document.getElementById('userEmail').value.trim();
+
+            if (!login || !password || !fio) {
+                alert('Заполните обязательные поля');
+                return;
+            }
+
+            const result = await api('createUser', {
+                login, password, fio, role, email,
+                adminLogin: currentUser.login
+            });
+
+            if (result.success) {
+                closeUserModal();
+                loadData();
+            } else {
+                alert(result.error);
+            }
+        }
+
+        async function deleteUser(login) {
+            if (!confirm('Удалить пользователя ' + login + '?')) return;
+            const result = await api('deleteUser', { login, adminLogin: currentUser.login });
+            if (result.success) loadData();
+            else alert(result.error);
+        }
+
+        async function restoreUser(login) {
+            const result = await api('restoreUser', { login, adminLogin: currentUser.login });
+            if (result.success) loadData();
+            else alert(result.error);
+        }
+
+        async function purgeUser(login) {
+            if (!confirm('Удалить пользователя ' + login + ' НАВСЕГДА?')) return;
+            const result = await api('purgeUser', { 
+                login, 
+                adminLogin: currentUser.login,
+                adminRole: currentUser.role
+            });
+            if (result.success) loadData();
+            else alert(result.error);
+        }
+
+        // Проверка сессии при загрузке
+        window.onload = () => {
+            const saved = localStorage.getItem('user');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                showMainScreen();
+            }
+        };
+
+        // Вход по Enter
+        document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+    </script>
 </body>
 </html>
