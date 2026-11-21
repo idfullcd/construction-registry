@@ -2,7 +2,7 @@
 // Версия: FINAL-V2-NUMERIC-ID
 
 // ⚠️ ВСТАВЬТЕ СЮДА ВАШУ РАБОЧУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT ⚠️
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQFSn0PCJ6ffyf3_rTb1jq1LpSilORYVqlW_SZtMHb_7wYHnl3cYQjJCaGoYWuJfgFDg/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3tH9Vf1ewKTyn0yYcBZ4SQ8f-IZlU115Hc_IRTDXuVji6CBvL3gSSxAmL1QjWVXFm/exec";
 
 const $ = id => document.getElementById(id);
 let currentUser = null;
