@@ -1,5 +1,5 @@
 // ФАЙЛ: app.js
-// Версия: FINAL-WITH-RECOVERY
+// Версия: FINAL-V2-NUMERIC-ID
 
 // ⚠️ ВСТАВЬТЕ СЮДА ВАШУ РАБОЧУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT ⚠️
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQFSn0PCJ6ffyf3_rTb1jq1LpSilORYVqlW_SZtMHb_7wYHnl3cYQjJCaGoYWuJfgFDg/exec";
@@ -10,7 +10,7 @@ let recoverUsername = null;
 
 window.addEventListener('load', () => {
   const dbg = $('debug');
-  if (dbg) dbg.innerHTML = 'Сборка: <b>FINAL-WITH-RECOVERY</b><br>API: ' + SCRIPT_URL;
+  if (dbg) dbg.innerHTML = 'Сборка: <b>FINAL-V2-NUMERIC-ID</b><br>API: ' + SCRIPT_URL;
   
   const saved = localStorage.getItem('currentUser');
   if (saved) {
@@ -63,14 +63,12 @@ function showRecoverStep(step) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Навигация
   $('link-reg').onclick   = e => { e.preventDefault(); msg('login-message', ''); show('register-section'); };
   $('link-recover').onclick = e => { e.preventDefault(); msg('login-message', ''); show('recover-section'); showRecoverStep('recover-step1'); };
   $('link-login-from-reg').onclick = e => { e.preventDefault(); msg('reg-message', ''); show('auth-section'); };
   $('link-login-from-recover').onclick = e => { e.preventDefault(); msg('recover-message', ''); show('auth-section'); };
   $('link-login-from-recover2').onclick = e => { e.preventDefault(); msg('recover-message2', ''); show('auth-section'); };
   
-  // Кнопки
   $('btn-login').onclick = login;
   $('btn-reg').onclick = register;
   $('btn-logout').onclick = logout;
@@ -78,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btn-recover-next').onclick = recoverStep1;
   $('btn-recover-submit').onclick = recoverStep2;
 
-  // Делегирование событий для таблицы пользователей
   $('users-tbody').addEventListener('change', async e => {
     const el = e.target;
     if (el.dataset.act !== 'role') return;
@@ -117,7 +114,7 @@ async function register() {
   const r = await api('register', { username, password, secretQuestion: question, secretAnswer: answer });
   if (r.success) {
     msg('reg-message', r.message, true);
-    setTimeout(() => { show('auth-section'); msg('login-message', 'Теперь войдите', true); }, 1500);
+    setTimeout(() => { show('auth-section'); msg('login-message', 'Теперь войдите', true); }, 2000);
   } else msg('reg-message', r.message);
 }
 
@@ -146,6 +143,7 @@ function logout() {
 function renderMain() {
   show('main-section');
   $('current-user').textContent = currentUser.username;
+  $('current-id').textContent = currentUser.id || '—';
   $('current-role').textContent = currentUser.role;
   $('current-role').className = 'badge role-' + currentUser.role;
   if (currentUser.role === 'admin') {
@@ -167,6 +165,9 @@ async function recoverStep1() {
     recoverUsername = username;
     $('recover-question').textContent = r.question;
     showRecoverStep('recover-step2');
+    if (r.noQuestion) {
+      msg('recover-message2', 'У этого пользователя нет секретного вопроса. Попросите администратора сбросить пароль.', true);
+    }
   } else {
     msg('recover-message', r.message);
   }
@@ -202,7 +203,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 async function loadUsers() {
   const tb = $('users-tbody');
-  tb.innerHTML = '<tr><td colspan="3">Загрузка…</td></tr>';
+  tb.innerHTML = '<tr><td colspan="4">Загрузка…</td></tr>';
   const r = await api('getUsers', { adminUsername: currentUser.username });
   
   if (!r.success) { 
@@ -211,12 +212,10 @@ async function loadUsers() {
   }
   
   msg('admin-message', '');
-  
-  // Фильтруем массив, убирая пустые или некорректные строки
   const validUsers = r.users.filter(u => u && u.username && u.role);
   
   if (validUsers.length === 0) {
-    tb.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#888">Нет пользователей</td></tr>';
+    tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888">Нет пользователей</td></tr>';
     return;
   }
   
@@ -224,6 +223,7 @@ async function loadUsers() {
     const self = u.username === currentUser.username;
     const opt = (v, l) => `<option value="${v}" ${u.role === v ? 'selected' : ''}>${l}</option>`;
     return `<tr>
+      <td><strong>${esc(u.id)}</strong></td>
       <td>${esc(u.username)}${self ? ' <i>(вы)</i>' : ''}</td>
       <td><span class="badge role-${esc(u.role)}">${esc(u.role)}</span></td>
       <td>
