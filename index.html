@@ -18,8 +18,6 @@
   .btn-danger:hover{background:#c82333}
   .btn-warning{background:#fd7e14;padding:6px 12px;font-size:14px}
   .btn-warning:hover{background:#e36a07}
-  .btn-secondary{background:#6c757d;padding:6px 12px;font-size:14px}
-  .btn-secondary:hover{background:#5a6268}
   .error{color:#dc3545;font-size:14px}
   .success{color:#28a745;font-size:14px}
   table{width:100%;border-collapse:collapse;margin-top:16px}
@@ -61,6 +59,7 @@
       <select id="reg-question">
         <option value="">-- Выберите вопрос --</option>
         <option value="Кличка вашей первой собаки?">Кличка вашей первой собаки?</option>
+        <option value="Кличка вашего питомца?">Кличка вашего питомца?</option>
         <option value="Город, в котором вы родились?">Город, в котором вы родились?</option>
         <option value="Девичья фамилия матери?">Девичья фамилия матери?</option>
         <option value="Название первой школы?">Название первой школы?</option>
@@ -101,13 +100,13 @@
       <h2>Привет, <span id="current-user"></span></h2>
       <button id="btn-logout" class="btn-danger">Выйти</button>
     </div>
-    <p>Ваша роль: <span id="current-role" class="badge"></span></p>
+    <p>Ваш ID: <strong id="current-id"></strong> · Ваша роль: <span id="current-role" class="badge"></span></p>
 
     <div id="admin-panel" class="hidden">
       <hr><h3>⚙️ Панель администратора</h3>
       <button id="btn-refresh">🔄 Обновить список</button>
       <table>
-        <thead><tr><th>Пользователь</th><th>Роль</th><th>Действия</th></tr></thead>
+        <thead><tr><th>ID</th><th>Пользователь</th><th>Роль</th><th>Действия</th></tr></thead>
         <tbody id="users-tbody"></tbody>
       </table>
       <p id="admin-message" class="error"></p>
