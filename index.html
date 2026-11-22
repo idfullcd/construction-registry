@@ -6,33 +6,35 @@
     <title>СтройРеестр - Авторизация</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; }
-        .container { max-width: 500px; margin: 40px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .container { max-width: 450px; margin: 40px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .container.wide { max-width: 900px; }
         .hidden { display: none !important; }
-        h2, h3 { color: #2c3e50; text-align: center; }
-        input, button, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; transition: background 0.3s; font-weight: bold; }
+        h2, h3 { color: #2c3e50; text-align: center; margin-top: 0; }
+        input, button, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; transition: background 0.2s; font-weight: bold; }
         button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
         button.danger { background-color: #dc3545; }
         button.danger:hover { background-color: #c82333; }
         .link { color: #007bff; cursor: pointer; text-decoration: underline; text-align: center; display: block; margin-top: 10px; font-size: 14px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background-color: #f8f9fa; color: #495057; }
         .message { padding: 10px; margin: 10px 0; border-radius: 4px; text-align: center; font-size: 14px; }
-        .error { background-color: #f8d7da; color: #721c24; }
-        .success { background-color: #d4edda; color: #155724; }
-        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
         .hint { font-size: 12px; color: #666; margin-top: -5px; margin-bottom: 10px; display: block; }
+        .divider { margin: 20px 0; border: 0; border-top: 1px solid #eee; }
     </style>
 </head>
 <body>
-    <div class="container" id="authContainer">
+    <div class="container" id="mainContainer">
         <!-- Форма входа -->
         <div id="loginView">
             <h2>Вход в СтройРеестр</h2>
-            <input type="text" id="loginUsername" placeholder="Имя пользователя">
-            <input type="password" id="loginPassword" placeholder="Пароль">
+            <input type="text" id="loginUsername" placeholder="Имя пользователя" autocomplete="username">
+            <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password">
             <button onclick="login()">Войти</button>
             <span class="link" onclick="showView('registerView')">Нет аккаунта? Зарегистрироваться</span>
             <span class="link" onclick="showView('recoverView')">Забыли пароль?</span>
@@ -42,13 +44,13 @@
         <!-- Форма регистрации -->
         <div id="registerView" class="hidden">
             <h2>Регистрация</h2>
-            <input type="text" id="regUsername" placeholder="Имя пользователя">
-            <input type="password" id="regPassword" placeholder="Пароль">
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-            <p style="text-align: center; font-weight: bold; color: #555;">🔒 Безопасность аккаунта</p>
+            <input type="text" id="regUsername" placeholder="Имя пользователя" autocomplete="username">
+            <input type="password" id="regPassword" placeholder="Пароль" autocomplete="new-password">
+            <hr class="divider">
+            <p style="text-align: center; font-weight: bold; color: #555; margin-bottom: 5px;">🔒 Безопасность аккаунта</p>
             <input type="text" id="regSecQuestion" placeholder="Контрольный вопрос (напр., кличка питомца)">
             <span class="hint">Этот вопрос понадобится для восстановления пароля.</span>
-            <input type="text" id="regSecAnswer" placeholder="Ваш ответ на вопрос">
+            <input type="text" id="regSecAnswer" placeholder="Ваш ответ на вопрос" autocomplete="off">
             <span class="hint">Ответ не чувствителен к регистру (Бобик = бобик).</span>
             
             <button onclick="register()">Зарегистрироваться</button>
@@ -60,16 +62,16 @@
         <div id="recoverView" class="hidden">
             <h2>Восстановление пароля</h2>
             <input type="text" id="recUsername" placeholder="Имя пользователя">
-            <input type="text" id="recSecAnswer" placeholder="Ваш ответ на контрольный вопрос">
-            <input type="password" id="recNewPassword" placeholder="Новый пароль">
+            <input type="text" id="recSecAnswer" placeholder="Ваш ответ на контрольный вопрос" autocomplete="off">
+            <input type="password" id="recNewPassword" placeholder="Новый пароль" autocomplete="new-password">
             <button onclick="recoverPassword()">Сменить пароль</button>
             <span class="link" onclick="showView('loginView')">Назад ко входу</span>
             <div id="recMessage" class="message hidden"></div>
         </div>
 
-        <!-- Основной интерфейс (широкий контейнер) -->
+        <!-- Основной интерфейс (Дашборд) -->
         <div id="dashboardView" class="hidden">
-            <!-- Содержимое будет перенесено в широкий контейнер через JS -->
+            <!-- Контент генерируется через JS -->
         </div>
     </div>
 
@@ -78,7 +80,7 @@
         let currentUserData = null;
 
         function showView(viewId) {
-            document.querySelectorAll('#authContainer > div').forEach(div => div.classList.add('hidden'));
+            document.querySelectorAll('#mainContainer > div').forEach(div => div.classList.add('hidden'));
             document.getElementById(viewId).classList.remove('hidden');
             clearMessages();
         }
@@ -103,6 +105,7 @@
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     body: payload,
+                    // text/plain предотвращает preflight OPTIONS запрос, который не поддерживается GAS
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                 });
                 return await response.json();
@@ -116,7 +119,12 @@
             const password = document.getElementById('loginPassword').value;
             if (!username || !password) return showMessage('loginMessage', 'Заполните все поля');
 
+            const btn = document.querySelector('#loginView button');
+            btn.disabled = true; btn.textContent = 'Вход...';
+
             const result = await sendRequest('login', { username, password });
+            btn.disabled = false; btn.textContent = 'Войти';
+
             if (result.success) {
                 currentUserData = result.user;
                 localStorage.setItem('currentUser', JSON.stringify(currentUserData));
@@ -136,7 +144,12 @@
                 return showMessage('regMessage', 'Заполните все поля, включая контрольный вопрос и ответ');
             }
 
+            const btn = document.querySelector('#registerView button');
+            btn.disabled = true; btn.textContent = 'Регистрация...';
+
             const result = await sendRequest('register', { username, password, securityQuestion: secQuestion, securityAnswer: secAnswer });
+            btn.disabled = false; btn.textContent = 'Зарегистрироваться';
+
             if (result.success) {
                 showMessage('regMessage', result.message + ' (Ваша роль: ' + result.role + ')', false);
                 setTimeout(() => showView('loginView'), 2000);
@@ -154,7 +167,12 @@
                 return showMessage('recMessage', 'Заполните все поля');
             }
 
+            const btn = document.querySelector('#recoverView button');
+            btn.disabled = true; btn.textContent = 'Обработка...';
+
             const result = await sendRequest('recoverPassword', { username, securityAnswer: secAnswer, newPassword });
+            btn.disabled = false; btn.textContent = 'Сменить пароль';
+
             if (result.success) {
                 showMessage('recMessage', result.message, false);
                 setTimeout(() => showView('loginView'), 2000);
@@ -164,38 +182,42 @@
         }
 
         function showDashboard() {
-            // Делаем контейнер широким для админки
-            document.getElementById('authContainer').classList.add('wide');
-            document.querySelectorAll('#authContainer > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById('mainContainer').classList.add('wide');
+            document.querySelectorAll('#mainContainer > div').forEach(div => div.classList.add('hidden'));
+            
+            const isAdmin = currentUserData.role === 'admin';
             
             const dashboardHTML = `
                 <div class="header-info">
                     <div>
                         <h3>Добро пожаловать, <span style="color: #007bff;">${currentUserData.username}</span>!</h3>
-                        <p>Ваша роль: <strong>${currentUserData.role.charAt(0).toUpperCase() + currentUserData.role.slice(1)}</strong></p>
+                        <p style="margin: 5px 0 0 0;">Ваша роль: <strong>${isAdmin ? 'Администратор' : (currentUserData.role === 'moderator' ? 'Модератор' : 'Пользователь')}</strong></p>
                     </div>
-                    <button onclick="logout()" style="width: auto; background-color: #6c757d;">Выйти</button>
+                    <button onclick="logout()" style="width: auto; background-color: #6c757d; margin: 0;">Выйти</button>
                 </div>
                 
-                <div id="adminPanel" class="${currentUserData.role === 'admin' ? '' : 'hidden'}">
+                <div id="adminPanel" class="${isAdmin ? '' : 'hidden'}">
                     <h3>⚙️ Панель администратора</h3>
                     <button onclick="loadUsers()" style="width: auto; margin-bottom: 10px;">🔄 Обновить список пользователей</button>
-                    <table id="usersTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Имя пользователя</th>
-                                <th>Роль</th>
-                                <th>Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody"></tbody>
-                    </table>
+                    <div style="overflow-x: auto;">
+                        <table id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Имя пользователя</th>
+                            <th>Роль</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
                 
-                <div id="userContent" class="${currentUserData.role !== 'admin' ? '' : 'hidden'}">
+                <div id="userContent" class="${isAdmin ? 'hidden' : ''}">
                     <h3>📁 Рабочая область</h3>
                     <p>Здесь будет отображаться основной функционал сайта СтройРеестр для вашей роли.</p>
+                    <p><em>(Здесь можно разместить iframe с вашей Google Таблицей или другой контент)</em></p>
                 </div>
             `;
             
@@ -203,7 +225,7 @@
             dashView.innerHTML = dashboardHTML;
             dashView.classList.remove('hidden');
             
-            if (currentUserData.role === 'admin') {
+            if (isAdmin) {
                 loadUsers();
             }
         }
@@ -211,59 +233,76 @@
         function logout() {
             currentUserData = null;
             localStorage.removeItem('currentUser');
-            document.getElementById('authContainer').classList.remove('wide');
+            document.getElementById('mainContainer').classList.remove('wide');
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginPassword').value = '';
             showView('loginView');
         }
 
         async function loadUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Загрузка...</td></tr>';
+            
             const result = await sendRequest('getUsers', {});
             if (result.success) {
-                const tbody = document.getElementById('usersTableBody');
                 tbody.innerHTML = '';
                 result.users.forEach(user => {
                     const isSelf = user.username === currentUserData.username;
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td><small>${user.id}</small></td>
-                        <td>${user.username} ${isSelf ? '(Вы)' : ''}</td>
+                        <td><small style="color:#666;">${user.id.substring(0, 8)}...</small></td>
+                        <td><strong>${user.username}</strong> ${isSelf ? '<span style="color:#007bff;">(Вы)</span>' : ''}</td>
                         <td>
-                            <select onchange="changeRole('${user.id}', this.value)" ${isSelf ? 'disabled' : ''}>
+                            <select onchange="changeRole('${user.id}', this.value)" ${isSelf ? 'disabled' : ''} style="margin:0; padding: 6px;">
                                 <option value="user" ${user.role === 'user' ? 'selected' : ''}>Пользователь</option>
                                 <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Модератор</option>
                                 <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Администратор</option>
                             </select>
                         </td>
                         <td>
-                            <button class="danger" onclick="deleteUser('${user.id}')" ${isSelf ? 'disabled' : ''}>Удалить</button>
+                            <button class="danger" onclick="deleteUser('${user.id}')" ${isSelf ? 'disabled' : ''} style="margin:0; padding: 6px 12px; width: auto;">Удалить</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
             } else {
-                alert('Ошибка загрузки: ' + result.error);
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Ошибка: ${result.error}</td></tr>`;
             }
         }
 
         async function changeRole(userId, newRole) {
             const result = await sendRequest('updateUserRole', { targetUserId: userId, newRole });
-            if (result.success) alert('Роль успешно обновлена');
-            else { alert('Ошибка: ' + result.error); loadUsers(); }
+            if (result.success) {
+                showMessage('loginMessage', 'Роль успешно обновлена', false); // Временное сообщение
+                setTimeout(clearMessages, 2000);
+            } else {
+                alert('Ошибка: ' + result.error);
+                loadUsers(); // Перезагружаем для отката UI
+            }
         }
 
         async function deleteUser(userId) {
-            if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) return;
+            if (!confirm('Вы уверены, что хотите удалить этого пользователя? Это действие необратимо.')) return;
+            
             const result = await sendRequest('deleteUser', { targetUserId: userId });
-            if (result.success) { alert('Пользователь удален'); loadUsers(); }
-            else { alert('Ошибка: ' + result.error); }
+            if (result.success) {
+                alert('Пользователь удален');
+                loadUsers();
+            } else {
+                alert('Ошибка: ' + result.error);
+            }
         }
 
+        // Проверка сессии при загрузке страницы
         window.onload = () => {
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
-                currentUserData = JSON.parse(savedUser);
-                showDashboard();
+                try {
+                    currentUserData = JSON.parse(savedUser);
+                    showDashboard();
+                } catch (e) {
+                    localStorage.removeItem('currentUser');
+                }
             }
         };
     </script>
