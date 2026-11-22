@@ -7,10 +7,12 @@ export const ROLES = [
 
 export const MENU_ITEMS = [
     { id: 'home', title: 'Главная', icon: '🏠', section: 'home', action: 'view', isHome: true },
+
     { id: 'contracts', title: 'Договоры', icon: '📋', section: 'contracts', action: 'view' },
     { id: 'documents', title: 'Документация', icon: '📁', section: 'documents', action: 'view' },
     { id: 'finance', title: 'Финансы', icon: '💰', section: 'finance', action: 'view' },
     { id: 'reports', title: 'Отчёты', icon: '📊', section: 'reports', action: 'view' },
+
     { id: 'users', title: 'Пользователи', icon: '👥', section: 'users', action: 'view', adminOnly: true },
     { id: 'matrix', title: 'Матрица прав', icon: '🔐', section: 'settings', action: 'edit', adminOnly: true },
     { id: 'logs', title: 'Журнал', icon: '📋', section: 'logs', action: 'view', adminOnly: true },
@@ -32,8 +34,11 @@ export const state = {
 
 export function escapeHtml(v) {
     return String(v == null ? '' : v)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 export function roleBadge(role) {
@@ -60,9 +65,11 @@ export function setBtnLoading(btnId, loading, text) {
 }
 
 export function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
 }
 
 export function openModal(id) {
-    document.getElementById(id).classList.add('active');
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
 }
