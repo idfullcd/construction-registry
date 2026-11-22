@@ -1,71 +1,18 @@
-.contracts-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-    gap: 10px;
-}
+.contracts-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
 .contracts-header h3 { margin: 0; }
-
-.icon-picker {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin: 8px 0;
-}
-.icon-option {
-    font-size: 28px;
-    padding: 8px 12px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    cursor: pointer;
-    background: white;
-    transition: all 0.2s;
-    width: auto;
-}
+.icon-picker { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.icon-option { font-size: 28px; padding: 8px 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; background: white; transition: all 0.2s; width: auto; }
 .icon-option:hover { border-color: #007bff; }
 .icon-option.selected { border-color: #007bff; background: #e7f1ff; }
-
-.form-row {
-    display: flex;
-    gap: 10px;
-    margin: 8px 0;
-}
+.form-row { display: flex; gap: 10px; margin: 8px 0; }
 .form-row > * { flex: 1; }
 .form-row label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 4px; }
-.form-row input,
-.form-row select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
+.form-row input, .form-row select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
 .form-group { margin: 10px 0; }
 .form-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 13px; }
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.drive-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    background: #fff3cd;
-    color: #856404;
-    border-radius: 4px;
-    font-size: 12px;
-    text-decoration: none;
-}
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+.drive-link { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: #fff3cd; color: #856404; border-radius: 4px; font-size: 12px; text-decoration: none; }
 .drive-link:hover { background: #ffeeba; }
-
 th.sortable { cursor: pointer; user-select: none; }
 th.sortable:hover { background: #e9ecef; }
 .sort-indicator { font-size: 10px; margin-left: 4px; color: #007bff; }
