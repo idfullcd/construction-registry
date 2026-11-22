@@ -12,15 +12,15 @@
         h2, h3 { color: #2c3e50; text-align: center; margin-top: 0; }
         input, button, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
         button { background-color: #007bff; color: white; border: none; cursor: pointer; transition: background 0.2s; font-weight: bold; }
-        button:hover { background-color: #0056b3; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        button:hover:not(:disabled) { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
         button.danger { background-color: #dc3545; }
-        button.danger:hover { background-color: #c82333; }
+        button.danger:hover:not(:disabled) { background-color: #c82333; }
         .link { color: #007bff; cursor: pointer; text-decoration: underline; text-align: center; display: block; margin-top: 10px; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background-color: #f8f9fa; color: #495057; }
-        .message { padding: 10px; margin: 10px 0; border-radius: 4px; text-align: center; font-size: 14px; }
+        .message { padding: 10px; margin: 10px 0; border-radius: 4px; text-align: center; font-size: 14px; word-wrap: break-word; }
         .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
@@ -35,7 +35,7 @@
             <h2>Вход в СтройРеестр</h2>
             <input type="text" id="loginUsername" placeholder="Имя пользователя" autocomplete="username">
             <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password">
-            <button onclick="login()">Войти</button>
+            <button id="loginBtn" onclick="login()">Войти</button>
             <span class="link" onclick="showView('registerView')">Нет аккаунта? Зарегистрироваться</span>
             <span class="link" onclick="showView('recoverView')">Забыли пароль?</span>
             <div id="loginMessage" class="message hidden"></div>
@@ -53,7 +53,7 @@
             <input type="text" id="regSecAnswer" placeholder="Ваш ответ на вопрос" autocomplete="off">
             <span class="hint">Ответ не чувствителен к регистру (Бобик = бобик).</span>
             
-            <button onclick="register()">Зарегистрироваться</button>
+            <button id="regBtn" onclick="register()">Зарегистрироваться</button>
             <span class="link" onclick="showView('loginView')">Уже есть аккаунт? Войти</span>
             <div id="regMessage" class="message hidden"></div>
         </div>
@@ -64,7 +64,7 @@
             <input type="text" id="recUsername" placeholder="Имя пользователя">
             <input type="text" id="recSecAnswer" placeholder="Ваш ответ на контрольный вопрос" autocomplete="off">
             <input type="password" id="recNewPassword" placeholder="Новый пароль" autocomplete="new-password">
-            <button onclick="recoverPassword()">Сменить пароль</button>
+            <button id="recBtn" onclick="recoverPassword()">Сменить пароль</button>
             <span class="link" onclick="showView('loginView')">Назад ко входу</span>
             <div id="recMessage" class="message hidden"></div>
         </div>
@@ -76,6 +76,7 @@
     </div>
 
     <script>
+        // УБЕДИТЕСЬ, ЧТО ЭТОТ URL СОВПАДАЕТ С ВАШИМ РАЗВЕРТЫВАНИЕМ
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDBLSNVZMheURUanslsSBJ30TDvv4eurDsDcv-Hoi0aabVAPni_IxPbysL8AMB93Hm2g/exec';
         let currentUserData = null;
 
@@ -99,18 +100,43 @@
             el.classList.remove('hidden');
         }
 
+        function setButtonLoading(btnId, isLoading, defaultText) {
+            const btn = document.getElementById(btnId);
+            if (isLoading) {
+                btn.disabled = true;
+                btn.textContent = 'Обработка...';
+            } else {
+                btn.disabled = false;
+                btn.textContent = defaultText;
+            }
+        }
+
         async function sendRequest(action, data) {
+            console.log(`[GAS Request] Action: ${action}`, data);
             try {
                 const payload = JSON.stringify({ action, ...data });
+                
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     body: payload,
                     // text/plain предотвращает preflight OPTIONS запрос, который не поддерживается GAS
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                 });
-                return await response.json();
+                
+                const text = await response.text();
+                console.log(`[GAS Response] Raw:`, text);
+                
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    return { success: false, error: 'Сервер вернул некорректный ответ: ' + text.substring(0, 100) };
+                }
             } catch (error) {
-                return { success: false, error: 'Ошибка сети: ' + error.message };
+                console.error("[GAS Network Error]", error);
+                return { 
+                    success: false, 
+                    error: 'Ошибка сети. Проверьте: 1) URL скрипта 2) Доступ "Все" (Anyone) в настройках развертывания 3) Отключите AdBlock.' 
+                };
             }
         }
 
@@ -119,11 +145,9 @@
             const password = document.getElementById('loginPassword').value;
             if (!username || !password) return showMessage('loginMessage', 'Заполните все поля');
 
-            const btn = document.querySelector('#loginView button');
-            btn.disabled = true; btn.textContent = 'Вход...';
-
+            setButtonLoading('loginBtn', true, 'Войти');
             const result = await sendRequest('login', { username, password });
-            btn.disabled = false; btn.textContent = 'Войти';
+            setButtonLoading('loginBtn', false, 'Войти');
 
             if (result.success) {
                 currentUserData = result.user;
@@ -144,11 +168,9 @@
                 return showMessage('regMessage', 'Заполните все поля, включая контрольный вопрос и ответ');
             }
 
-            const btn = document.querySelector('#registerView button');
-            btn.disabled = true; btn.textContent = 'Регистрация...';
-
+            setButtonLoading('regBtn', true, 'Зарегистрироваться');
             const result = await sendRequest('register', { username, password, securityQuestion: secQuestion, securityAnswer: secAnswer });
-            btn.disabled = false; btn.textContent = 'Зарегистрироваться';
+            setButtonLoading('regBtn', false, 'Зарегистрироваться');
 
             if (result.success) {
                 showMessage('regMessage', result.message + ' (Ваша роль: ' + result.role + ')', false);
@@ -167,11 +189,9 @@
                 return showMessage('recMessage', 'Заполните все поля');
             }
 
-            const btn = document.querySelector('#recoverView button');
-            btn.disabled = true; btn.textContent = 'Обработка...';
-
+            setButtonLoading('recBtn', true, 'Сменить пароль');
             const result = await sendRequest('recoverPassword', { username, securityAnswer: secAnswer, newPassword });
-            btn.disabled = false; btn.textContent = 'Сменить пароль';
+            setButtonLoading('recBtn', false, 'Сменить пароль');
 
             if (result.success) {
                 showMessage('recMessage', result.message, false);
@@ -205,7 +225,7 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Имя пользователя</th>
-                            <th>Роль</th>
+                                    <th>Роль</th>
                                     <th>Действия</th>
                                 </tr>
                             </thead>
@@ -217,7 +237,6 @@
                 <div id="userContent" class="${isAdmin ? 'hidden' : ''}">
                     <h3>📁 Рабочая область</h3>
                     <p>Здесь будет отображаться основной функционал сайта СтройРеестр для вашей роли.</p>
-                    <p><em>(Здесь можно разместить iframe с вашей Google Таблицей или другой контент)</em></p>
                 </div>
             `;
             
@@ -273,11 +292,10 @@
         async function changeRole(userId, newRole) {
             const result = await sendRequest('updateUserRole', { targetUserId: userId, newRole });
             if (result.success) {
-                showMessage('loginMessage', 'Роль успешно обновлена', false); // Временное сообщение
-                setTimeout(clearMessages, 2000);
+                alert('Роль успешно обновлена');
             } else {
                 alert('Ошибка: ' + result.error);
-                loadUsers(); // Перезагружаем для отката UI
+                loadUsers();
             }
         }
 
@@ -293,7 +311,6 @@
             }
         }
 
-        // Проверка сессии при загрузке страницы
         window.onload = () => {
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
