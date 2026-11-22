@@ -1,5 +1,5 @@
 // URL вашего Apps Script
-export const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3tH9Vf1ewKTyn0yYcBZ4SQ8f-IZlU115Hc_IRTDXuVji6CBvL3gSSxAmL1QjWVXFm/exec';
+export const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5F8xSiQQgS1pm_6sqRFljHaMLmYy_4jo_KMkE5XaoS2X-fgus6nPNYat33s1oyQcl/exec';
 
 // Роли
 export const ROLES = [
