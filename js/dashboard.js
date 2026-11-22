@@ -12,26 +12,17 @@ export function showApp() {
     document.getElementById('userName').textContent = state.currentUser.username;
     document.getElementById('userRole').innerHTML = roleBadge(state.currentUser.role);
 
-    // Индикатор загрузки
     document.getElementById('contentArea').innerHTML = '<p style="text-align:center; padding:30px;">Загрузка данных...</p>';
 
-    // Загружаем метаданные параллельно
     Promise.all([
-        sendRequest('getContractMeta', {}).catch(e => {
-            console.error('[Dashboard] getContractMeta failed:', e);
-            return { success: false, error: e.message };
-        }),
-        sendRequest('getMatrix', {}).catch(e => {
-            console.error('[Dashboard] getMatrix failed:', e);
-            return { success: false, error: e.message };
-        })
+        sendRequest('getContractMeta', {}).catch(e => ({ success: false, error: e.message })),
+        sendRequest('getMatrix', {}).catch(e => ({ success: false, error: e.message }))
     ]).then(([metaRes, matrixRes]) => {
         console.log('[Dashboard] Loaded:', { meta: metaRes.success, matrix: matrixRes.success });
         
         if (metaRes.success) state.contractMeta = metaRes;
         if (matrixRes.success) state.matrixData = matrixRes;
         
-        // Если матрица не загрузилась — показываем ошибку
         if (!matrixRes.success) {
             document.getElementById('contentArea').innerHTML = `
                 <div style="text-align:center; padding:40px;">
@@ -50,7 +41,6 @@ export function showApp() {
         
         renderMenu();
         
-        // Открываем первый доступный пункт меню
         const first = document.querySelector('.nav-item');
         if (first) {
             navigateTo(first.dataset.section);
@@ -59,14 +49,12 @@ export function showApp() {
                 <div style="text-align:center; padding:60px 20px;">
                     <div style="font-size:64px;">🔒</div>
                     <h2 style="margin:20px 0;">Нет доступных разделов</h2>
-                    <p style="color:#666;">У вашей роли (${escapeHtml(state.currentUser.role)}) нет прав на просмотр ни одного раздела.</p>
-                    <p style="color:#999; font-size:14px; margin-top:10px;">Обратитесь к администратору для настройки прав.</p>
+                    <p style="color:#666;">У вашей роли (${escapeHtml(state.currentUser.role)}) нет прав.</p>
                     <button class="btn btn-secondary" onclick="window._logout()" style="margin-top:20px;">🚪 Выйти</button>
                 </div>
             `;
         }
     }).catch(error => {
-        console.error('[Dashboard] Promise.all error:', error);
         document.getElementById('contentArea').innerHTML = `
             <div style="text-align:center; padding:40px;">
                 <div style="font-size:64px;">⚠️</div>
@@ -79,46 +67,78 @@ export function showApp() {
 }
 
 export function renderMenu() {
-    console.log('[Dashboard] renderMenu called, matrixData:', !!state.matrixData);
+    console.log('[Dashboard] renderMenu called, role:', state.currentUser.role);
     const nav = document.getElementById('sidebarNav');
     nav.innerHTML = '';
     
-    let visibleCount = 0;
-    MENU_ITEMS.forEach(item => {
-        // Пропускаем админские пункты для не-админов
-        if (item.adminOnly && state.currentUser.role !== 'Администратор') {
-            console.log('[Menu] Skip admin-only:', item.id);
+    const isAdmin = state.currentUser.role === 'Администратор';
+    
+    // Разделяем пункты на обычные и админские
+    const regularItems = MENU_ITEMS.filter(item => !item.adminOnly);
+    const adminItems = MENU_ITEMS.filter(item => item.adminOnly);
+    
+    // ===== ОБЫЧНЫЕ ПУНКТЫ =====
+    let regularCount = 0;
+    regularItems.forEach(item => {
+        // Главная доступна всем
+        if (item.isHome) {
+            appendNavItem(nav, item);
+            regularCount++;
             return;
         }
-        // Пропускаем пункты без доступа
-        if (!item.adminOnly && !item.isHome && !checkAccess(item.section, item.action)) {
-            console.log('[Menu] Skip no access:', item.id, item.section, item.action);
-            return;
+        // Для остальных проверяем права
+        if (checkAccess(item.section, item.action)) {
+            appendNavItem(nav, item);
+            regularCount++;
         }
-        
-        console.log('[Menu] Add item:', item.id);
-        visibleCount++;
-        const btn = document.createElement('button');
-        btn.className = 'nav-item';
-        btn.dataset.section = item.id;
-        btn.innerHTML = `<span class="nav-icon">${escapeHtml(item.icon)}</span><span class="nav-text">${escapeHtml(item.title)}</span>`;
-        btn.onclick = () => navigateTo(item.id);
-        nav.appendChild(btn);
     });
     
-    console.log('[Dashboard] Menu items visible:', visibleCount);
+    console.log('[Dashboard] Regular items:', regularCount);
+    
+    // ===== АДМИНСКАЯ СЕКЦИЯ (только для администратора) =====
+    if (isAdmin && adminItems.length > 0) {
+        // Разделитель с заголовком
+        const divider = document.createElement('div');
+        divider.className = 'nav-divider';
+        divider.innerHTML = `
+            <div class="nav-divider-line"></div>
+            <div class="nav-divider-label">
+                <span class="nav-divider-icon">🛡️</span>
+                <span class="nav-divider-text">АДМИНИСТРИРОВАНИЕ</span>
+            </div>
+            <div class="nav-divider-line"></div>
+        `;
+        nav.appendChild(divider);
+        
+        // Админские пункты
+        adminItems.forEach(item => {
+            appendNavItem(nav, item, true);
+        });
+        
+        console.log('[Dashboard] Admin items:', adminItems.length);
+    }
+}
+
+function appendNavItem(nav, item, isAdminItem = false) {
+    const btn = document.createElement('button');
+    btn.className = 'nav-item' + (isAdminItem ? ' nav-item-admin' : '');
+    btn.dataset.section = item.id;
+    btn.innerHTML = `
+        <span class="nav-icon">${escapeHtml(item.icon)}</span>
+        <span class="nav-text">${escapeHtml(item.title)}</span>
+    `;
+    btn.onclick = () => navigateTo(item.id);
+    nav.appendChild(btn);
 }
 
 export function navigateTo(sectionId) {
     console.log('[Dashboard] navigateTo:', sectionId);
     state.currentSection = sectionId;
     
-    // Подсветка активного пункта
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const activeBtn = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
     if (activeBtn) activeBtn.classList.add('active');
     
-    // Заголовок страницы
     const menuItem = MENU_ITEMS.find(m => m.id === sectionId);
     document.getElementById('pageTitle').textContent = menuItem ? `${menuItem.icon} ${menuItem.title}` : sectionId;
     
@@ -147,7 +167,6 @@ function loadHomePage() {
     const now = new Date();
     const dateStr = now.toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     
-    // Приветствие в зависимости от времени суток
     const hour = now.getHours();
     let greeting = 'Добрый день';
     if (hour < 6) greeting = 'Доброй ночи';
@@ -165,46 +184,27 @@ function loadHomePage() {
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 25px;">
     `;
     
-    // Быстрые действия
     const quickActions = [];
     
     if (checkAccess('contracts', 'view')) {
-        quickActions.push({
-            icon: '📋',
-            title: 'Договоры',
-            desc: 'Просмотр и управление договорами',
-            action: () => navigateTo('contracts')
-        });
+        quickActions.push({ icon: '📋', title: 'Договоры', desc: 'Просмотр и управление договорами', section: 'contracts' });
     }
-    
     if (checkAccess('contracts', 'create')) {
-        quickActions.push({
-            icon: '➕',
-            title: 'Новый договор',
-            desc: 'Создать договор с папкой на Drive',
-            action: () => { navigateTo('contracts'); setTimeout(() => window._openContractModal && window._openContractModal(), 300); }
-        });
+        quickActions.push({ icon: '➕', title: 'Новый договор', desc: 'Создать договор с папкой на Drive', section: 'contracts' });
     }
-    
+    if (checkAccess('documents', 'view')) {
+        quickActions.push({ icon: '📁', title: 'Документация', desc: 'Рабочая документация', section: 'documents' });
+    }
+    if (checkAccess('finance', 'view')) {
+        quickActions.push({ icon: '💰', title: 'Финансы', desc: 'Финансовые операции', section: 'finance' });
+    }
+    if (checkAccess('reports', 'view')) {
+        quickActions.push({ icon: '📊', title: 'Отчёты', desc: 'Отчётность по проектам', section: 'reports' });
+    }
     if (isAdmin) {
-        quickActions.push({
-            icon: '👥',
-            title: 'Пользователи',
-            desc: 'Управление учётными записями',
-            action: () => navigateTo('users')
-        });
-        quickActions.push({
-            icon: '📋',
-            title: 'Журнал действий',
-            desc: 'История всех операций в системе',
-            action: () => navigateTo('logs')
-        });
-        quickActions.push({
-            icon: '🔐',
-            title: 'Матрица прав',
-            desc: 'Настройка доступа по ролям',
-            action: () => navigateTo('matrix')
-        });
+        quickActions.push({ icon: '👥', title: 'Пользователи', desc: 'Управление учётными записями', section: 'users' });
+        quickActions.push({ icon: '📋', title: 'Журнал действий', desc: 'История всех операций', section: 'logs' });
+        quickActions.push({ icon: '🔐', title: 'Матрица прав', desc: 'Настройка доступа по ролям', section: 'matrix' });
     }
     
     if (quickActions.length === 0) {
@@ -218,10 +218,8 @@ function loadHomePage() {
     } else {
         quickActions.forEach(action => {
             html += `
-                <div class="quick-action-card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s; border: 2px solid transparent;" 
-                     onmouseover="this.style.borderColor='#007bff'; this.style.transform='translateY(-2px)';"
-                     onmouseout="this.style.borderColor='transparent'; this.style.transform='translateY(0)';">
-                    <div style="font-size: 32px; margin-bottom: 10px;">${action.icon}</div>
+                <div class="quick-action-card" data-section="${escapeHtml(action.section)}" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s; border: 2px solid transparent;">
+                    <div style="font-size: 32px; margin-bottom: 10px;">${escapeHtml(action.icon)}</div>
                     <h3 style="margin: 0 0 5px 0; font-size: 16px;">${escapeHtml(action.title)}</h3>
                     <p style="margin: 0; color: #666; font-size: 13px;">${escapeHtml(action.desc)}</p>
                 </div>
@@ -231,7 +229,6 @@ function loadHomePage() {
     
     html += `</div>`;
     
-    // Информация о системе
     html += `
         <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
             <h3 style="margin: 0 0 15px 0; color: #2c3e50;">📌 О системе</h3>
@@ -259,10 +256,17 @@ function loadHomePage() {
     html += `</div>`;
     area.innerHTML = html;
     
-    // Назначаем обработчики на быстрые действия
-    const cards = area.querySelectorAll('.quick-action-card');
-    cards.forEach((card, idx) => {
-        card.addEventListener('click', () => quickActions[idx].action());
+    // Обработчики на быстрые действия
+    area.querySelectorAll('.quick-action-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.borderColor = '#007bff';
+            card.style.transform = 'translateY(-2px)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.borderColor = 'transparent';
+            card.style.transform = 'translateY(0)';
+        });
+        card.addEventListener('click', () => navigateTo(card.dataset.section));
     });
 }
 
