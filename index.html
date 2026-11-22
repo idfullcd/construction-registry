@@ -20,16 +20,23 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background-color: #f8f9fa; color: #495057; }
-        .message { padding: 10px; margin: 10px 0; border-radius: 4px; text-align: center; font-size: 14px; word-wrap: break-word; }
+        .message { padding: 12px; margin: 10px 0; border-radius: 4px; text-align: center; font-size: 14px; word-wrap: break-word; line-height: 1.5; }
         .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
         .hint { font-size: 12px; color: #666; margin-top: -5px; margin-bottom: 10px; display: block; }
         .divider { margin: 20px 0; border: 0; border-top: 1px solid #eee; }
+        .network-warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; padding: 10px; border-radius: 4px; font-size: 13px; margin-bottom: 15px; text-align: center; }
     </style>
 </head>
 <body>
     <div class="container" id="mainContainer">
+        
+        <!-- Предупреждение о блокировщиках (видимо только при ошибках сети) -->
+        <div id="networkWarning" class="network-warning hidden">
+            ⚠️ <strong>Внимание:</strong> Если действия не выполняются, отключите AdBlock, uBlock Origin или антивирус (Kaspersky/Avast). Они часто блокируют домен <em>script.googleusercontent.com</em>.
+        </div>
+
         <!-- Форма входа -->
         <div id="loginView">
             <h2>Вход в СтройРеестр</h2>
@@ -76,12 +83,14 @@
     </div>
 
     <script>
-        // УБЕДИТЕСЬ, ЧТО ЭТОТ URL СОВПАДАЕТ С ВАШИМ РАЗВЕРТЫВАНИЕМ
+        // ⚠️ УБЕДИТЕСЬ, ЧТО ЭТОТ URL В ТОЧНОСТИ СОВПАДАЕТ С ВАШИМ РАЗВЕРТЫВАНИЕМ В GOOGLE APPS SCRIPT
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5F8xSiQQgS1pm_6sqRFljHaMLmYy_4jo_KMkE5XaoS2X-fgus6nPNYat33s1oyQcl/exec';
         let currentUserData = null;
 
         function showView(viewId) {
-            document.querySelectorAll('#mainContainer > div').forEach(div => div.classList.add('hidden'));
+            document.querySelectorAll('#mainContainer > div').forEach(div => {
+                if (div.id !== 'networkWarning') div.classList.add('hidden');
+            });
             document.getElementById(viewId).classList.remove('hidden');
             clearMessages();
         }
@@ -91,11 +100,12 @@
                 el.textContent = '';
                 el.classList.add('hidden');
             });
+            document.getElementById('networkWarning').classList.add('hidden');
         }
 
         function showMessage(elementId, message, isError = true) {
             const el = document.getElementById(elementId);
-            el.textContent = message;
+            el.innerHTML = message.replace(/\n/g, '<br>');
             el.className = 'message ' + (isError ? 'error' : 'success');
             el.classList.remove('hidden');
         }
@@ -112,30 +122,39 @@
         }
 
         async function sendRequest(action, data) {
-            console.log(`[GAS Request] Action: ${action}`, data);
+            console.log(`[GAS] Отправка запроса: ${action}`, data);
             try {
                 const payload = JSON.stringify({ action, ...data });
                 
+                // Используем text/plain, чтобы избежать preflight OPTIONS запроса, 
+                // который Google Apps Script не поддерживает и который вызывает ошибки CORS/Timeout.
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     body: payload,
-                    // text/plain предотвращает preflight OPTIONS запрос, который не поддерживается GAS
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    redirect: 'follow',
+                    cache: 'no-cache'
                 });
                 
                 const text = await response.text();
-                console.log(`[GAS Response] Raw:`, text);
+                console.log(`[GAS] Ответ сервера:`, text);
                 
                 try {
                     return JSON.parse(text);
                 } catch (e) {
-                    return { success: false, error: 'Сервер вернул некорректный ответ: ' + text.substring(0, 100) };
+                    return { 
+                        success: false, 
+                        error: 'Сервер вернул не JSON. Возможно, запрос перехвачен расширением браузера. Ответ: ' + text.substring(0, 100) 
+                    };
                 }
             } catch (error) {
-                console.error("[GAS Network Error]", error);
+                console.error("[GAS] Ошибка сети:", error);
+                document.getElementById('networkWarning').classList.remove('hidden');
                 return { 
                     success: false, 
-                    error: 'Ошибка сети. Проверьте: 1) URL скрипта 2) Доступ "Все" (Anyone) в настройках развертывания 3) Отключите AdBlock.' 
+                    error: 'Ошибка сети (TIMEOUT / Failed to fetch).\n\n1. Отключите AdBlock/uBlock Origin или антивирус (Kaspersky/Avast).\n2. Попробуйте открыть сайт в режиме Инкогнито (Ctrl+Shift+N).\n3. Убедитесь, что в Google Apps Script выбрано "У кого есть доступ: Все" (Anyone).' 
                 };
             }
         }
@@ -203,7 +222,9 @@
 
         function showDashboard() {
             document.getElementById('mainContainer').classList.add('wide');
-            document.querySelectorAll('#mainContainer > div').forEach(div => div.classList.add('hidden'));
+            document.querySelectorAll('#mainContainer > div').forEach(div => {
+                if (div.id !== 'networkWarning') div.classList.add('hidden');
+            });
             
             const isAdmin = currentUserData.role === 'admin';
             
@@ -311,6 +332,7 @@
             }
         }
 
+        // Проверка сессии при загрузке страницы
         window.onload = () => {
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
