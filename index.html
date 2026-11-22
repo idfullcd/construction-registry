@@ -10,98 +10,82 @@
     <link rel="stylesheet" href="styles/contracts.css">
 </head>
 <body>
-    <!-- ЭКРАН АВТОРИЗАЦИИ -->
     <div id="authScreen" class="auth-screen">
         <div class="auth-container">
-            <!-- Вход -->
             <div id="loginView" class="auth-view">
                 <h2>🏗️ СтройРеестр</h2>
-                <input type="text" id="loginUsername" placeholder="Имя пользователя">
-                <input type="password" id="loginPassword" placeholder="Пароль">
-                <button id="loginBtn" onclick="login()">Войти</button>
-                <span class="link" onclick="showAuthView('registerView')">Нет аккаунта? Регистрация</span>
-                <span class="link" onclick="showAuthView('recoverView')">Забыли пароль?</span>
+                <input type="text" id="loginUsername" placeholder="Имя пользователя" autocomplete="username">
+                <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password">
+                <button id="loginBtn" onclick="window._login()">Войти</button>
+                <span class="link" onclick="window._showAuthView('registerView')">Нет аккаунта? Регистрация</span>
+                <span class="link" onclick="window._showAuthView('recoverView')">Забыли пароль?</span>
                 <div id="loginMessage" class="message hidden"></div>
             </div>
 
-            <!-- Регистрация -->
             <div id="registerView" class="auth-view hidden">
                 <h2>Регистрация</h2>
-                <input type="text" id="regUsername" placeholder="Имя пользователя">
-                <input type="password" id="regPassword" placeholder="Пароль">
+                <input type="text" id="regUsername" placeholder="Имя пользователя" autocomplete="username">
+                <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)" autocomplete="new-password">
                 <hr class="divider">
                 <p class="auth-subtitle">🔒 Контрольный вопрос</p>
                 <input type="text" id="regSecQuestion" placeholder="Напр., кличка питомца">
-                <input type="text" id="regSecAnswer" placeholder="Ответ">
-                <button id="regBtn" onclick="register()">Зарегистрироваться</button>
-                <span class="link" onclick="showAuthView('loginView')">Уже есть аккаунт? Войти</span>
+                <input type="text" id="regSecAnswer" placeholder="Ответ" autocomplete="off">
+                <button id="regBtn" onclick="window._register()">Зарегистрироваться</button>
+                <span class="link" onclick="window._showAuthView('loginView')">Уже есть аккаунт? Войти</span>
                 <div id="regMessage" class="message hidden"></div>
             </div>
 
-            <!-- Восстановление -->
             <div id="recoverView" class="auth-view hidden">
                 <h2>Восстановление пароля</h2>
                 <input type="text" id="recUsername" placeholder="Имя пользователя">
-                <input type="text" id="recSecAnswer" placeholder="Ответ на контрольный вопрос">
-                <input type="password" id="recNewPassword" placeholder="Новый пароль">
-                <button id="recBtn" onclick="recoverPassword()">Сменить пароль</button>
-                <span class="link" onclick="showAuthView('loginView')">Назад</span>
+                <input type="text" id="recSecAnswer" placeholder="Ответ на контрольный вопрос" autocomplete="off">
+                <input type="password" id="recNewPassword" placeholder="Новый пароль (мин. 6 символов)" autocomplete="new-password">
+                <button id="recBtn" onclick="window._recoverPassword()">Сменить пароль</button>
+                <span class="link" onclick="window._showAuthView('loginView')">Назад</span>
                 <div id="recMessage" class="message hidden"></div>
             </div>
         </div>
     </div>
 
-    <!-- ЭКРАН ПРИЛОЖЕНИЯ (с меню) -->
     <div id="appScreen" class="app-screen hidden">
-        <!-- Боковое меню -->
         <aside id="sidebar" class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">🏗️ СтройРеестр</div>
-                <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+                <button class="sidebar-toggle" onclick="window._toggleSidebar()">☰</button>
             </div>
-            
             <div class="user-card">
-                <div class="user-avatar" id="userAvatar">👤</div>
+                <div class="user-avatar">👤</div>
                 <div class="user-info">
                     <div class="user-name" id="userName">—</div>
                     <div class="user-role" id="userRole">—</div>
                 </div>
             </div>
-
-            <nav class="sidebar-nav" id="sidebarNav">
-                <!-- Пункты меню генерируются в dashboard.js -->
-            </nav>
-
+            <nav class="sidebar-nav" id="sidebarNav"></nav>
             <div class="sidebar-footer">
-                <button class="logout-btn" onclick="logout()">🚪 Выйти</button>
+                <button class="logout-btn" onclick="window._logout()">🚪 Выйти</button>
             </div>
         </aside>
 
-        <!-- Основная область -->
         <main class="main-content">
             <header class="topbar">
-                <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+                <button class="menu-btn" onclick="window._toggleSidebar()">☰</button>
                 <h2 class="page-title" id="pageTitle">Главная</h2>
-                <div class="topbar-actions" id="topbarActions"></div>
             </header>
-            <div class="content-area" id="contentArea">
-                <!-- Содержимое вкладок -->
-            </div>
+            <div class="content-area" id="contentArea"></div>
         </main>
     </div>
 
-    <!-- МОДАЛЬНЫЕ ОКНА -->
     <div id="permissionsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Индивидуальные права: <span id="permModalUsername"></span></h3>
-                <button class="close-btn" onclick="closeModal('permissionsModal')">&times;</button>
+                <h3>Права: <span id="permModalUsername"></span></h3>
+                <button class="close-btn" onclick="window._closeModal('permissionsModal')">&times;</button>
             </div>
             <p class="hint">Отметьте дополнительные права сверх роли.</p>
             <div id="permModalBody"></div>
             <div class="modal-actions">
-                <button onclick="saveCustomPermissions()" class="success">💾 Сохранить</button>
-                <button onclick="resetCustomPermissions()" class="secondary">🔄 Сбросить</button>
+                <button class="btn btn-success" onclick="window._saveCustomPermissions()">💾 Сохранить</button>
+                <button class="btn btn-secondary" onclick="window._resetCustomPermissions()">🔄 Сбросить</button>
             </div>
         </div>
     </div>
@@ -110,13 +94,12 @@
         <div class="modal-content modal-large">
             <div class="modal-header">
                 <h3 id="contractModalTitle">Новый договор</h3>
-                <button class="close-btn" onclick="closeModal('contractModal')">&times;</button>
+                <button class="close-btn" onclick="window._closeModal('contractModal')">&times;</button>
             </div>
             <div id="contractForm"></div>
         </div>
     </div>
 
-    <!-- JS-модули -->
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
