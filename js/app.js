@@ -1,27 +1,29 @@
-import { state } from './config.js';
-import { showAuthView, logout } from './auth.js';
-import { showApp } from './dashboard.js';
+import { state, closeModal } from './config.js';
+import { showAuthView, login, register, recoverPassword, logout } from './auth.js';
+import { showApp, toggleSidebar } from './dashboard.js';
 
-// Делаем функции доступными глобально для onclick в HTML
-window.showAuthView = showAuthView;
-window.login = (await import('./auth.js')).login;
-window.register = (await import('./auth.js')).register;
-window.recoverPassword = (await import('./auth.js')).recoverPassword;
-window.logout = logout;
-window.closeModal = (await import('./config.js')).closeModal;
+// Глобальные обработчики для onclick в HTML
+window._showAuthView = showAuthView;
+window._login = login;
+window._register = register;
+window._recoverPassword = recoverPassword;
+window._logout = logout;
+window._closeModal = closeModal;
+window._toggleSidebar = toggleSidebar;
 
-// Проверка сессии при загрузке
-window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('currentUser');
-    if (saved) {
-        try {
-            state.currentUser = JSON.parse(saved);
-            showApp();
-        } catch (e) {
-            localStorage.removeItem('currentUser');
-            showAuthView('loginView');
-        }
-    } else {
+// Восстановление сессии
+const saved = localStorage.getItem('currentUser');
+const savedToken = localStorage.getItem('sessionToken');
+if (saved && savedToken) {
+    try {
+        state.currentUser = JSON.parse(saved);
+        state.sessionToken = savedToken;
+        showApp();
+    } catch (e) {
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('sessionToken');
         showAuthView('loginView');
     }
-});
+} else {
+    showAuthView('loginView');
+}
