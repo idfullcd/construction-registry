@@ -6,6 +6,7 @@ export const ROLES = [
 ];
 
 export const MENU_ITEMS = [
+    { id: 'home', title: 'Главная', icon: '🏠', section: 'home', action: 'view', isHome: true },
     { id: 'contracts', title: 'Договоры', icon: '📋', section: 'contracts', action: 'view' },
     { id: 'documents', title: 'Документация', icon: '📁', section: 'documents', action: 'view' },
     { id: 'finance', title: 'Финансы', icon: '💰', section: 'finance', action: 'view' },
