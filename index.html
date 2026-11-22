@@ -6,7 +6,8 @@
     <title>СтройРеестр - Авторизация</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; }
-        .container { max-width: 900px; margin: 40px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .container { max-width: 500px; margin: 40px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .container.wide { max-width: 900px; }
         .hidden { display: none !important; }
         h2, h3 { color: #2c3e50; text-align: center; }
         input, button, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
@@ -14,21 +15,22 @@
         button:hover { background-color: #0056b3; }
         button.danger { background-color: #dc3545; }
         button.danger:hover { background-color: #c82333; }
-        .link { color: #007bff; cursor: pointer; text-decoration: underline; text-align: center; display: block; margin-top: 10px; }
+        .link { color: #007bff; cursor: pointer; text-decoration: underline; text-align: center; display: block; margin-top: 10px; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
         th { background-color: #f8f9fa; color: #495057; }
-        .message { padding: 10px; margin: 10px 0; border-radius: 4px; text-align: center; }
+        .message { padding: 10px; margin: 10px 0; border-radius: 4px; text-align: center; font-size: 14px; }
         .error { background-color: #f8d7da; color: #721c24; }
         .success { background-color: #d4edda; color: #155724; }
         .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .hint { font-size: 12px; color: #666; margin-top: -5px; margin-bottom: 10px; display: block; }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="authContainer">
         <!-- Форма входа -->
         <div id="loginView">
-            <h2>Вход в систему СтройРеестр</h2>
+            <h2>Вход в СтройРеестр</h2>
             <input type="text" id="loginUsername" placeholder="Имя пользователя">
             <input type="password" id="loginPassword" placeholder="Пароль">
             <button onclick="login()">Войти</button>
@@ -39,9 +41,16 @@
 
         <!-- Форма регистрации -->
         <div id="registerView" class="hidden">
-            <h2>Регистрация нового пользователя</h2>
-            <input type="text" id="regUsername" placeholder="Придумайте имя пользователя">
-            <input type="password" id="regPassword" placeholder="Придумайте пароль">
+            <h2>Регистрация</h2>
+            <input type="text" id="regUsername" placeholder="Имя пользователя">
+            <input type="password" id="regPassword" placeholder="Пароль">
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+            <p style="text-align: center; font-weight: bold; color: #555;">🔒 Безопасность аккаунта</p>
+            <input type="text" id="regSecQuestion" placeholder="Контрольный вопрос (напр., кличка питомца)">
+            <span class="hint">Этот вопрос понадобится для восстановления пароля.</span>
+            <input type="text" id="regSecAnswer" placeholder="Ваш ответ на вопрос">
+            <span class="hint">Ответ не чувствителен к регистру (Бобик = бобик).</span>
+            
             <button onclick="register()">Зарегистрироваться</button>
             <span class="link" onclick="showView('loginView')">Уже есть аккаунт? Войти</span>
             <div id="regMessage" class="message hidden"></div>
@@ -51,53 +60,25 @@
         <div id="recoverView" class="hidden">
             <h2>Восстановление пароля</h2>
             <input type="text" id="recUsername" placeholder="Имя пользователя">
+            <input type="text" id="recSecAnswer" placeholder="Ваш ответ на контрольный вопрос">
             <input type="password" id="recNewPassword" placeholder="Новый пароль">
             <button onclick="recoverPassword()">Сменить пароль</button>
             <span class="link" onclick="showView('loginView')">Назад ко входу</span>
             <div id="recMessage" class="message hidden"></div>
         </div>
 
-        <!-- Основной интерфейс -->
+        <!-- Основной интерфейс (широкий контейнер) -->
         <div id="dashboardView" class="hidden">
-            <div class="header-info">
-                <div>
-                    <h3>Добро пожаловать, <span id="currentUser" style="color: #007bff;"></span>!</h3>
-                    <p>Ваша роль: <strong id="currentRole"></strong></p>
-                </div>
-                <button onclick="logout()" style="width: auto; background-color: #6c757d;">Выйти</button>
-            </div>
-            
-            <!-- Панель администратора (видна только админам) -->
-            <div id="adminPanel" class="hidden">
-                <h3>⚙️ Панель администратора</h3>
-                <button onclick="loadUsers()" style="width: auto; margin-bottom: 10px;">🔄 Обновить список пользователей</button>
-                <table id="usersTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Имя пользователя</th>
-                            <th>Роль</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTableBody"></tbody>
-                </table>
-            </div>
-            
-            <!-- Контент для обычных пользователей -->
-            <div id="userContent" class="hidden">
-                <h3>📁 Рабочая область</h3>
-                <p>Здесь будет отображаться основной функционал сайта СтройРеестр для вашей роли.</p>
-            </div>
+            <!-- Содержимое будет перенесено в широкий контейнер через JS -->
         </div>
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDBLSNVZMheURUanslsSBJ30TDvv4eurDsDcv-Hoi0aabVAPni_IxPbysL8AMB93Hm2g/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3tH9Vf1ewKTyn0yYcBZ4SQ8f-IZlU115Hc_IRTDXuVji6CBvL3gSSxAmL1QjWVXFm/exec';
         let currentUserData = null;
 
         function showView(viewId) {
-            document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+            document.querySelectorAll('#authContainer > div').forEach(div => div.classList.add('hidden'));
             document.getElementById(viewId).classList.remove('hidden');
             clearMessages();
         }
@@ -122,7 +103,6 @@
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     body: payload,
-                    // text/plain предотвращает preflight OPTIONS запрос, который не поддерживается GAS
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                 });
                 return await response.json();
@@ -149,9 +129,14 @@
         async function register() {
             const username = document.getElementById('regUsername').value.trim();
             const password = document.getElementById('regPassword').value;
-            if (!username || !password) return showMessage('regMessage', 'Заполните все поля');
+            const secQuestion = document.getElementById('regSecQuestion').value.trim();
+            const secAnswer = document.getElementById('regSecAnswer').value.trim();
+            
+            if (!username || !password || !secQuestion || !secAnswer) {
+                return showMessage('regMessage', 'Заполните все поля, включая контрольный вопрос и ответ');
+            }
 
-            const result = await sendRequest('register', { username, password });
+            const result = await sendRequest('register', { username, password, securityQuestion: secQuestion, securityAnswer: secAnswer });
             if (result.success) {
                 showMessage('regMessage', result.message + ' (Ваша роль: ' + result.role + ')', false);
                 setTimeout(() => showView('loginView'), 2000);
@@ -162,10 +147,14 @@
 
         async function recoverPassword() {
             const username = document.getElementById('recUsername').value.trim();
+            const secAnswer = document.getElementById('recSecAnswer').value.trim();
             const newPassword = document.getElementById('recNewPassword').value;
-            if (!username || !newPassword) return showMessage('recMessage', 'Заполните все поля');
+            
+            if (!username || !secAnswer || !newPassword) {
+                return showMessage('recMessage', 'Заполните все поля');
+            }
 
-            const result = await sendRequest('recoverPassword', { username, newPassword });
+            const result = await sendRequest('recoverPassword', { username, securityAnswer: secAnswer, newPassword });
             if (result.success) {
                 showMessage('recMessage', result.message, false);
                 setTimeout(() => showView('loginView'), 2000);
@@ -175,23 +164,54 @@
         }
 
         function showDashboard() {
-            document.getElementById('currentUser').textContent = currentUserData.username;
-            document.getElementById('currentRole').textContent = currentUserData.role.charAt(0).toUpperCase() + currentUserData.role.slice(1);
+            // Делаем контейнер широким для админки
+            document.getElementById('authContainer').classList.add('wide');
+            document.querySelectorAll('#authContainer > div').forEach(div => div.classList.add('hidden'));
+            
+            const dashboardHTML = `
+                <div class="header-info">
+                    <div>
+                        <h3>Добро пожаловать, <span style="color: #007bff;">${currentUserData.username}</span>!</h3>
+                        <p>Ваша роль: <strong>${currentUserData.role.charAt(0).toUpperCase() + currentUserData.role.slice(1)}</strong></p>
+                    </div>
+                    <button onclick="logout()" style="width: auto; background-color: #6c757d;">Выйти</button>
+                </div>
+                
+                <div id="adminPanel" class="${currentUserData.role === 'admin' ? '' : 'hidden'}">
+                    <h3>⚙️ Панель администратора</h3>
+                    <button onclick="loadUsers()" style="width: auto; margin-bottom: 10px;">🔄 Обновить список пользователей</button>
+                    <table id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Имя пользователя</th>
+                                <th>Роль</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+                
+                <div id="userContent" class="${currentUserData.role !== 'admin' ? '' : 'hidden'}">
+                    <h3>📁 Рабочая область</h3>
+                    <p>Здесь будет отображаться основной функционал сайта СтройРеестр для вашей роли.</p>
+                </div>
+            `;
+            
+            const dashView = document.getElementById('dashboardView');
+            dashView.innerHTML = dashboardHTML;
+            dashView.classList.remove('hidden');
             
             if (currentUserData.role === 'admin') {
-                document.getElementById('adminPanel').classList.remove('hidden');
-                document.getElementById('userContent').classList.add('hidden');
                 loadUsers();
-            } else {
-                document.getElementById('adminPanel').classList.add('hidden');
-                document.getElementById('userContent').classList.remove('hidden');
             }
-            showView('dashboardView');
         }
 
         function logout() {
             currentUserData = null;
             localStorage.removeItem('currentUser');
+            document.getElementById('authContainer').classList.remove('wide');
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginPassword').value = '';
             showView('loginView');
@@ -228,26 +248,17 @@
 
         async function changeRole(userId, newRole) {
             const result = await sendRequest('updateUserRole', { targetUserId: userId, newRole });
-            if (result.success) {
-                alert('Роль успешно обновлена');
-            } else {
-                alert('Ошибка: ' + result.error);
-                loadUsers();
-            }
+            if (result.success) alert('Роль успешно обновлена');
+            else { alert('Ошибка: ' + result.error); loadUsers(); }
         }
 
         async function deleteUser(userId) {
-            if (!confirm('Вы уверены, что хотите удалить этого пользователя? Это действие необратимо.')) return;
+            if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) return;
             const result = await sendRequest('deleteUser', { targetUserId: userId });
-            if (result.success) {
-                alert('Пользователь удален');
-                loadUsers();
-            } else {
-                alert('Ошибка: ' + result.error);
-            }
+            if (result.success) { alert('Пользователь удален'); loadUsers(); }
+            else { alert('Ошибка: ' + result.error); }
         }
 
-        // Проверка сессии при загрузке страницы
         window.onload = () => {
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
