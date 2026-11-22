@@ -1,4 +1,4 @@
-export const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5F8xSiQQgS1pm_6sqRFljHaMLmYy_4jo_KMkE5XaoS2X-fgus6nPNYat33s1oyQcl/exec';
+export const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0YIVPkILzoJllePyAFqjBBVCDacJ7fA0cA78tRdG5msFz09WsDYeLxXvmIQumWANy/exec';
 
 export const ROLES = [
     'Администратор', 'ПТО', 'Бухгалтерия', 'Прораб', 'Архитектор',
