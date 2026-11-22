@@ -8,7 +8,7 @@
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; background: #f0f2f5; color: #333; }
         .container { max-width: 450px; margin: 40px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .container.wide { max-width: 1200px; }
+        .container.wide { max-width: 1400px; }
         .hidden { display: none !important; }
         h2, h3 { color: #2c3e50; text-align: center; margin-top: 0; }
         input, button, select, textarea { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; font-family: inherit; }
@@ -23,7 +23,9 @@
         .link { color: #007bff; cursor: pointer; text-decoration: underline; text-align: center; display: block; margin-top: 10px; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: middle; }
-        th { background: #f8f9fa; color: #495057; position: sticky; top: 0; }
+        th { background: #f8f9fa; color: #495057; position: sticky; top: 0; cursor: pointer; user-select: none; }
+        th:hover { background: #e9ecef; }
+        th .sort-indicator { font-size: 10px; margin-left: 4px; color: #007bff; }
         .message { padding: 10px; margin: 10px 0; border-radius: 4px; text-align: center; font-size: 14px; }
         .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .success-msg { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
@@ -31,23 +33,20 @@
         .hint { font-size: 12px; color: #666; margin-top: -5px; margin-bottom: 8px; display: block; }
         .divider { margin: 15px 0; border: 0; border-top: 1px solid #eee; }
         
-        /* Вкладки админки */
         .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #dee2e6; }
         .tab { padding: 10px 16px; cursor: pointer; background: #e9ecef; border: none; border-radius: 4px 4px 0 0; font-size: 13px; color: #495057; font-weight: normal; }
         .tab.active { background: #007bff; color: white; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        /* Матрица прав */
-        .matrix-table th, .matrix-table td { text-align: center; padding: 6px; }
+        .matrix-table th, .matrix-table td { text-align: center; padding: 6px; cursor: default; }
         .matrix-table th:first-child, .matrix-table td:first-child { text-align: left; font-weight: bold; }
         .matrix-table input[type="checkbox"] { width: auto; margin: 0; cursor: pointer; }
         
-        /* Фильтры */
-        .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-radius: 4px; }
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-radius: 4px; align-items: center; }
         .filters input, .filters select { width: auto; flex: 1; min-width: 120px; margin: 0; padding: 6px; font-size: 13px; }
+        .filters button { width: auto; padding: 6px 12px; margin: 0; }
         
-        /* Бейджи ролей */
         .badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; color: white; }
         .badge-admin { background: #dc3545; }
         .badge-pto { background: #007bff; }
@@ -61,20 +60,42 @@
         .badge-kadry { background: #6c757d; }
         .badge-snab { background: #343a40; }
         
-        .scroll-table { max-height: 500px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; }
+        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .status-active { background: #d4edda; color: #155724; }
+        .status-paused { background: #fff3cd; color: #856404; }
+        .status-done { background: #d1ecf1; color: #0c5460; }
+        .status-archive { background: #e2e3e5; color: #383d41; }
+        
+        .scroll-table { max-height: 600px; overflow: auto; border: 1px solid #ddd; border-radius: 4px; }
         .user-actions { display: flex; gap: 4px; flex-wrap: wrap; }
         .user-actions button { width: auto; padding: 4px 8px; font-size: 12px; margin: 0; }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal.active { display: flex; }
-        .modal-content { background: white; padding: 25px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; width: auto; padding: 0; margin: 0; }
+        
+        .form-row { display: flex; gap: 10px; }
+        .form-row > * { flex: 1; }
+        
+        .icon-picker { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .icon-option { font-size: 28px; padding: 8px 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; background: white; transition: all 0.2s; width: auto; margin: 0; }
+        .icon-option:hover { border-color: #007bff; }
+        .icon-option.selected { border-color: #007bff; background: #e7f1ff; }
+        
+        .contract-card { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: box-shadow 0.2s; }
+        .contract-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .contract-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .contract-title { font-weight: bold; font-size: 15px; }
+        .contract-meta { display: flex; gap: 15px; flex-wrap: wrap; font-size: 12px; color: #666; }
+        
+        .drive-link { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: #fff3cd; color: #856404; border-radius: 4px; font-size: 12px; text-decoration: none; }
+        .drive-link:hover { background: #ffeeba; }
     </style>
 </head>
 <body>
     <div class="container" id="mainContainer">
-        <!-- ВХОД -->
         <div id="loginView">
             <h2>🏗️ СтройРеестр</h2>
             <input type="text" id="loginUsername" placeholder="Имя пользователя">
@@ -85,7 +106,6 @@
             <div id="loginMessage" class="message hidden"></div>
         </div>
 
-        <!-- РЕГИСТРАЦИЯ -->
         <div id="registerView" class="hidden">
             <h2>Регистрация</h2>
             <input type="text" id="regUsername" placeholder="Имя пользователя">
@@ -99,7 +119,6 @@
             <div id="regMessage" class="message hidden"></div>
         </div>
 
-        <!-- ВОССТАНОВЛЕНИЕ -->
         <div id="recoverView" class="hidden">
             <h2>Восстановление пароля</h2>
             <input type="text" id="recUsername" placeholder="Имя пользователя">
@@ -110,21 +129,77 @@
             <div id="recMessage" class="message hidden"></div>
         </div>
 
-        <!-- ДАШБОРД -->
         <div id="dashboardView" class="hidden"></div>
     </div>
 
-    <!-- Модальное окно для индивидуальных прав -->
+    <!-- Модалка индивидуальных прав пользователя -->
     <div id="permissionsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 style="margin:0;">Индивидуальные права: <span id="permModalUsername"></span></h3>
                 <button class="close-btn" onclick="closeModal('permissionsModal')">&times;</button>
             </div>
-            <p class="hint">Отметьте дополнительные права сверх роли. Пустые значения = использовать права роли.</p>
+            <p class="hint">Отметьте дополнительные права сверх роли.</p>
             <div id="permModalBody"></div>
             <button onclick="saveCustomPermissions()" class="success">💾 Сохранить</button>
-            <button onclick="resetCustomPermissions()" class="secondary">🔄 Сбросить (использовать роль)</button>
+            <button onclick="resetCustomPermissions()" class="secondary">🔄 Сбросить</button>
+        </div>
+    </div>
+
+    <!-- Модалка создания/редактирования договора -->
+    <div id="contractModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="margin:0;" id="contractModalTitle">Новый договор</h3>
+                <button class="close-btn" onclick="closeModal('contractModal')">&times;</button>
+            </div>
+            <input type="hidden" id="contractEditId">
+            
+            <label><strong>Название договора *</strong></label>
+            <input type="text" id="contractTitle" placeholder="Напр., Договор подряда на выполнение работ">
+            
+            <div class="form-row">
+                <div>
+                    <label><strong>Контрагент *</strong></label>
+                    <input type="text" id="contractContractor" placeholder="ООО «Пример»">
+                </div>
+                <div>
+                    <label><strong>Сумма, ₽</strong></label>
+                    <input type="number" id="contractSum" placeholder="0" step="0.01">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div>
+                    <label><strong>Дата заключения</strong></label>
+                    <input type="date" id="contractDate">
+                </div>
+                <div>
+                    <label><strong>Дата окончания</strong></label>
+                    <input type="date" id="contractEndDate">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div>
+                    <label><strong>Тип объекта</strong></label>
+                    <select id="contractObject"></select>
+                </div>
+                <div>
+                    <label><strong>Статус</strong></label>
+                    <select id="contractStatus"></select>
+                </div>
+            </div>
+            
+            <label><strong>Иконка договора</strong></label>
+            <div class="icon-picker" id="contractIconPicker"></div>
+            
+            <label><strong>Описание</strong></label>
+            <textarea id="contractDescription" rows="3" placeholder="Краткое описание договора..."></textarea>
+            
+            <div id="contractDriveInfo" class="hidden" style="margin-top:10px;"></div>
+            
+            <button onclick="saveContract()" class="success" style="margin-top:15px;">💾 Сохранить</button>
         </div>
     </div>
 
@@ -133,6 +208,10 @@
         let currentUser = null;
         let matrixData = null;
         let currentEditUserId = null;
+        let contractMeta = null;
+        let selectedIcon = '🏢';
+        let currentSort = { field: 'createdAt', dir: 'desc' };
+        let currentContractFilter = {};
 
         const ROLE_BADGES = {
             'Администратор': 'badge-admin', 'ПТО': 'badge-pto', 'Бухгалтерия': 'badge-buh',
@@ -141,8 +220,26 @@
             'Отдел_кадров': 'badge-kadry', 'Снабжение': 'badge-snab'
         };
 
+        const STATUS_CLASSES = {
+            'Действует': 'status-active', 'Приостановлен': 'status-paused',
+            'Завершён': 'status-done', 'Архив': 'status-archive'
+        };
+
         function roleBadge(role) {
             return `<span class="badge ${ROLE_BADGES[role] || 'badge-kadry'}">${role}</span>`;
+        }
+
+        function statusBadge(status) {
+            return `<span class="status-badge ${STATUS_CLASSES[status] || ''}">${status}</span>`;
+        }
+
+        function hasPerm(section, action) {
+            if (!currentUser) return false;
+            const cp = currentUser.customPermissions;
+            if (cp && cp[section] && cp[section].includes(action)) return true;
+            // Проверка по матрице (упрощённо - для админа всегда true)
+            if (currentUser.role === 'Администратор') return true;
+            return false; // для остальных ролей нужна загрузка матрицы
         }
 
         function showView(viewId) {
@@ -177,7 +274,7 @@
                 try { return JSON.parse(text); }
                 catch(e) { return { success: false, error: 'Некорректный ответ сервера' }; }
             } catch (error) {
-                return { success: false, error: 'Ошибка сети. Проверьте подключение и настройки Apps Script.' };
+                return { success: false, error: 'Ошибка сети. Проверьте подключение.' };
             }
         }
 
@@ -185,11 +282,11 @@
         // АУТЕНТИФИКАЦИЯ
         // ============================================================
         async function login() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            if (!username || !password) return showMessage('loginMessage', 'Заполните все поля');
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value;
+            if (!u || !p) return showMessage('loginMessage', 'Заполните все поля');
             setBtn('loginBtn', true, 'Войти');
-            const result = await sendRequest('login', { username, password });
+            const result = await sendRequest('login', { username: u, password: p });
             setBtn('loginBtn', false, 'Войти');
             if (result.success) {
                 currentUser = result.user;
@@ -243,12 +340,43 @@
         // ============================================================
         // ДАШБОРД
         // ============================================================
-        function showDashboard() {
+        async function showDashboard() {
             document.getElementById('mainContainer').classList.add('wide');
             document.querySelectorAll('#mainContainer > div').forEach(d => d.classList.add('hidden'));
             
-            const isAdmin = currentUser.role === 'Администратор';
             const dash = document.getElementById('dashboardView');
+            
+            // Загружаем метаданные договоров
+            const metaResult = await sendRequest('getContractMeta', {});
+            if (metaResult.success) contractMeta = metaResult;
+            
+            // Загружаем матрицу для проверки прав
+            const matrixResult = await sendRequest('getMatrix', {});
+            if (matrixResult.success) matrixData = matrixResult;
+            
+            const canViewContracts = checkAccess('contracts', 'view');
+            const canCreateContracts = checkAccess('contracts', 'create');
+            const isAdmin = currentUser.role === 'Администратор';
+            
+            let tabsHTML = '';
+            if (isAdmin) {
+                tabsHTML = `
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('contractsTab', this)">📋 Договоры</button>
+                        <button class="tab" onclick="switchTab('usersTab', this)">👥 Пользователи</button>
+                        <button class="tab" onclick="switchTab('matrixTab', this)">🔐 Матрица прав</button>
+                        <button class="tab" onclick="switchTab('logsTab', this)">📋 Журнал</button>
+                        <button class="tab" onclick="switchTab('historyTab', this)">📜 История</button>
+                        <button class="tab" onclick="switchTab('trashTab', this)">🗑️ Корзина</button>
+                    </div>
+                `;
+            } else if (canViewContracts) {
+                tabsHTML = `
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('contractsTab', this)">📋 Договоры</button>
+                    </div>
+                `;
+            }
             
             dash.innerHTML = `
                 <div class="header-info">
@@ -259,46 +387,426 @@
                     <button onclick="logout()" class="secondary" style="width:auto;">Выйти</button>
                 </div>
                 
+                ${tabsHTML}
+                
+                ${canViewContracts ? '<div id="contractsTab" class="tab-content active"></div>' : ''}
                 ${isAdmin ? `
-                    <div class="tabs">
-                        <button class="tab active" onclick="switchTab('usersTab', this)">👥 Пользователи</button>
-                        <button class="tab" onclick="switchTab('matrixTab', this)">🔐 Матрица прав</button>
-                        <button class="tab" onclick="switchTab('logsTab', this)">📋 Журнал действий</button>
-                        <button class="tab" onclick="switchTab('historyTab', this)">📜 История изменений</button>
-                        <button class="tab" onclick="switchTab('trashTab', this)">🗑️ Корзина</button>
-                    </div>
-                    
-                    <div id="usersTab" class="tab-content active"></div>
+                    <div id="usersTab" class="tab-content"></div>
                     <div id="matrixTab" class="tab-content"></div>
                     <div id="logsTab" class="tab-content"></div>
                     <div id="historyTab" class="tab-content"></div>
                     <div id="trashTab" class="tab-content"></div>
-                ` : `
+                ` : ''}
+                
+                ${!canViewContracts && !isAdmin ? `
                     <div style="text-align:center; padding:40px;">
                         <h3>📁 Рабочая область</h3>
                         <p>Добро пожаловать в систему СтройРеестр!</p>
                         <p>Ваша роль: ${roleBadge(currentUser.role)}</p>
-                        <p style="color:#666; font-size:14px;">Здесь будет основной функционал для вашей роли.</p>
                     </div>
-                `}
+                ` : ''}
             `;
             dash.classList.remove('hidden');
             
-            if (isAdmin) {
-                loadUsersTab();
-            }
+            if (canViewContracts) loadContractsTab();
+        }
+
+        function checkAccess(section, action) {
+            if (!currentUser || !matrixData) return false;
+            const cp = currentUser.customPermissions;
+            if (cp && cp[section] && cp[section].includes(action)) return true;
+            const rolePerms = matrixData.matrix[currentUser.role] || {};
+            return rolePerms[section] && rolePerms[section].includes(action);
         }
 
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
+            const tabEl = document.getElementById(tabId);
+            if (tabEl) tabEl.classList.add('active');
             
+            if (tabId === 'usersTab') loadUsersTab();
             if (tabId === 'matrixTab') loadMatrixTab();
             if (tabId === 'logsTab') loadLogsTab();
             if (tabId === 'historyTab') loadHistoryTab();
             if (tabId === 'trashTab') loadTrashTab();
+            if (tabId === 'contractsTab') loadContractsTab();
+        }
+
+        // ============================================================
+        // ВКЛАДКА: ДОГОВОРЫ
+        // ============================================================
+        async function loadContractsTab() {
+            const container = document.getElementById('contractsTab');
+            if (!container) return;
+            container.innerHTML = '<p>Загрузка...</p>';
+            
+            const canCreate = checkAccess('contracts', 'create');
+            const canEdit = checkAccess('contracts', 'edit');
+            const canDelete = checkAccess('contracts', 'delete');
+            const canRestore = checkAccess('contracts', 'restore');
+            
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3 style="margin:0;">📋 Договоры</h3>
+                    <div>
+                        ${canCreate ? '<button onclick="openContractModal()" style="width:auto; padding:8px 16px;">➕ Новый договор</button>' : ''}
+                        ${canRestore ? '<button onclick="loadContractTrashTab()" class="secondary" style="width:auto; padding:8px 16px; margin-left:5px;">🗑️ Корзина</button>' : ''}
+                    </div>
+                </div>
+                
+                <div class="filters">
+                    <input type="text" id="contractSearch" placeholder="🔍 Поиск (номер, название, контрагент)" onkeyup="if(event.key==='Enter') applyContractFilters()">
+                    <select id="contractFilterStatus" onchange="applyContractFilters()">
+                        <option value="">Все статусы</option>
+                        ${contractMeta.statuses.map(s => `<option value="${s}">${s}</option>`).join('')}
+                    </select>
+                    <select id="contractFilterObject" onchange="applyContractFilters()">
+                        <option value="">Все объекты</option>
+                        ${contractMeta.objects.map(o => `<option value="${o}">${o}</option>`).join('')}
+                    </select>
+                    <select id="contractFilterIcon" onchange="applyContractFilters()">
+                        <option value="">Все иконки</option>
+                        ${contractMeta.icons.map(i => `<option value="${i}">${i}</option>`).join('')}
+                    </select>
+                    <button onclick="applyContractFilters()">Применить</button>
+                    <button onclick="resetContractFilters()" class="secondary">Сбросить</button>
+                </div>
+                
+                <div id="contractsBody"></div>
+            `;
+            container.innerHTML = html;
+            await fetchContracts();
+        }
+
+        async function fetchContracts() {
+            const body = document.getElementById('contractsBody');
+            body.innerHTML = '<p>Загрузка...</p>';
+            
+            const result = await sendRequest('getContracts', {
+                filter: currentContractFilter,
+                sort: currentSort,
+                actorRole: currentUser.role,
+                actorPermissions: currentUser.customPermissions
+            });
+            
+            if (!result.success) {
+                body.innerHTML = `<p style="color:red;">${result.error}</p>`;
+                return;
+            }
+            
+            if (result.contracts.length === 0) {
+                body.innerHTML = '<p style="text-align:center; color:#999; padding:30px;">Договоров не найдено</p>';
+                return;
+            }
+            
+            const canEdit = checkAccess('contracts', 'edit');
+            const canDelete = checkAccess('contracts', 'delete');
+            
+            let html = `<div class="scroll-table"><table>
+                <thead>
+                    <tr>
+                        <th onclick="sortContracts('number')">ID ${sortIndicator('number')}</th>
+                        <th onclick="sortContracts('icon')">🎯 ${sortIndicator('icon')}</th>
+                        <th onclick="sortContracts('title')">Название ${sortIndicator('title')}</th>
+                        <th onclick="sortContracts('contractor')">Контрагент ${sortIndicator('contractor')}</th>
+                        <th onclick="sortContracts('sum')">Сумма ${sortIndicator('sum')}</th>
+                        <th onclick="sortContracts('objectType')">Объект ${sortIndicator('objectType')}</th>
+                        <th onclick="sortContracts('status')">Статус ${sortIndicator('status')}</th>
+                        <th onclick="sortContracts('contractDate')">Дата ${sortIndicator('contractDate')}</th>
+                        <th>Папка</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            result.contracts.forEach(c => {
+                const sumFormatted = c.sum ? Number(c.sum).toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ₽' : '—';
+                html += `
+                    <tr>
+                        <td><strong>${c.id}</strong></td>
+                        <td style="font-size:20px; text-align:center;">${c.icon}</td>
+                        <td><strong>${c.title}</strong></td>
+                        <td>${c.contractor}</td>
+                        <td style="text-align:right; white-space:nowrap;">${sumFormatted}</td>
+                        <td>${c.objectType}</td>
+                        <td>${statusBadge(c.status)}</td>
+                        <td style="font-size:11px; white-space:nowrap;">${c.contractDate ? new Date(c.contractDate).toLocaleDateString('ru-RU') : '—'}</td>
+                        <td>
+                            ${c.driveFolderUrl ? `<a href="${c.driveFolderUrl}" target="_blank" class="drive-link">📁 Открыть</a>` : '—'}
+                        </td>
+                        <td>
+                            <div class="user-actions">
+                                <button onclick="openContractModal('${c.id}')" title="Редактировать">✏️</button>
+                                ${canDelete ? `<button class="danger" onclick="deleteContractConfirm('${c.id}', '${c.title.replace(/'/g, "\\'")}')" title="В корзину">🗑️</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            html += `<p style="font-size:12px; color:#666; margin-top:8px;">Всего договоров: ${result.contracts.length}</p>`;
+            body.innerHTML = html;
+        }
+
+        function sortIndicator(field) {
+            if (currentSort.field !== field) return '';
+            return `<span class="sort-indicator">${currentSort.dir === 'asc' ? '▲' : '▼'}</span>`;
+        }
+
+        function sortContracts(field) {
+            if (currentSort.field === field) {
+                currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.field = field;
+                currentSort.dir = 'asc';
+            }
+            fetchContracts();
+        }
+
+        function applyContractFilters() {
+            currentContractFilter = {
+                search: document.getElementById('contractSearch').value.trim(),
+                status: document.getElementById('contractFilterStatus').value,
+                objectType: document.getElementById('contractFilterObject').value,
+                icon: document.getElementById('contractFilterIcon').value
+            };
+            fetchContracts();
+        }
+
+        function resetContractFilters() {
+            currentContractFilter = {};
+            document.getElementById('contractSearch').value = '';
+            document.getElementById('contractFilterStatus').value = '';
+            document.getElementById('contractFilterObject').value = '';
+            document.getElementById('contractFilterIcon').value = '';
+            fetchContracts();
+        }
+
+        // ============================================================
+        // МОДАЛКА ДОГОВОРА
+        // ============================================================
+        async function openContractModal(contractId = null) {
+            document.getElementById('contractEditId').value = contractId || '';
+            document.getElementById('contractModalTitle').textContent = contractId ? 'Редактирование договора' : 'Новый договор';
+            
+            // Заполняем селекты
+            const objSel = document.getElementById('contractObject');
+            objSel.innerHTML = contractMeta.objects.map(o => `<option value="${o}">${o}</option>`).join('');
+            
+            const statSel = document.getElementById('contractStatus');
+            statSel.innerHTML = contractMeta.statuses.map(s => `<option value="${s}">${s}</option>`).join('');
+            
+            // Иконки
+            const picker = document.getElementById('contractIconPicker');
+            picker.innerHTML = contractMeta.icons.map(icon => 
+                `<button type="button" class="icon-option ${icon === selectedIcon ? 'selected' : ''}" onclick="selectIcon('${icon}', this)">${icon}</button>`
+            ).join('');
+            
+            // Сброс полей
+            document.getElementById('contractTitle').value = '';
+            document.getElementById('contractContractor').value = '';
+            document.getElementById('contractSum').value = '';
+            document.getElementById('contractDate').value = '';
+            document.getElementById('contractEndDate').value = '';
+            document.getElementById('contractDescription').value = '';
+            document.getElementById('contractDriveInfo').classList.add('hidden');
+            
+            if (contractId) {
+                // Загружаем данные договора
+                const result = await sendRequest('getContracts', {
+                    filter: {},
+                    sort: { field: 'createdAt', dir: 'desc' },
+                    actorRole: currentUser.role,
+                    actorPermissions: currentUser.customPermissions
+                });
+                if (result.success) {
+                    const c = result.contracts.find(x => x.id === contractId);
+                    if (c) {
+                        document.getElementById('contractTitle').value = c.title;
+                        document.getElementById('contractContractor').value = c.contractor;
+                        document.getElementById('contractSum').value = c.sum || '';
+                        document.getElementById('contractDate').value = c.contractDate ? c.contractDate.split('T')[0] : '';
+                        document.getElementById('contractEndDate').value = c.endDate ? c.endDate.split('T')[0] : '';
+                        document.getElementById('contractObject').value = c.objectType;
+                        document.getElementById('contractStatus').value = c.status;
+                        document.getElementById('contractDescription').value = c.description || '';
+                        selectIcon(c.icon);
+                        
+                        if (c.driveFolderUrl) {
+                            const info = document.getElementById('contractDriveInfo');
+                            info.innerHTML = `
+                                <strong>📁 Папка на Google Drive:</strong><br>
+                                <a href="${c.driveFolderUrl}" target="_blank" class="drive-link" style="margin-top:5px;">🔗 Открыть папку договора</a>
+                                <p class="hint" style="margin-top:8px;">Структура: 01_Договорные / 02_Исполнительная / 03_Материалы / 04_Финансы / 05_Переписка</p>
+                            `;
+                            info.classList.remove('hidden');
+                        }
+                    }
+                }
+            } else {
+                selectIcon('🏢');
+            }
+            
+            document.getElementById('contractModal').classList.add('active');
+        }
+
+        function selectIcon(icon, btnEl = null) {
+            selectedIcon = icon;
+            document.querySelectorAll('.icon-option').forEach(b => b.classList.remove('selected'));
+            if (btnEl) btnEl.classList.add('selected');
+            else {
+                document.querySelectorAll('.icon-option').forEach(b => {
+                    if (b.textContent.trim() === icon) b.classList.add('selected');
+                });
+            }
+        }
+
+        async function saveContract() {
+            const contractId = document.getElementById('contractEditId').value;
+            const data = {
+                title: document.getElementById('contractTitle').value.trim(),
+                contractor: document.getElementById('contractContractor').value.trim(),
+                sum: parseFloat(document.getElementById('contractSum').value) || 0,
+                contractDate: document.getElementById('contractDate').value,
+                endDate: document.getElementById('contractEndDate').value,
+                objectType: document.getElementById('contractObject').value,
+                status: document.getElementById('contractStatus').value,
+                description: document.getElementById('contractDescription').value.trim(),
+                icon: selectedIcon,
+                actorId: currentUser.id,
+                actorUsername: currentUser.username,
+                actorRole: currentUser.role,
+                actorPermissions: currentUser.customPermissions
+            };
+            
+            if (!data.title || !data.contractor) {
+                alert('Название и контрагент обязательны');
+                return;
+            }
+            
+            let result;
+            if (contractId) {
+                result = await sendRequest('updateContract', { contractId, updates: data });
+            } else {
+                result = await sendRequest('createContract', data);
+            }
+            
+            if (result.success) {
+                alert(result.message);
+                closeModal('contractModal');
+                fetchContracts();
+            } else {
+                alert('Ошибка: ' + result.error);
+            }
+        }
+
+        async function deleteContractConfirm(id, title) {
+            if (!confirm(`Переместить договор "${title}" в корзину?`)) return;
+            const result = await sendRequest('deleteContract', {
+                contractId: id,
+                actorId: currentUser.id,
+                actorUsername: currentUser.username,
+                actorRole: currentUser.role,
+                actorPermissions: currentUser.customPermissions
+            });
+            if (result.success) { alert(result.message); fetchContracts(); }
+            else alert('Ошибка: ' + result.error);
+        }
+
+        // ============================================================
+        // КОРЗИНА ДОГОВОРОВ
+        // ============================================================
+        async function loadContractTrashTab() {
+            const container = document.getElementById('contractsTab');
+            container.innerHTML = '<p>Загрузка...</p>';
+            
+            const result = await sendRequest('getContractTrash', {
+                actorRole: currentUser.role,
+                actorPermissions: currentUser.customPermissions
+            });
+            
+            if (!result.success) {
+                container.innerHTML = `<p style="color:red;">${result.error}</p>`;
+                return;
+            }
+            
+            const canRestore = checkAccess('contracts', 'restore');
+            const isAdmin = currentUser.role === 'Администратор';
+            
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3 style="margin:0;">🗑️ Корзина договоров (${result.trashed.length})</h3>
+                    <div>
+                        <button onclick="loadContractsTab()" class="secondary" style="width:auto; padding:8px 16px;">← Назад к договорам</button>
+                        ${isAdmin && result.trashed.length > 0 ? `<button onclick="emptyContractTrashConfirm()" class="danger" style="width:auto; padding:8px 16px; margin-left:5px;">🔥 Очистить корзину</button>` : ''}
+                    </div>
+                </div>
+            `;
+            
+            if (result.trashed.length === 0) {
+                html += '<p style="text-align:center; color:#999; padding:30px;">Корзина пуста</p>';
+            } else {
+                html += `<table>
+                    <thead><tr><th>ID</th><th>Иконка</th><th>Название</th><th>Контрагент</th><th>Удалён</th><th>Действия</th></tr></thead><tbody>`;
+                result.trashed.forEach(c => {
+                    html += `<tr>
+                        <td><strong>${c.id}</strong></td>
+                        <td style="font-size:20px;">${c.icon}</td>
+                        <td>${c.title}</td>
+                        <td>${c.contractor}</td>
+                        <td style="font-size:11px;">${c.deletedAt ? new Date(c.deletedAt).toLocaleString('ru-RU') : '—'}</td>
+                        <td>
+                            <div class="user-actions">
+                                ${canRestore ? `<button class="success" onclick="restoreContractConfirm('${c.id}', '${c.title.replace(/'/g, "\\'")}')" style="width:auto; padding:4px 8px; font-size:12px;">♻️ Восстановить</button>` : ''}
+                                ${isAdmin ? `<button class="danger" onclick="hardDeleteContractConfirm('${c.id}', '${c.title.replace(/'/g, "\\'")}')" style="width:auto; padding:4px 8px; font-size:12px;">🔥 Навсегда</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            container.innerHTML = html;
+        }
+
+        async function restoreContractConfirm(id, title) {
+            if (!confirm(`Восстановить договор "${title}"?`)) return;
+            const result = await sendRequest('restoreContract', {
+                contractId: id,
+                actorId: currentUser.id,
+                actorUsername: currentUser.username,
+                actorRole: currentUser.role,
+                actorPermissions: currentUser.customPermissions
+            });
+            if (result.success) { alert(result.message); loadContractTrashTab(); }
+            else alert('Ошибка: ' + result.error);
+        }
+
+        async function hardDeleteContractConfirm(id, title) {
+            if (!confirm(`⚠️ УДАЛИТЬ договор "${title}" НАВСЕГДА? Папка на Google Drive тоже будет удалена!`)) return;
+            if (!confirm('Это действие НЕОБРАТИМО. Продолжить?')) return;
+            const result = await sendRequest('hardDeleteContract', {
+                contractId: id,
+                actorId: currentUser.id,
+                actorUsername: currentUser.username,
+                actorRole: currentUser.role
+            });
+            if (result.success) { alert(result.message); loadContractTrashTab(); }
+            else alert('Ошибка: ' + result.error);
+        }
+
+        async function emptyContractTrashConfirm() {
+            if (!confirm('⚠️ Очистить корзину договоров? ВСЕ договоры и их папки на Drive будут удалены НАВСЕГДА!')) return;
+            if (!confirm('Это действие НЕОБРАТИМО. Продолжить?')) return;
+            const result = await sendRequest('emptyContractTrash', {
+                actorId: currentUser.id,
+                actorUsername: currentUser.username,
+                actorRole: currentUser.role
+            });
+            if (result.success) { alert(result.message); loadContractTrashTab(); }
+            else alert('Ошибка: ' + result.error);
         }
 
         // ============================================================
@@ -306,6 +814,7 @@
         // ============================================================
         async function loadUsersTab() {
             const container = document.getElementById('usersTab');
+            if (!container) return;
             container.innerHTML = '<p>Загрузка...</p>';
             const result = await sendRequest('getUsers', {});
             if (!result.success) { container.innerHTML = `<p style="color:red;">${result.error}</p>`; return; }
@@ -314,15 +823,7 @@
                 <h3>👥 Управление пользователями (${result.users.length})</h3>
                 <div class="scroll-table">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Пользователь</th>
-                            <th>Роль</th>
-                            <th>Создан</th>
-                            <th>Последний вход</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Пользователь</th><th>Роль</th><th>Создан</th><th>Последний вход</th><th>Действия</th></tr></thead>
                     <tbody>
             `;
             
@@ -361,12 +862,8 @@
                 targetUserId: userId, newRole,
                 actorId: currentUser.id, actorUsername: currentUser.username, actorRole: currentUser.role
             });
-            if (result.success) {
-                alert('Роль изменена');
-                loadUsersTab();
-            } else {
-                alert('Ошибка: ' + result.error);
-            }
+            if (result.success) { alert('Роль изменена'); loadUsersTab(); }
+            else alert('Ошибка: ' + result.error);
         }
 
         async function softDeleteUser(userId, username) {
@@ -380,13 +877,12 @@
         }
 
         // ============================================================
-        // МОДАЛКА: ИНДИВИДУАЛЬНЫЕ ПРАВА
+        // МОДАЛКА ПРАВ
         // ============================================================
         async function openPermissionsModal(userId, username) {
             currentEditUserId = userId;
             document.getElementById('permModalUsername').textContent = username;
             
-            // Получаем текущие права и матрицу
             const [permResult, matrixResult] = await Promise.all([
                 sendRequest('getUserPermissions', { targetUserId: userId }),
                 sendRequest('getMatrix', {})
@@ -449,6 +945,8 @@
             });
             
             if (result.success) {
+                currentUser.customPermissions = permissions;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 alert('Права сохранены');
                 closeModal('permissionsModal');
                 loadUsersTab();
@@ -458,24 +956,21 @@
         }
 
         async function resetCustomPermissions() {
-            if (!confirm('Сбросить индивидуальные права? Будут использоваться права роли.')) return;
+            if (!confirm('Сбросить индивидуальные права?')) return;
             const result = await sendRequest('updateUserPermissions', {
                 targetUserId: currentEditUserId,
                 permissions: {},
                 actorId: currentUser.id, actorUsername: currentUser.username, actorRole: currentUser.role
             });
-            if (result.success) {
-                alert('Права сброшены');
-                closeModal('permissionsModal');
-                loadUsersTab();
-            }
+            if (result.success) { alert('Права сброшены'); closeModal('permissionsModal'); loadUsersTab(); }
         }
 
         // ============================================================
-        // ВКЛАДКА: МАТРИЦА ПРАВ
+        // МАТРИЦА ПРАВ
         // ============================================================
         async function loadMatrixTab() {
             const container = document.getElementById('matrixTab');
+            if (!container) return;
             container.innerHTML = '<p>Загрузка...</p>';
             const result = await sendRequest('getMatrix', {});
             if (!result.success) { container.innerHTML = `<p style="color:red;">${result.error}</p>`; return; }
@@ -483,12 +978,9 @@
             matrixData = result;
             let html = `
                 <h3>🔐 Матрица прав по ролям</h3>
-                <p class="hint">Отметьте права для каждой роли. Изменения сохраняются кнопкой внизу.</p>
                 <div class="scroll-table">
                 <table class="matrix-table">
-                    <thead>
-                        <tr>
-                            <th>Роль</th>
+                    <thead><tr><th>Роль</th>
             `;
             
             Object.keys(result.sections).forEach(sk => {
@@ -545,10 +1037,11 @@
         }
 
         // ============================================================
-        // ВКЛАДКА: ЖУРНАЛ ДЕЙСТВИЙ
+        // ЖУРНАЛ
         // ============================================================
         async function loadLogsTab() {
             const container = document.getElementById('logsTab');
+            if (!container) return;
             container.innerHTML = `
                 <h3>📋 Журнал действий</h3>
                 <div class="filters">
@@ -557,16 +1050,17 @@
                         <option value="">Все действия</option>
                         <option value="login">Вход</option>
                         <option value="register">Регистрация</option>
+                        <option value="create_contract">Создание договора</option>
+                        <option value="update_contract">Изменение договора</option>
+                        <option value="soft_delete_contract">Договор в корзину</option>
+                        <option value="restore_contract">Восстановление договора</option>
+                        <option value="hard_delete_contract">Окончательное удаление договора</option>
                         <option value="change_role">Смена роли</option>
                         <option value="change_permissions">Смена прав</option>
-                        <option value="soft_delete">В корзину</option>
-                        <option value="restore">Восстановление</option>
-                        <option value="hard_delete">Окончательное удаление</option>
-                        <option value="update_matrix">Изменение матрицы</option>
                     </select>
                     <input type="date" id="logFilterFrom">
                     <input type="date" id="logFilterTo">
-                    <button onclick="applyLogsFilter()" style="width:auto; padding:6px 12px;">Применить</button>
+                    <button onclick="applyLogsFilter()">Применить</button>
                 </div>
                 <div id="logsBody"><p>Загрузка...</p></div>
             `;
@@ -610,22 +1104,24 @@
         }
 
         // ============================================================
-        // ВКЛАДКА: ИСТОРИЯ ИЗМЕНЕНИЙ
+        // ИСТОРИЯ
         // ============================================================
         async function loadHistoryTab() {
             const container = document.getElementById('historyTab');
+            if (!container) return;
             container.innerHTML = `
-                <h3>📜 История изменений полей</h3>
+                <h3>📜 История изменений</h3>
                 <div class="filters">
                     <input type="text" id="histFilterUser" placeholder="🔍 Пользователь">
                     <select id="histFilterType">
                         <option value="">Все типы</option>
                         <option value="user">Пользователи</option>
+                        <option value="contract">Договоры</option>
                         <option value="matrix">Матрица прав</option>
                     </select>
                     <input type="date" id="histFilterFrom">
                     <input type="date" id="histFilterTo">
-                    <button onclick="applyHistFilter()" style="width:auto; padding:6px 12px;">Применить</button>
+                    <button onclick="applyHistFilter()">Применить</button>
                 </div>
                 <div id="histBody"><p>Загрузка...</p></div>
             `;
@@ -669,17 +1165,18 @@
         }
 
         // ============================================================
-        // ВКЛАДКА: КОРЗИНА
+        // КОРЗИНА ПОЛЬЗОВАТЕЛЕЙ
         // ============================================================
         async function loadTrashTab() {
             const container = document.getElementById('trashTab');
+            if (!container) return;
             container.innerHTML = '<p>Загрузка...</p>';
             const result = await sendRequest('getTrash', {});
             if (!result.success) { container.innerHTML = `<p style="color:red;">${result.error}</p>`; return; }
             
             let html = `
-                <h3>🗑️ Корзина (${result.trashed.length})</h3>
-                ${result.trashed.length > 0 ? `<button class="danger" onclick="emptyTrashConfirm()">🔥 Очистить корзину (навсегда)</button>` : ''}
+                <h3>🗑️ Корзина пользователей (${result.trashed.length})</h3>
+                ${result.trashed.length > 0 ? `<button class="danger" onclick="emptyTrashConfirm()">🔥 Очистить корзину</button>` : ''}
             `;
             
             if (result.trashed.length === 0) {
@@ -694,7 +1191,7 @@
                         <td style="font-size:11px;">${u.deletedAt ? new Date(u.deletedAt).toLocaleString('ru-RU') : '-'}</td>
                         <td>
                             <button class="success" onclick="restoreUserConfirm('${u.id}', '${u.username}')" style="width:auto; padding:4px 8px; font-size:12px; margin:0;">♻️ Восстановить</button>
-                            <button class="danger" onclick="hardDeleteConfirm('${u.id}', '${u.username}')" style="width:auto; padding:4px 8px; font-size:12px; margin:0;">🔥 Удалить навсегда</button>
+                            <button class="danger" onclick="hardDeleteConfirm('${u.id}', '${u.username}')" style="width:auto; padding:4px 8px; font-size:12px; margin:0;">🔥 Навсегда</button>
                         </td>
                     </tr>`;
                 });
@@ -714,8 +1211,8 @@
         }
 
         async function hardDeleteConfirm(userId, username) {
-            if (!confirm(`⚠️ УДАЛИТЬ "${username}" НАВСЕГДА? Это действие необратимо!`)) return;
-            if (!confirm('Вы ТОЧНО уверены?')) return;
+            if (!confirm(`⚠️ УДАЛИТЬ "${username}" НАВСЕГДА?`)) return;
+            if (!confirm('Это действие НЕОБРАТИМО. Продолжить?')) return;
             const result = await sendRequest('hardDeleteUser', {
                 targetUserId: userId,
                 actorId: currentUser.id, actorUsername: currentUser.username, actorRole: currentUser.role
