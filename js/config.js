@@ -1,13 +1,10 @@
-// URL вашего Apps Script
 export const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5F8xSiQQgS1pm_6sqRFljHaMLmYy_4jo_KMkE5XaoS2X-fgus6nPNYat33s1oyQcl/exec';
 
-// Роли
 export const ROLES = [
     'Администратор', 'ПТО', 'Бухгалтерия', 'Прораб', 'Архитектор',
     'Дизайнер', 'ГАП', 'ГИП', 'Тендерный_специалист', 'Отдел_кадров', 'Снабжение'
 ];
 
-// Структура меню (разделы приложения)
 export const MENU_ITEMS = [
     { id: 'contracts', title: 'Договоры', icon: '📋', section: 'contracts', action: 'view' },
     { id: 'documents', title: 'Документация', icon: '📁', section: 'documents', action: 'view' },
@@ -20,31 +17,36 @@ export const MENU_ITEMS = [
     { id: 'trash', title: 'Корзина', icon: '🗑️', section: 'trash', action: 'view', adminOnly: true }
 ];
 
-// Состояние приложения (глобальное)
 export const state = {
     currentUser: null,
+    sessionToken: null,
     matrixData: null,
     contractMeta: null,
-    currentSection: 'contracts',
+    currentSection: null,
     currentEditUserId: null,
     selectedIcon: '🏢',
     contractSort: { field: 'createdAt', dir: 'desc' },
     contractFilter: {}
 };
 
-// Вспомогательные функции
+export function escapeHtml(v) {
+    return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 export function roleBadge(role) {
-    return `<span class="badge badge-${role}">${role}</span>`;
+    return `<span class="badge badge-${escapeHtml(role)}">${escapeHtml(role)}</span>`;
 }
 
 export function statusBadge(status) {
-    return `<span class="status-badge status-${status}">${status}</span>`;
+    return `<span class="status-badge status-${escapeHtml(status)}">${escapeHtml(status)}</span>`;
 }
 
 export function showMessage(elementId, msg, isError = true) {
     const el = document.getElementById(elementId);
     if (!el) return;
-    el.innerHTML = msg.replace(/\n/g, '<br>');
+    el.textContent = msg;
     el.className = 'message ' + (isError ? 'error' : 'success-msg');
     el.classList.remove('hidden');
 }
