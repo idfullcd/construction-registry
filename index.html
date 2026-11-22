@@ -3,174 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>СтройРеестр - Авторизация</title>
+    <title>СтройРеестр - Система управления</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; background: #f0f2f5; color: #333; }
         .container { max-width: 450px; margin: 40px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .container.wide { max-width: 900px; }
+        .container.wide { max-width: 1200px; }
         .hidden { display: none !important; }
         h2, h3 { color: #2c3e50; text-align: center; margin-top: 0; }
-        input, button, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; transition: background 0.2s; font-weight: bold; }
-        button:hover:not(:disabled) { background-color: #0056b3; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
-        button.danger { background-color: #dc3545; }
-        button.danger:hover:not(:disabled) { background-color: #c82333; }
+        input, button, select, textarea { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; font-family: inherit; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        button:hover:not(:disabled) { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        button.danger { background: #dc3545; }
+        button.danger:hover:not(:disabled) { background: #c82333; }
+        button.success { background: #28a745; }
+        button.success:hover:not(:disabled) { background: #218838; }
+        button.secondary { background: #6c757d; }
         .link { color: #007bff; cursor: pointer; text-decoration: underline; text-align: center; display: block; margin-top: 10px; font-size: 14px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #f8f9fa; color: #495057; }
-        .message { padding: 12px; margin: 10px 0; border-radius: 4px; text-align: center; font-size: 14px; word-wrap: break-word; line-height: 1.5; }
-        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        .hint { font-size: 12px; color: #666; margin-top: -5px; margin-bottom: 10px; display: block; }
-        .divider { margin: 20px 0; border: 0; border-top: 1px solid #eee; }
-        .network-warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; padding: 10px; border-radius: 4px; font-size: 13px; margin-bottom: 15px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: middle; }
+        th { background: #f8f9fa; color: #495057; position: sticky; top: 0; }
+        .message { padding: 10px; margin: 10px 0; border-radius: 4px; text-align: center; font-size: 14px; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .success-msg { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #007bff; padding-bottom: 15px; }
+        .hint { font-size: 12px; color: #666; margin-top: -5px; margin-bottom: 8px; display: block; }
+        .divider { margin: 15px 0; border: 0; border-top: 1px solid #eee; }
+        
+        /* Вкладки админки */
+        .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #dee2e6; }
+        .tab { padding: 10px 16px; cursor: pointer; background: #e9ecef; border: none; border-radius: 4px 4px 0 0; font-size: 13px; color: #495057; font-weight: normal; }
+        .tab.active { background: #007bff; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Матрица прав */
+        .matrix-table th, .matrix-table td { text-align: center; padding: 6px; }
+        .matrix-table th:first-child, .matrix-table td:first-child { text-align: left; font-weight: bold; }
+        .matrix-table input[type="checkbox"] { width: auto; margin: 0; cursor: pointer; }
+        
+        /* Фильтры */
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-radius: 4px; }
+        .filters input, .filters select { width: auto; flex: 1; min-width: 120px; margin: 0; padding: 6px; font-size: 13px; }
+        
+        /* Бейджи ролей */
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; color: white; }
+        .badge-admin { background: #dc3545; }
+        .badge-pto { background: #007bff; }
+        .badge-buh { background: #28a745; }
+        .badge-prorab { background: #fd7e14; }
+        .badge-arch { background: #6f42c1; }
+        .badge-design { background: #e83e8c; }
+        .badge-gap { background: #20c997; }
+        .badge-gip { background: #17a2b8; }
+        .badge-tender { background: #ffc107; color: #333; }
+        .badge-kadry { background: #6c757d; }
+        .badge-snab { background: #343a40; }
+        
+        .scroll-table { max-height: 500px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; }
+        .user-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+        .user-actions button { width: auto; padding: 4px 8px; font-size: 12px; margin: 0; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; width: auto; padding: 0; margin: 0; }
     </style>
 </head>
 <body>
     <div class="container" id="mainContainer">
-        
-        <!-- Предупреждение о блокировщиках (видимо только при ошибках сети) -->
-        <div id="networkWarning" class="network-warning hidden">
-            ⚠️ <strong>Внимание:</strong> Если действия не выполняются, отключите AdBlock, uBlock Origin или антивирус (Kaspersky/Avast). Они часто блокируют домен <em>script.googleusercontent.com</em>.
-        </div>
-
-        <!-- Форма входа -->
+        <!-- ВХОД -->
         <div id="loginView">
-            <h2>Вход в СтройРеестр</h2>
-            <input type="text" id="loginUsername" placeholder="Имя пользователя" autocomplete="username">
-            <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password">
+            <h2>🏗️ СтройРеестр</h2>
+            <input type="text" id="loginUsername" placeholder="Имя пользователя">
+            <input type="password" id="loginPassword" placeholder="Пароль">
             <button id="loginBtn" onclick="login()">Войти</button>
             <span class="link" onclick="showView('registerView')">Нет аккаунта? Зарегистрироваться</span>
             <span class="link" onclick="showView('recoverView')">Забыли пароль?</span>
             <div id="loginMessage" class="message hidden"></div>
         </div>
 
-        <!-- Форма регистрации -->
+        <!-- РЕГИСТРАЦИЯ -->
         <div id="registerView" class="hidden">
             <h2>Регистрация</h2>
-            <input type="text" id="regUsername" placeholder="Имя пользователя" autocomplete="username">
-            <input type="password" id="regPassword" placeholder="Пароль" autocomplete="new-password">
+            <input type="text" id="regUsername" placeholder="Имя пользователя">
+            <input type="password" id="regPassword" placeholder="Пароль">
             <hr class="divider">
-            <p style="text-align: center; font-weight: bold; color: #555; margin-bottom: 5px;">🔒 Безопасность аккаунта</p>
-            <input type="text" id="regSecQuestion" placeholder="Контрольный вопрос (напр., кличка питомца)">
-            <span class="hint">Этот вопрос понадобится для восстановления пароля.</span>
-            <input type="text" id="regSecAnswer" placeholder="Ваш ответ на вопрос" autocomplete="off">
-            <span class="hint">Ответ не чувствителен к регистру (Бобик = бобик).</span>
-            
+            <p style="text-align:center; font-weight:bold; color:#555;">🔒 Контрольный вопрос</p>
+            <input type="text" id="regSecQuestion" placeholder="Напр., кличка питомца">
+            <input type="text" id="regSecAnswer" placeholder="Ответ (не чувствителен к регистру)">
             <button id="regBtn" onclick="register()">Зарегистрироваться</button>
             <span class="link" onclick="showView('loginView')">Уже есть аккаунт? Войти</span>
             <div id="regMessage" class="message hidden"></div>
         </div>
 
-        <!-- Форма восстановления пароля -->
+        <!-- ВОССТАНОВЛЕНИЕ -->
         <div id="recoverView" class="hidden">
             <h2>Восстановление пароля</h2>
             <input type="text" id="recUsername" placeholder="Имя пользователя">
-            <input type="text" id="recSecAnswer" placeholder="Ваш ответ на контрольный вопрос" autocomplete="off">
-            <input type="password" id="recNewPassword" placeholder="Новый пароль" autocomplete="new-password">
+            <input type="text" id="recSecAnswer" placeholder="Ответ на контрольный вопрос">
+            <input type="password" id="recNewPassword" placeholder="Новый пароль">
             <button id="recBtn" onclick="recoverPassword()">Сменить пароль</button>
-            <span class="link" onclick="showView('loginView')">Назад ко входу</span>
+            <span class="link" onclick="showView('loginView')">Назад</span>
             <div id="recMessage" class="message hidden"></div>
         </div>
 
-        <!-- Основной интерфейс (Дашборд) -->
-        <div id="dashboardView" class="hidden">
-            <!-- Контент генерируется через JS -->
+        <!-- ДАШБОРД -->
+        <div id="dashboardView" class="hidden"></div>
+    </div>
+
+    <!-- Модальное окно для индивидуальных прав -->
+    <div id="permissionsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="margin:0;">Индивидуальные права: <span id="permModalUsername"></span></h3>
+                <button class="close-btn" onclick="closeModal('permissionsModal')">&times;</button>
+            </div>
+            <p class="hint">Отметьте дополнительные права сверх роли. Пустые значения = использовать права роли.</p>
+            <div id="permModalBody"></div>
+            <button onclick="saveCustomPermissions()" class="success">💾 Сохранить</button>
+            <button onclick="resetCustomPermissions()" class="secondary">🔄 Сбросить (использовать роль)</button>
         </div>
     </div>
 
     <script>
-        // ⚠️ УБЕДИТЕСЬ, ЧТО ЭТОТ URL В ТОЧНОСТИ СОВПАДАЕТ С ВАШИМ РАЗВЕРТЫВАНИЕМ В GOOGLE APPS SCRIPT
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5F8xSiQQgS1pm_6sqRFljHaMLmYy_4jo_KMkE5XaoS2X-fgus6nPNYat33s1oyQcl/exec';
-        let currentUserData = null;
+        let currentUser = null;
+        let matrixData = null;
+        let currentEditUserId = null;
+
+        const ROLE_BADGES = {
+            'Администратор': 'badge-admin', 'ПТО': 'badge-pto', 'Бухгалтерия': 'badge-buh',
+            'Прораб': 'badge-prorab', 'Архитектор': 'badge-arch', 'Дизайнер': 'badge-design',
+            'ГАП': 'badge-gap', 'ГИП': 'badge-gip', 'Тендерный_специалист': 'badge-tender',
+            'Отдел_кадров': 'badge-kadry', 'Снабжение': 'badge-snab'
+        };
+
+        function roleBadge(role) {
+            return `<span class="badge ${ROLE_BADGES[role] || 'badge-kadry'}">${role}</span>`;
+        }
 
         function showView(viewId) {
-            document.querySelectorAll('#mainContainer > div').forEach(div => {
-                if (div.id !== 'networkWarning') div.classList.add('hidden');
-            });
+            document.querySelectorAll('#mainContainer > div').forEach(d => d.classList.add('hidden'));
             document.getElementById(viewId).classList.remove('hidden');
-            clearMessages();
         }
 
-        function clearMessages() {
-            document.querySelectorAll('.message').forEach(el => {
-                el.textContent = '';
-                el.classList.add('hidden');
-            });
-            document.getElementById('networkWarning').classList.add('hidden');
-        }
-
-        function showMessage(elementId, message, isError = true) {
-            const el = document.getElementById(elementId);
-            el.innerHTML = message.replace(/\n/g, '<br>');
-            el.className = 'message ' + (isError ? 'error' : 'success');
+        function showMessage(id, msg, isError = true) {
+            const el = document.getElementById(id);
+            el.innerHTML = msg.replace(/\n/g, '<br>');
+            el.className = 'message ' + (isError ? 'error' : 'success-msg');
             el.classList.remove('hidden');
         }
 
-        function setButtonLoading(btnId, isLoading, defaultText) {
-            const btn = document.getElementById(btnId);
-            if (isLoading) {
-                btn.disabled = true;
-                btn.textContent = 'Обработка...';
-            } else {
-                btn.disabled = false;
-                btn.textContent = defaultText;
-            }
+        function setBtn(id, loading, text) {
+            const btn = document.getElementById(id);
+            btn.disabled = loading;
+            btn.textContent = loading ? 'Обработка...' : text;
         }
 
         async function sendRequest(action, data) {
-            console.log(`[GAS] Отправка запроса: ${action}`, data);
             try {
                 const payload = JSON.stringify({ action, ...data });
-                
-                // Используем text/plain, чтобы избежать preflight OPTIONS запроса, 
-                // который Google Apps Script не поддерживает и который вызывает ошибки CORS/Timeout.
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     body: payload,
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8'
-                    },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     redirect: 'follow',
                     cache: 'no-cache'
                 });
-                
                 const text = await response.text();
-                console.log(`[GAS] Ответ сервера:`, text);
-                
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    return { 
-                        success: false, 
-                        error: 'Сервер вернул не JSON. Возможно, запрос перехвачен расширением браузера. Ответ: ' + text.substring(0, 100) 
-                    };
-                }
+                try { return JSON.parse(text); }
+                catch(e) { return { success: false, error: 'Некорректный ответ сервера' }; }
             } catch (error) {
-                console.error("[GAS] Ошибка сети:", error);
-                document.getElementById('networkWarning').classList.remove('hidden');
-                return { 
-                    success: false, 
-                    error: 'Ошибка сети (TIMEOUT / Failed to fetch).\n\n1. Отключите AdBlock/uBlock Origin или антивирус (Kaspersky/Avast).\n2. Попробуйте открыть сайт в режиме Инкогнито (Ctrl+Shift+N).\n3. Убедитесь, что в Google Apps Script выбрано "У кого есть доступ: Все" (Anyone).' 
-                };
+                return { success: false, error: 'Ошибка сети. Проверьте подключение и настройки Apps Script.' };
             }
         }
 
+        // ============================================================
+        // АУТЕНТИФИКАЦИЯ
+        // ============================================================
         async function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
             if (!username || !password) return showMessage('loginMessage', 'Заполните все поля');
-
-            setButtonLoading('loginBtn', true, 'Войти');
+            setBtn('loginBtn', true, 'Войти');
             const result = await sendRequest('login', { username, password });
-            setButtonLoading('loginBtn', false, 'Войти');
-
+            setBtn('loginBtn', false, 'Войти');
             if (result.success) {
-                currentUserData = result.user;
-                localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+                currentUser = result.user;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 showDashboard();
             } else {
                 showMessage('loginMessage', result.error);
@@ -178,168 +201,549 @@
         }
 
         async function register() {
-            const username = document.getElementById('regUsername').value.trim();
-            const password = document.getElementById('regPassword').value;
-            const secQuestion = document.getElementById('regSecQuestion').value.trim();
-            const secAnswer = document.getElementById('regSecAnswer').value.trim();
-            
-            if (!username || !password || !secQuestion || !secAnswer) {
-                return showMessage('regMessage', 'Заполните все поля, включая контрольный вопрос и ответ');
-            }
-
-            setButtonLoading('regBtn', true, 'Зарегистрироваться');
-            const result = await sendRequest('register', { username, password, securityQuestion: secQuestion, securityAnswer: secAnswer });
-            setButtonLoading('regBtn', false, 'Зарегистрироваться');
-
+            const u = document.getElementById('regUsername').value.trim();
+            const p = document.getElementById('regPassword').value;
+            const q = document.getElementById('regSecQuestion').value.trim();
+            const a = document.getElementById('regSecAnswer').value.trim();
+            if (!u || !p || !q || !a) return showMessage('regMessage', 'Заполните все поля');
+            setBtn('regBtn', true, 'Зарегистрироваться');
+            const result = await sendRequest('register', { username: u, password: p, securityQuestion: q, securityAnswer: a });
+            setBtn('regBtn', false, 'Зарегистрироваться');
             if (result.success) {
-                showMessage('regMessage', result.message + ' (Ваша роль: ' + result.role + ')', false);
-                setTimeout(() => showView('loginView'), 2000);
+                showMessage('regMessage', result.message + ' (Роль: ' + result.role + ')', false);
+                setTimeout(() => showView('loginView'), 1500);
             } else {
                 showMessage('regMessage', result.error);
             }
         }
 
         async function recoverPassword() {
-            const username = document.getElementById('recUsername').value.trim();
-            const secAnswer = document.getElementById('recSecAnswer').value.trim();
-            const newPassword = document.getElementById('recNewPassword').value;
-            
-            if (!username || !secAnswer || !newPassword) {
-                return showMessage('recMessage', 'Заполните все поля');
-            }
-
-            setButtonLoading('recBtn', true, 'Сменить пароль');
-            const result = await sendRequest('recoverPassword', { username, securityAnswer: secAnswer, newPassword });
-            setButtonLoading('recBtn', false, 'Сменить пароль');
-
+            const u = document.getElementById('recUsername').value.trim();
+            const a = document.getElementById('recSecAnswer').value.trim();
+            const p = document.getElementById('recNewPassword').value;
+            if (!u || !a || !p) return showMessage('recMessage', 'Заполните все поля');
+            setBtn('recBtn', true, 'Сменить пароль');
+            const result = await sendRequest('recoverPassword', { username: u, securityAnswer: a, newPassword: p });
+            setBtn('recBtn', false, 'Сменить пароль');
             if (result.success) {
                 showMessage('recMessage', result.message, false);
-                setTimeout(() => showView('loginView'), 2000);
+                setTimeout(() => showView('loginView'), 1500);
             } else {
                 showMessage('recMessage', result.error);
             }
         }
 
-        function showDashboard() {
-            document.getElementById('mainContainer').classList.add('wide');
-            document.querySelectorAll('#mainContainer > div').forEach(div => {
-                if (div.id !== 'networkWarning') div.classList.add('hidden');
-            });
-            
-            const isAdmin = currentUserData.role === 'admin';
-            
-            const dashboardHTML = `
-                <div class="header-info">
-                    <div>
-                        <h3>Добро пожаловать, <span style="color: #007bff;">${currentUserData.username}</span>!</h3>
-                        <p style="margin: 5px 0 0 0;">Ваша роль: <strong>${isAdmin ? 'Администратор' : (currentUserData.role === 'moderator' ? 'Модератор' : 'Пользователь')}</strong></p>
-                    </div>
-                    <button onclick="logout()" style="width: auto; background-color: #6c757d; margin: 0;">Выйти</button>
-                </div>
-                
-                <div id="adminPanel" class="${isAdmin ? '' : 'hidden'}">
-                    <h3>⚙️ Панель администратора</h3>
-                    <button onclick="loadUsers()" style="width: auto; margin-bottom: 10px;">🔄 Обновить список пользователей</button>
-                    <div style="overflow-x: auto;">
-                        <table id="usersTable">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Имя пользователя</th>
-                                    <th>Роль</th>
-                                    <th>Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div id="userContent" class="${isAdmin ? 'hidden' : ''}">
-                    <h3>📁 Рабочая область</h3>
-                    <p>Здесь будет отображаться основной функционал сайта СтройРеестр для вашей роли.</p>
-                </div>
-            `;
-            
-            const dashView = document.getElementById('dashboardView');
-            dashView.innerHTML = dashboardHTML;
-            dashView.classList.remove('hidden');
-            
-            if (isAdmin) {
-                loadUsers();
-            }
-        }
-
         function logout() {
-            currentUserData = null;
+            currentUser = null;
             localStorage.removeItem('currentUser');
             document.getElementById('mainContainer').classList.remove('wide');
-            document.getElementById('loginUsername').value = '';
-            document.getElementById('loginPassword').value = '';
             showView('loginView');
         }
 
-        async function loadUsers() {
-            const tbody = document.getElementById('usersTableBody');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Загрузка...</td></tr>';
+        // ============================================================
+        // ДАШБОРД
+        // ============================================================
+        function showDashboard() {
+            document.getElementById('mainContainer').classList.add('wide');
+            document.querySelectorAll('#mainContainer > div').forEach(d => d.classList.add('hidden'));
             
-            const result = await sendRequest('getUsers', {});
-            if (result.success) {
-                tbody.innerHTML = '';
-                result.users.forEach(user => {
-                    const isSelf = user.username === currentUserData.username;
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><small style="color:#666;">${user.id.substring(0, 8)}...</small></td>
-                        <td><strong>${user.username}</strong> ${isSelf ? '<span style="color:#007bff;">(Вы)</span>' : ''}</td>
-                        <td>
-                            <select onchange="changeRole('${user.id}', this.value)" ${isSelf ? 'disabled' : ''} style="margin:0; padding: 6px;">
-                                <option value="user" ${user.role === 'user' ? 'selected' : ''}>Пользователь</option>
-                                <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Модератор</option>
-                                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Администратор</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button class="danger" onclick="deleteUser('${user.id}')" ${isSelf ? 'disabled' : ''} style="margin:0; padding: 6px 12px; width: auto;">Удалить</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Ошибка: ${result.error}</td></tr>`;
+            const isAdmin = currentUser.role === 'Администратор';
+            const dash = document.getElementById('dashboardView');
+            
+            dash.innerHTML = `
+                <div class="header-info">
+                    <div>
+                        <h3 style="margin:0;">👤 ${currentUser.username}</h3>
+                        <p style="margin:5px 0 0 0;">${roleBadge(currentUser.role)}</p>
+                    </div>
+                    <button onclick="logout()" class="secondary" style="width:auto;">Выйти</button>
+                </div>
+                
+                ${isAdmin ? `
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('usersTab', this)">👥 Пользователи</button>
+                        <button class="tab" onclick="switchTab('matrixTab', this)">🔐 Матрица прав</button>
+                        <button class="tab" onclick="switchTab('logsTab', this)">📋 Журнал действий</button>
+                        <button class="tab" onclick="switchTab('historyTab', this)">📜 История изменений</button>
+                        <button class="tab" onclick="switchTab('trashTab', this)">🗑️ Корзина</button>
+                    </div>
+                    
+                    <div id="usersTab" class="tab-content active"></div>
+                    <div id="matrixTab" class="tab-content"></div>
+                    <div id="logsTab" class="tab-content"></div>
+                    <div id="historyTab" class="tab-content"></div>
+                    <div id="trashTab" class="tab-content"></div>
+                ` : `
+                    <div style="text-align:center; padding:40px;">
+                        <h3>📁 Рабочая область</h3>
+                        <p>Добро пожаловать в систему СтройРеестр!</p>
+                        <p>Ваша роль: ${roleBadge(currentUser.role)}</p>
+                        <p style="color:#666; font-size:14px;">Здесь будет основной функционал для вашей роли.</p>
+                    </div>
+                `}
+            `;
+            dash.classList.remove('hidden');
+            
+            if (isAdmin) {
+                loadUsersTab();
             }
+        }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            if (tabId === 'matrixTab') loadMatrixTab();
+            if (tabId === 'logsTab') loadLogsTab();
+            if (tabId === 'historyTab') loadHistoryTab();
+            if (tabId === 'trashTab') loadTrashTab();
+        }
+
+        // ============================================================
+        // ВКЛАДКА: ПОЛЬЗОВАТЕЛИ
+        // ============================================================
+        async function loadUsersTab() {
+            const container = document.getElementById('usersTab');
+            container.innerHTML = '<p>Загрузка...</p>';
+            const result = await sendRequest('getUsers', {});
+            if (!result.success) { container.innerHTML = `<p style="color:red;">${result.error}</p>`; return; }
+            
+            let html = `
+                <h3>👥 Управление пользователями (${result.users.length})</h3>
+                <div class="scroll-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Пользователь</th>
+                            <th>Роль</th>
+                            <th>Создан</th>
+                            <th>Последний вход</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            result.users.forEach(u => {
+                const isSelf = u.username === currentUser.username;
+                html += `
+                    <tr>
+                        <td><strong>${u.username}</strong> ${isSelf ? '<span style="color:#007bff;">(Вы)</span>' : ''}</td>
+                        <td>
+                            ${isSelf ? roleBadge(u.role) : `
+                                <select onchange="changeRole('${u.id}', this.value)" style="width:auto; padding:4px; margin:0; font-size:12px;">
+                                    ${result.roles.map(r => `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`).join('')}
+                                </select>
+                            `}
+                        </td>
+                        <td style="font-size:11px;">${u.createdAt ? new Date(u.createdAt).toLocaleString('ru-RU') : '-'}</td>
+                        <td style="font-size:11px;">${u.lastLogin ? new Date(u.lastLogin).toLocaleString('ru-RU') : '-'}</td>
+                        <td>
+                            <div class="user-actions">
+                                ${!isSelf ? `
+                                    <button onclick="openPermissionsModal('${u.id}', '${u.username}')">⚙️ Права</button>
+                                    <button class="danger" onclick="softDeleteUser('${u.id}', '${u.username}')">🗑️</button>
+                                ` : '<em style="color:#999;">—</em>'}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
         }
 
         async function changeRole(userId, newRole) {
-            const result = await sendRequest('updateUserRole', { targetUserId: userId, newRole });
+            const result = await sendRequest('updateUserRole', {
+                targetUserId: userId, newRole,
+                actorId: currentUser.id, actorUsername: currentUser.username, actorRole: currentUser.role
+            });
             if (result.success) {
-                alert('Роль успешно обновлена');
+                alert('Роль изменена');
+                loadUsersTab();
             } else {
                 alert('Ошибка: ' + result.error);
-                loadUsers();
             }
         }
 
-        async function deleteUser(userId) {
-            if (!confirm('Вы уверены, что хотите удалить этого пользователя? Это действие необратимо.')) return;
+        async function softDeleteUser(userId, username) {
+            if (!confirm(`Переместить "${username}" в корзину?`)) return;
+            const result = await sendRequest('deleteUser', {
+                targetUserId: userId,
+                actorId: currentUser.id, actorUsername: currentUser.username, actorRole: currentUser.role
+            });
+            if (result.success) { alert(result.message); loadUsersTab(); }
+            else alert('Ошибка: ' + result.error);
+        }
+
+        // ============================================================
+        // МОДАЛКА: ИНДИВИДУАЛЬНЫЕ ПРАВА
+        // ============================================================
+        async function openPermissionsModal(userId, username) {
+            currentEditUserId = userId;
+            document.getElementById('permModalUsername').textContent = username;
             
-            const result = await sendRequest('deleteUser', { targetUserId: userId });
+            // Получаем текущие права и матрицу
+            const [permResult, matrixResult] = await Promise.all([
+                sendRequest('getUserPermissions', { targetUserId: userId }),
+                sendRequest('getMatrix', {})
+            ]);
+            
+            if (!permResult.success || !matrixResult.success) {
+                alert('Ошибка загрузки данных');
+                return;
+            }
+            
+            matrixData = matrixResult;
+            const customPerms = permResult.permissions;
+            const rolePerms = matrixResult.matrix[permResult.role] || {};
+            
+            let html = `<p><strong>Роль:</strong> ${roleBadge(permResult.role)}</p><hr>`;
+            
+            Object.keys(matrixResult.sections).forEach(sectionKey => {
+                const sectionName = matrixResult.sections[sectionKey];
+                html += `<h4 style="margin:15px 0 5px 0;">${sectionName}</h4>`;
+                html += `<div style="display:flex; gap:10px; flex-wrap:wrap;">`;
+                matrixResult.actions.forEach(action => {
+                    const roleHas = rolePerms[sectionKey] && rolePerms[sectionKey].includes(action);
+                    const customHas = customPerms[sectionKey] && customPerms[sectionKey].includes(action);
+                    const checked = customHas ? 'checked' : '';
+                    const roleMark = roleHas ? '✓' : '—';
+                    html += `
+                        <label style="display:flex; align-items:center; gap:4px; font-size:13px; cursor:pointer;">
+                            <input type="checkbox" data-section="${sectionKey}" data-action="${action}" ${checked} style="width:auto; margin:0;">
+                            ${action} <small style="color:#999;">(роль: ${roleMark})</small>
+                        </label>
+                    `;
+                });
+                html += `</div>`;
+            });
+            
+            document.getElementById('permModalBody').innerHTML = html;
+            document.getElementById('permissionsModal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        async function saveCustomPermissions() {
+            const checkboxes = document.querySelectorAll('#permModalBody input[type="checkbox"]');
+            const permissions = {};
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    const section = cb.dataset.section;
+                    const action = cb.dataset.action;
+                    if (!permissions[section]) permissions[section] = [];
+                    permissions[section].push(action);
+                }
+            });
+            
+            const result = await sendRequest('updateUserPermissions', {
+                targetUserId: currentEditUserId,
+                permissions,
+                actorId: currentUser.id, actorUsername: currentUser.username, actorRole: currentUser.role
+            });
+            
             if (result.success) {
-                alert('Пользователь удален');
-                loadUsers();
+                alert('Права сохранены');
+                closeModal('permissionsModal');
+                loadUsersTab();
             } else {
                 alert('Ошибка: ' + result.error);
             }
         }
 
-        // Проверка сессии при загрузке страницы
+        async function resetCustomPermissions() {
+            if (!confirm('Сбросить индивидуальные права? Будут использоваться права роли.')) return;
+            const result = await sendRequest('updateUserPermissions', {
+                targetUserId: currentEditUserId,
+                permissions: {},
+                actorId: currentUser.id, actorUsername: currentUser.username, actorRole: currentUser.role
+            });
+            if (result.success) {
+                alert('Права сброшены');
+                closeModal('permissionsModal');
+                loadUsersTab();
+            }
+        }
+
+        // ============================================================
+        // ВКЛАДКА: МАТРИЦА ПРАВ
+        // ============================================================
+        async function loadMatrixTab() {
+            const container = document.getElementById('matrixTab');
+            container.innerHTML = '<p>Загрузка...</p>';
+            const result = await sendRequest('getMatrix', {});
+            if (!result.success) { container.innerHTML = `<p style="color:red;">${result.error}</p>`; return; }
+            
+            matrixData = result;
+            let html = `
+                <h3>🔐 Матрица прав по ролям</h3>
+                <p class="hint">Отметьте права для каждой роли. Изменения сохраняются кнопкой внизу.</p>
+                <div class="scroll-table">
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th>Роль</th>
+            `;
+            
+            Object.keys(result.sections).forEach(sk => {
+                html += `<th>${result.sections[sk]}</th>`;
+            });
+            html += `</tr></thead><tbody>`;
+            
+            result.roles.forEach(role => {
+                html += `<tr><td>${roleBadge(role)}</td>`;
+                const rolePerms = result.matrix[role] || {};
+                Object.keys(result.sections).forEach(sk => {
+                    html += `<td><div style="display:flex; flex-direction:column; gap:2px; font-size:11px;">`;
+                    result.actions.forEach(action => {
+                        const checked = rolePerms[sk] && rolePerms[sk].includes(action) ? 'checked' : '';
+                        html += `<label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
+                            <input type="checkbox" data-role="${role}" data-section="${sk}" data-action="${action}" ${checked} style="width:auto; margin:0;">
+                            ${action}
+                        </label>`;
+                    });
+                    html += `</div></td>`;
+                });
+                html += `</tr>`;
+            });
+            
+            html += `</tbody></table></div>
+                <button onclick="saveMatrix()" class="success" style="margin-top:15px;">💾 Сохранить матрицу</button>
+            `;
+            container.innerHTML = html;
+        }
+
+        async function saveMatrix() {
+            const checkboxes = document.querySelectorAll('.matrix-table input[type="checkbox"]');
+            const rolesData = {};
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    const role = cb.dataset.role;
+                    const section = cb.dataset.section;
+                    const action = cb.dataset.action;
+                    if (!rolesData[role]) rolesData[role] = {};
+                    if (!rolesData[role][section]) rolesData[role][section] = [];
+                    rolesData[role][section].push(action);
+                }
+            });
+            
+            let successCount = 0;
+            for (const role of Object.keys(rolesData)) {
+                const result = await sendRequest('updateMatrix', {
+                    role, permissions: rolesData[role],
+                    actorId: currentUser.id, actorUsername: currentUser.username, actorRole: currentUser.role
+                });
+                if (result.success) successCount++;
+            }
+            alert(`Сохранено ролей: ${successCount}`);
+        }
+
+        // ============================================================
+        // ВКЛАДКА: ЖУРНАЛ ДЕЙСТВИЙ
+        // ============================================================
+        async function loadLogsTab() {
+            const container = document.getElementById('logsTab');
+            container.innerHTML = `
+                <h3>📋 Журнал действий</h3>
+                <div class="filters">
+                    <input type="text" id="logFilterUser" placeholder="🔍 Пользователь">
+                    <select id="logFilterAction">
+                        <option value="">Все действия</option>
+                        <option value="login">Вход</option>
+                        <option value="register">Регистрация</option>
+                        <option value="change_role">Смена роли</option>
+                        <option value="change_permissions">Смена прав</option>
+                        <option value="soft_delete">В корзину</option>
+                        <option value="restore">Восстановление</option>
+                        <option value="hard_delete">Окончательное удаление</option>
+                        <option value="update_matrix">Изменение матрицы</option>
+                    </select>
+                    <input type="date" id="logFilterFrom">
+                    <input type="date" id="logFilterTo">
+                    <button onclick="applyLogsFilter()" style="width:auto; padding:6px 12px;">Применить</button>
+                </div>
+                <div id="logsBody"><p>Загрузка...</p></div>
+            `;
+            await fetchLogs();
+        }
+
+        async function fetchLogs(filter = {}) {
+            const result = await sendRequest('getLogs', { limit: 300, filter });
+            const body = document.getElementById('logsBody');
+            if (!result.success) { body.innerHTML = `<p style="color:red;">${result.error}</p>`; return; }
+            
+            if (result.logs.length === 0) {
+                body.innerHTML = '<p style="text-align:center; color:#999;">Записей не найдено</p>';
+                return;
+            }
+            
+            let html = `<div class="scroll-table"><table>
+                <thead><tr><th>Время</th><th>Пользователь</th><th>Роль</th><th>Действие</th><th>Объект</th><th>Детали</th></tr></thead><tbody>`;
+            result.logs.forEach(log => {
+                html += `<tr>
+                    <td style="font-size:11px; white-space:nowrap;">${new Date(log.timestamp).toLocaleString('ru-RU')}</td>
+                    <td><strong>${log.username}</strong></td>
+                    <td>${roleBadge(log.userRole)}</td>
+                    <td><code>${log.action}</code></td>
+                    <td>${log.target}</td>
+                    <td style="font-size:11px; max-width:200px; overflow:hidden; text-overflow:ellipsis;">${log.details}</td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            body.innerHTML = html;
+        }
+
+        function applyLogsFilter() {
+            const filter = {
+                username: document.getElementById('logFilterUser').value.trim(),
+                action: document.getElementById('logFilterAction').value,
+                dateFrom: document.getElementById('logFilterFrom').value,
+                dateTo: document.getElementById('logFilterTo').value
+            };
+            fetchLogs(filter);
+        }
+
+        // ============================================================
+        // ВКЛАДКА: ИСТОРИЯ ИЗМЕНЕНИЙ
+        // ============================================================
+        async function loadHistoryTab() {
+            const container = document.getElementById('historyTab');
+            container.innerHTML = `
+                <h3>📜 История изменений полей</h3>
+                <div class="filters">
+                    <input type="text" id="histFilterUser" placeholder="🔍 Пользователь">
+                    <select id="histFilterType">
+                        <option value="">Все типы</option>
+                        <option value="user">Пользователи</option>
+                        <option value="matrix">Матрица прав</option>
+                    </select>
+                    <input type="date" id="histFilterFrom">
+                    <input type="date" id="histFilterTo">
+                    <button onclick="applyHistFilter()" style="width:auto; padding:6px 12px;">Применить</button>
+                </div>
+                <div id="histBody"><p>Загрузка...</p></div>
+            `;
+            await fetchHistory();
+        }
+
+        async function fetchHistory(filter = {}) {
+            const result = await sendRequest('getHistory', { limit: 300, filter });
+            const body = document.getElementById('histBody');
+            if (!result.success) { body.innerHTML = `<p style="color:red;">${result.error}</p>`; return; }
+            
+            if (result.history.length === 0) {
+                body.innerHTML = '<p style="text-align:center; color:#999;">Записей не найдено</p>';
+                return;
+            }
+            
+            let html = `<div class="scroll-table"><table>
+                <thead><tr><th>Время</th><th>Кто</th><th>Объект</th><th>Поле</th><th>Было</th><th>Стало</th></tr></thead><tbody>`;
+            result.history.forEach(h => {
+                html += `<tr>
+                    <td style="font-size:11px; white-space:nowrap;">${new Date(h.timestamp).toLocaleString('ru-RU')}</td>
+                    <td><strong>${h.username}</strong></td>
+                    <td>${h.entityType} <small style="color:#999;">(${String(h.entityId).substring(0,8)}...)</small></td>
+                    <td><code>${h.field}</code></td>
+                    <td style="font-size:11px; max-width:180px; overflow:hidden; text-overflow:ellipsis; background:#ffebee;">${h.oldValue || '—'}</td>
+                    <td style="font-size:11px; max-width:180px; overflow:hidden; text-overflow:ellipsis; background:#e8f5e9;">${h.newValue || '—'}</td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            body.innerHTML = html;
+        }
+
+        function applyHistFilter() {
+            const filter = {
+                username: document.getElementById('histFilterUser').value.trim(),
+                entityType: document.getElementById('histFilterType').value,
+                dateFrom: document.getElementById('histFilterFrom').value,
+                dateTo: document.getElementById('histFilterTo').value
+            };
+            fetchHistory(filter);
+        }
+
+        // ============================================================
+        // ВКЛАДКА: КОРЗИНА
+        // ============================================================
+        async function loadTrashTab() {
+            const container = document.getElementById('trashTab');
+            container.innerHTML = '<p>Загрузка...</p>';
+            const result = await sendRequest('getTrash', {});
+            if (!result.success) { container.innerHTML = `<p style="color:red;">${result.error}</p>`; return; }
+            
+            let html = `
+                <h3>🗑️ Корзина (${result.trashed.length})</h3>
+                ${result.trashed.length > 0 ? `<button class="danger" onclick="emptyTrashConfirm()">🔥 Очистить корзину (навсегда)</button>` : ''}
+            `;
+            
+            if (result.trashed.length === 0) {
+                html += '<p style="text-align:center; color:#999; margin-top:20px;">Корзина пуста</p>';
+            } else {
+                html += `<table style="margin-top:15px;">
+                    <thead><tr><th>Пользователь</th><th>Роль</th><th>Удалён</th><th>Действия</th></tr></thead><tbody>`;
+                result.trashed.forEach(u => {
+                    html += `<tr>
+                        <td><strong>${u.username}</strong></td>
+                        <td>${roleBadge(u.role)}</td>
+                        <td style="font-size:11px;">${u.deletedAt ? new Date(u.deletedAt).toLocaleString('ru-RU') : '-'}</td>
+                        <td>
+                            <button class="success" onclick="restoreUserConfirm('${u.id}', '${u.username}')" style="width:auto; padding:4px 8px; font-size:12px; margin:0;">♻️ Восстановить</button>
+                            <button class="danger" onclick="hardDeleteConfirm('${u.id}', '${u.username}')" style="width:auto; padding:4px 8px; font-size:12px; margin:0;">🔥 Удалить навсегда</button>
+                        </td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            container.innerHTML = html;
+        }
+
+        async function restoreUserConfirm(userId, username) {
+            if (!confirm(`Восстановить "${username}"?`)) return;
+            const result = await sendRequest('restoreUser', {
+                targetUserId: userId,
+                actorId: currentUser.id, actorUsername: currentUser.username, actorRole: currentUser.role
+            });
+            if (result.success) { alert(result.message); loadTrashTab(); }
+            else alert('Ошибка: ' + result.error);
+        }
+
+        async function hardDeleteConfirm(userId, username) {
+            if (!confirm(`⚠️ УДАЛИТЬ "${username}" НАВСЕГДА? Это действие необратимо!`)) return;
+            if (!confirm('Вы ТОЧНО уверены?')) return;
+            const result = await sendRequest('hardDeleteUser', {
+                targetUserId: userId,
+                actorId: currentUser.id, actorUsername: currentUser.username, actorRole: currentUser.role
+            });
+            if (result.success) { alert(result.message); loadTrashTab(); }
+            else alert('Ошибка: ' + result.error);
+        }
+
+        async function emptyTrashConfirm() {
+            if (!confirm('⚠️ Очистить корзину? ВСЕ пользователи будут удалены НАВСЕГДА!')) return;
+            if (!confirm('Это действие НЕОБРАТИМО. Продолжить?')) return;
+            const result = await sendRequest('emptyTrash', {
+                actorId: currentUser.id, actorUsername: currentUser.username, actorRole: currentUser.role
+            });
+            if (result.success) { alert(result.message); loadTrashTab(); }
+            else alert('Ошибка: ' + result.error);
+        }
+
+        // ============================================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ============================================================
         window.onload = () => {
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
+            const saved = localStorage.getItem('currentUser');
+            if (saved) {
                 try {
-                    currentUserData = JSON.parse(savedUser);
+                    currentUser = JSON.parse(saved);
                     showDashboard();
-                } catch (e) {
+                } catch(e) {
                     localStorage.removeItem('currentUser');
                 }
             }
